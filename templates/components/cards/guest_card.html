@@ -1,0 +1,36 @@
+<!-- components/cards/guest_card.html -->
+<div class="card guest-card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ guest.Name }}</h5>
+        <span class="badge {% if guest.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+            {{ 'Active' if guest.is_active else 'Inactive' }}
+        </span>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>ID:</strong> {{ guest.ID }}</p>
+                <p><strong>Role:</strong> {{ guest.GuestRole }}</p>
+                <p><strong>Registration:</strong> {{ guest.RegistrationDate }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Phone:</strong> {{ guest.Phone }}</p>
+                <p><strong>Email:</strong> {{ guest.Email or 'Not provided' }}</p>
+                <p>
+                    <strong>Attendance:</strong> 
+                    <span class="text-{% if guest.DailyAttendance == 'True' %}success{% else %}danger{% endif %}">
+                        {{ 'Present' if guest.DailyAttendance == 'True' else 'Absent' }}
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer d-flex justify-content-end">
+        <a href="/single_guest/{{ guest.ID }}" class="btn btn-sm btn-info me-2">
+            <i class="fas fa-eye"></i> View
+        </a>
+        <button class="btn btn-sm btn-primary" onclick="generateBadge('{{ guest.ID }}')">
+            <i class="fas fa-id-badge"></i> Badge
+        </button>
+    </div>
+</div>

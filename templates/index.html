@@ -1,0 +1,198 @@
+<!-- templates/index.html -->
+{% extends "base.html" %}
+
+{% block title %}Conference Management System{% endblock %}
+
+{% block content %}
+<div class="row align-items-center justify-content-center pb-4">
+    <div class="col-lg-7">
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold text-primary">Conference Guest Management</h1>
+            <p class="lead">Welcome to the comprehensive management system for the 73rd Annual Reunion - PLEXUS</p>
+        </div>
+        
+        <div class="card shadow-lg border-0">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <h2 class="h4">Quick Access</h2>
+                    <p class="text-muted">Select an option to get started</p>
+                </div>
+                
+                <div class="d-grid gap-3">
+                    <a href="/guest/login" class="btn btn-primary btn-lg d-flex align-items-center justify-content-between">
+                       <div>
+                           <i class="fas fa-sign-in-alt me-2"></i> Guest Login
+                           <p class="mb-0 small text-white-50">Faculty members and guests</p>
+                       </div>
+                       <i class="fas fa-chevron-right"></i>
+                   </a>
+                   
+                   <a href="/guest_registration" class="btn btn-outline-primary btn-lg d-flex align-items-center justify-content-between">
+                       <div>
+                           <i class="fas fa-user-plus me-2"></i> Register
+                           <p class="mb-0 small text-muted">New guest registration</p>
+                       </div>
+                       <i class="fas fa-chevron-right"></i>
+                   </a>
+                   
+                   <a href="/admin_dashboard" class="btn btn-dark btn-lg d-flex align-items-center justify-content-between">
+                       <div>
+                           <i class="fas fa-cogs me-2"></i> Admin Panel
+                           <p class="mb-0 small text-white-50">Staff and organizers</p>
+                       </div>
+                       <i class="fas fa-chevron-right"></i>
+                   </a>
+                   
+                   <div class="text-center pt-3">
+                       <a href="/check_in" class="btn btn-danger pulse px-4 py-2">
+                           <i class="fas fa-qrcode me-2"></i> Scan QR for Check-in
+                       </a>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+
+   <div class="col-lg-5 d-none d-lg-block">
+       <div class="card border-0 shadow-lg">
+           <div class="card-body p-4">
+               <h3 class="h5 mb-4 border-bottom pb-2">
+                   <i class="fas fa-bullhorn text-primary me-2"></i> Announcements
+               </h3>
+               
+               <div class="announcement-item mb-3 pb-3 border-bottom">
+                   <h4 class="h6 fw-bold">Welcome to the 73rd Annual Reunion</h4>
+                   <p class="text-muted mb-1 small">
+                       <i class="fas fa-calendar-alt me-1"></i> March 14, 2025
+                   </p>
+                   <p class="mb-0">Registration is now open for all delegates and faculty members. Early registration closes on April 15, 2025.</p>
+               </div>
+               
+               <div class="announcement-item mb-3 pb-3 border-bottom">
+                   <h4 class="h6 fw-bold">Faculty Presentation Submissions</h4>
+                   <p class="text-muted mb-1 small">
+                       <i class="fas fa-calendar-alt me-1"></i> March 10, 2025
+                   </p>
+                   <p class="mb-0">Faculty members are invited to submit their presentations for the academic sessions. Deadline for submissions is April 30, 2025.</p>
+               </div>
+               
+               <div class="announcement-item">
+                   <h4 class="h6 fw-bold">Travel Arrangements</h4>
+                   <p class="text-muted mb-1 small">
+                       <i class="fas fa-calendar-alt me-1"></i> March 5, 2025
+                   </p>
+                   <p class="mb-0">Please update your journey details in your profile once you've confirmed your travel arrangements.</p>
+               </div>
+               
+               <div class="text-center mt-4">
+                   <a href="#" class="btn btn-sm btn-outline-secondary">View All Announcements</a>
+               </div>
+           </div>
+       </div>
+       
+       <div class="card border-0 shadow-sm mt-4">
+           <div class="card-body p-4">
+               <h3 class="h5 mb-4 border-bottom pb-2">
+                   <i class="fas fa-info-circle text-primary me-2"></i> Help & Information
+               </h3>
+               
+               <div class="d-grid gap-2">
+                   <a href="#" class="btn btn-outline-info d-flex align-items-center justify-content-between" onclick="toggleHelpOverlay()">
+                       <span><i class="fas fa-question-circle me-2"></i> How to Use This System</span>
+                       <i class="fas fa-external-link-alt"></i>
+                   </a>
+                   
+                   <a href="#" class="btn btn-outline-info d-flex align-items-center justify-content-between">
+                       <span><i class="fas fa-map-marker-alt me-2"></i> Venue Information</span>
+                       <i class="fas fa-external-link-alt"></i>
+                   </a>
+                   
+                   <a href="#" class="btn btn-outline-info d-flex align-items-center justify-content-between">
+                       <span><i class="fas fa-phone me-2"></i> Contact Us</span>
+                       <i class="fas fa-external-link-alt"></i>
+                   </a>
+               </div>
+           </div>
+       </div>
+   </div>
+</div>
+
+<div class="row mt-4">
+   <div class="col-md-12">
+       <div class="card border-0 shadow-sm">
+           <div class="card-body p-4">
+               <h3 class="h5 mb-4 border-bottom pb-2 text-center">
+                   <i class="fas fa-calendar-check text-primary me-2"></i> Event Schedule
+               </h3>
+               
+               <div class="table-responsive">
+                   <table class="table table-hover">
+                       <thead class="table-light">
+                           <tr>
+                               <th>Date</th>
+                               <th>Time</th>
+                               <th>Event</th>
+                               <th>Location</th>
+                           </tr>
+                       </thead>
+                       <tbody>
+                           <tr>
+                               <td rowspan="3">May 20, 2025</td>
+                               <td>09:00 - 10:30</td>
+                               <td>Registration & Welcome Kit Distribution</td>
+                               <td>Main Lobby</td>
+                           </tr>
+                           <tr>
+                               <td>11:00 - 12:30</td>
+                               <td>Inaugural Ceremony</td>
+                               <td>Auditorium</td>
+                           </tr>
+                           <tr>
+                               <td>14:00 - 17:00</td>
+                               <td>Academic Session: Recent Advances</td>
+                               <td>Conference Room A</td>
+                           </tr>
+                           <tr>
+                               <td rowspan="3">May 21, 2025</td>
+                               <td>09:30 - 11:30</td>
+                               <td>Faculty Presentations</td>
+                               <td>Conference Rooms A, B, C</td>
+                           </tr>
+                           <tr>
+                               <td>12:00 - 13:30</td>
+                               <td>Lunch & Networking</td>
+                               <td>Banquet Hall</td>
+                           </tr>
+                           <tr>
+                               <td>14:00 - 16:30</td>
+                               <td>Panel Discussion</td>
+                               <td>Auditorium</td>
+                           </tr>
+                           <tr>
+                               <td rowspan="2">May 22, 2025</td>
+                               <td>10:00 - 13:00</td>
+                               <td>Alumni Association Meeting</td>
+                               <td>Meeting Room 1</td>
+                           </tr>
+                           <tr>
+                               <td>19:00 - 22:00</td>
+                               <td>Gala Dinner</td>
+                               <td>Grand Banquet Hall</td>
+                           </tr>
+                       </tbody>
+                   </table>
+               </div>
+               
+               <div class="text-center mt-3">
+                   <a href="#" class="btn btn-outline-primary">
+                       <i class="fas fa-download me-2"></i> Download Complete Schedule
+                   </a>
+               </div>
+           </div>
+       </div>
+   </div>
+</div>
+
+<!-- Help System Overlay -->
+{% include 'components/help_system.html' %}
+{% endblock %}

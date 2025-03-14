@@ -1,0 +1,34 @@
+<!-- templates/error.html -->
+{% extends "base.html" %}
+
+{% block title %}Error - {{ status_code|default('404') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-center py-5">
+    <div class="text-center">
+        <div class="error-code">
+            <h1 class="display-1 fw-bold text-danger">{{ status_code|default('404') }}</h1>
+        </div>
+        
+        <div class="error-message">
+            <h2 class="h3 mb-4">{{ message|default('Page Not Found') }}</h2>
+            <p class="lead text-muted">{{ error_details|default('The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.') }}</p>
+        </div>
+        
+        <div class="error-actions mt-5">
+            <a href="/" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-home me-2"></i> Go Home
+            </a>
+            <button onclick="window.history.back()" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-arrow-left me-2"></i> Go Back
+            </button>
+        </div>
+        
+        {% if error_id %}
+        <div class="error-reference mt-4">
+            <p class="small text-muted">Reference ID: {{ error_id }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
