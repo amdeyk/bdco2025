@@ -1,105 +1,95 @@
-# app/config.py
-import os
-import configparser
-from pathlib import Path
-import logging
+# app/models/guest.py
+from typing import Dict, Optional, List
+from datetime import datetime
+import uuid
 
-logger = logging.getLogger(__name__)
-
-class Config:
-    """Configuration management with sensible defaults"""
+class Guest:
+    """Model for guest records"""
     
-    def __init__(self, config_file="config.ini"):
-        self.config_file = config_file
-        self.config = configparser.ConfigParser()
+    def __init__(
+        self, 
+        name: str = "", 
+        phone: str = "", 
+        email: str = "", 
+        guest_role: str = "Delegate"
+    ):
+        """
+        Initialize a new guest
         
-        # Create default configuration
-        self._set_defaults()
+        Args:
+            name: Guest's full name
+            phone: Contact phone number
+            email: Email address
+            guest_role: Role at the conference (Delegate, Faculty, Staff, etc.)
+        """
+        self.id = str(uuid.uuid4())[:8].upper()  # Short ID for convenience
+        self.name = name
+        self.phone = phone
+        self.email = email
+        self.guest_role = guest_role
+        self.registration_date = datetime.now().isoformat()
+        self.daily_attendance = "False"
+        self.is_active = True
+        self.kit_received = "False"
+        self.badge_printed = "False"
+        self.payment_status = "Pending"
+        self.payment_amount = "0"
+        self.organization = ""
+        self.notes = ""
         
-        # Load custom configuration if exists
-        if os.path.exists(config_file):
-            try:
-                self.config.read(config_file)
-                logger.info(f"Configuration loaded from {config_file}")
-            except Exception as e:
-                logger.error(f"Error loading configuration: {str(e)}")
-        else:
-            self._create_default_config()
-    
-    def _set_defaults(self):
-        """Set default configuration values"""
-        self.config['DEFAULT'] = {
-            'AdminPassword': 'admin123change_this',
-            'SoftwareVersion': '2.0',
-            'Debug': 'False',
-            'SecretKey': 'generate_random_secret_key_here'
-        }
+    @classmethod
+    def from_dict(cls, data: Dict) -> 'Guest':
+        """Create a guest instance from dictionary data"""
+        instance = cls()
         
-        self.config['DATABASE'] = {
-            'CSVPath': './data/guests.csv',
-            'BackupDir': './data/backups'
-        }
-        
-        self.config['PATHS'] = {
-            'StaticDir': './static',
-            'TemplatesDir': './templates',
-            'LogsDir': './logs'
-        }
-        
-        self.config['SECURITY'] = {
-            'MaxLoginAttempts': '3',
-            'SessionTimeout': '30'
-        }
-        
-        self.config['EMAIL'] = {
-            'Enabled': 'False',
-            'SMTPServer': 'smtp.example.com',
-            'SMTPPort': '587',
-            'Username': 'admin@example.com',
-            'Password': 'change_this_password',
-            'SenderEmail': 'conference@example.com',
-            'SenderName': 'Conference Management'
-        }
-    
-    def _create_default_config(self):
-        """Create default configuration file"""
-        try:
-            # Ensure directory exists
-            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+        # Map dictionary fields to object attributes
+        for key, value in data.items():
+            # Convert to standard object attribute names (camelCase to snake_case)
+            attr_name = key[0].lower() + key[1:]
             
-            # Write configuration
-            with open(self.config_file, 'w') as f:
-                self.config.write(f)
+            # Special case for ID
+            if key == "ID":
+                attr_name = "id"
+            
+            # Check if attribute exists and set value
+            if hasattr(instance, attr_name):
+                setattr(instance, attr_name, value)
                 
-            logger.info(f"Created default configuration file: {self.config_file}")
-        except Exception as e:
-            logger.error(f"Error creating default configuration: {str(e)}")
-    
-    def get(self, section, key, fallback=None):
-        """Get configuration value with fallback"""
-        return self.config.get(section, key, fallback=fallback)
-    
-    def getboolean(self, section, key, fallback=None):
-        """Get boolean configuration value with fallback"""
-        return self.config.getboolean(section, key, fallback=fallback)
-    
-    def getint(self, section, key, fallback=None):
-        """Get integer configuration value with fallback"""
-        return self.config.getint(section, key, fallback=fallback)
-    
-    def set(self, section, key, value):
-        """Set configuration value"""
-        if section not in self.config:
-            self.config[section] = {}
+        return instance
         
-        self.config[section][key] = str(value)
+    def to_dict(self) -> Dict:
+        """Convert to dictionary representation (for CSV storage)"""
+        return {
+            "ID": self.id,
+            "Name": self.name,
+            "Phone": self.phone,
+            "Email": self.email,
+            "GuestRole": self.guest_role,
+            "RegistrationDate": self.registration_date,
+            "DailyAttendance": self.daily_attendance,
+            "IsActive": str(self.is_active),
+            "KitReceived": self.kit_received,
+            "BadgePrinted": self.badge_printed,
+            "PaymentStatus": self.payment_status,
+            "PaymentAmount": self.payment_amount,
+            "Organization": self.organization,
+            "Notes": self.notes
+        }
         
-        # Save changes
-        try:
-            with open(self.config_file, 'w') as f:
-                self.config.write(f)
-            logger.info(f"Updated configuration: {section}.{key}")
-            return True
-        except Exception as e:
-            logger.error(f"Error saving configuration: {str(e)}")
-            return False
+    def validate(self) -> List[str]:
+        """Validate guest data and return list of errors"""
+        errors = []
+        
+        if not self.name or len(self.name) < 3:
+            errors.append("Name is required and must be at least 3 characters")
+            
+        if not self.phone or not self.phone.isdigit() or len(self.phone) != 10:
+            errors.append("Phone number must be exactly 10 digits")
+            
+        if self.email and "@" not in self.email:
+            errors.append("Invalid email format")
+            
+        if self.guest_role not in ["Delegate", "Faculty", "Staff", "Sponsor", "Guest"]:
+            errors.append("Invalid guest role")
+            
+        return errors

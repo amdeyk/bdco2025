@@ -1,0 +1,551 @@
+{% extends "base.html" %}
+
+{% block title %}Guest Profile | Conference Management{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0"><i class="fas fa-user me-2"></i> Guest Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    {% if guest.photo_url %}
+                    <img src="{{ guest.photo_url }}" alt="{{ guest.Name }}" class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;">
+                        <i class="fas fa-user-circle text-secondary" style="font-size: 100px;"></i>
+                    </div>
+                    {% endif %}
+                    <h5 class="mt-3 mb-0">{{ guest.Name }}</h5>
+                    <span class="badge bg-info mt-2">{{ guest.GuestRole }}</span>
+                </div>
+                
+                <hr>
+                
+                <div class="mb-3">
+                    <label class="fw-bold mb-1"><i class="fas fa-id-card me-2"></i> Guest ID:</label>
+                    <p class="mb-0">{{ guest.ID }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="fw-bold mb-1"><i class="fas fa-phone me-2"></i> Phone:</label>
+                    <p class="mb-0">{{ guest.Phone }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="fw-bold mb-1"><i class="fas fa-envelope me-2"></i> Email:</label>
+                    <p class="mb-0">{{ guest.Email or 'Not provided' }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="fw-bold mb-1"><i class="fas fa-calendar-alt me-2"></i> Registration Date:</label>
+                    <p class="mb-0">{{ guest.RegistrationDate }}</p>
+                </div>
+                
+                <hr>
+                
+                <div class="d-grid">
+                    <button type="button" class="btn btn-outline-primary mb-2" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                        <i class="fas fa-edit me-2"></i> Edit Profile
+                    </button>
+                    <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">
+                        <i class="fas fa-camera me-2"></i> Update Photo
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- QR Code Card -->
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i> QR Code</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="qr-container p-2 mb-3">
+                    <img src="/static/qr_codes/guest_{{ guest.ID }}.png" alt="QR Code" class="img-fluid" style="max-width: 200px;">
+                </div>
+                <p class="text-muted mb-0">Use this QR code for quick check-in</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs" id="guestTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="true">
+                    <i class="fas fa-info-circle me-2"></i> Information
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="presentations-tab" data-bs-toggle="tab" data-bs-target="#presentations" type="button" role="tab" aria-controls="presentations" aria-selected="false">
+                    <i class="fas fa-file-powerpoint me-2"></i> Presentations
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="journey-tab" data-bs-toggle="tab" data-bs-target="#journey" type="button" role="tab" aria-controls="journey" aria-selected="false">
+                    <i class="fas fa-plane me-2"></i> Journey Details
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab" aria-controls="messages" aria-selected="false">
+                    <i class="fas fa-envelope me-2"></i> Messages
+                </button>
+            </li>
+        </ul>
+        
+        <!-- Tab Content -->
+        <div class="tab-content mt-4" id="guestTabContent">
+            <!-- Information Tab -->
+            <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Conference Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="fw-bold mb-1">Payment Status:</label>
+                                    <div>
+                                        <span class="badge {% if guest.PaymentStatus == 'Paid' %}bg-success{% elif guest.PaymentStatus == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ guest.PaymentStatus }}
+                                        </span>
+                                    </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <h6 class="fw-bold">Conference Schedule</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Time</th>
+                                                <th>Event</th>
+                                                <th>Location</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>May 20, 2025</td>
+                                                <td>09:00 - 10:30</td>
+                                                <td>Registration & Welcome Kit</td>
+                                                <td>Main Lobby</td>
+                                            </tr>
+                                            <tr>
+                                                <td>May 20, 2025</td>
+                                                <td>11:00 - 12:30</td>
+                                                <td>Inaugural Ceremony</td>
+                                                <td>Auditorium</td>
+                                            </tr>
+                                            <tr>
+                                                <td>May 21, 2025</td>
+                                                <td>09:30 - 11:30</td>
+                                                <td>Faculty Presentations</td>
+                                                <td>Conference Rooms</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="text-end">
+                                    <a href="#" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i> Full Schedule
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                                
+            <!-- Presentations Tab -->
+            <div class="tab-pane fade" id="presentations" role="tabpanel" aria-labelledby="presentations-tab">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Your Presentations</h5>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPresentationModal">
+                            <i class="fas fa-upload me-1"></i> Upload New
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        {% if presentations %}
+                        <div class="row">
+                            {% for presentation in presentations %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <h6 class="card-title">{{ presentation.title }}</h6>
+                                            <span class="badge {% if presentation.file_type == 'pdf' %}bg-danger{% elif presentation.file_type == 'ppt' %}bg-warning{% elif presentation.file_type == 'video' %}bg-primary{% else %}bg-success{% endif %}">
+                                                {{ presentation.file_type|upper }}
+                                            </span>
+                                        </div>
+                                        <p class="card-text small text-muted">
+                                            {{ presentation.description|truncate(100) }}
+                                        </p>
+                                        <p class="card-text small">
+                                            <i class="fas fa-calendar-alt me-1"></i> {{ presentation.upload_date }}
+                                        </p>
+                                    </div>
+                                    <div class="card-footer bg-white">
+                                        <a href="{{ presentation.file_url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="fas fa-download me-1"></i> Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
+                            <h5>No Presentations Yet</h5>
+                            <p class="text-muted">Upload your presentations for the conference here.</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadPresentationModal">
+                                <i class="fas fa-upload me-2"></i> Upload Your First Presentation
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Journey Details Tab -->
+            <div class="tab-pane fade" id="journey" role="tabpanel" aria-labelledby="journey-tab">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Travel Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="journeyForm" method="post" action="/guest/update-journey">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="mb-3 border-bottom pb-2">Inward Journey</h6>
+                                    
+                                    <div class="mb-3">
+                                        <label for="inward_date" class="form-label">Arrival Date</label>
+                                        <input type="date" class="form-control" id="inward_date" name="inward_date" 
+                                               value="{{ inward_journey.date or '' }}">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="inward_origin" class="form-label">Origin</label>
+                                        <input type="text" class="form-control" id="inward_origin" name="inward_origin" 
+                                               placeholder="City/Airport/Station" value="{{ inward_journey.origin or '' }}">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="inward_destination" class="form-label">Destination</label>
+                                        <input type="text" class="form-control" id="inward_destination" name="inward_destination" 
+                                               placeholder="Conference Venue City" value="{{ inward_journey.destination or 'Calcutta' }}">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="inward_remarks" class="form-label">Travel Details</label>
+                                        <textarea class="form-control" id="inward_remarks" name="inward_remarks" rows="3" 
+                                                  placeholder="Flight/Train Number, arrival time, etc.">{{ inward_journey.remarks or '' }}</textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <h6 class="mb-3 border-bottom pb-2">Outward Journey</h6>
+                                    
+                                    <div class="mb-3">
+                                        <label for="outward_date" class="form-label">Departure Date</label>
+                                        <input type="date" class="form-control" id="outward_date" name="outward_date" 
+                                               value="{{ outward_journey.date or '' }}">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="outward_origin" class="form-label">Origin</label>
+                                        <input type="text" class="form-control" id="outward_origin" name="outward_origin" 
+                                               placeholder="Conference Venue City" value="{{ outward_journey.origin or 'Calcutta' }}">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="outward_destination" class="form-label">Destination</label>
+                                        <input type="text" class="form-control" id="outward_destination" name="outward_destination" 
+                                               placeholder="City/Airport/Station" value="{{ outward_journey.destination or '' }}">
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="outward_remarks" class="form-label">Travel Details</label>
+                                        <textarea class="form-control" id="outward_remarks" name="outward_remarks" rows="3" 
+                                                  placeholder="Flight/Train Number, departure time, etc.">{{ outward_journey.remarks or '' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-end mt-3">
+                                <button type="submit" class="btn btn-primary" id="saveJourneyBtn">
+                                    <i class="fas fa-save me-2"></i> Save Journey Details
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Messages Tab -->
+            <div class="tab-pane fade" id="messages" role="tabpanel" aria-labelledby="messages-tab">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0">Messages</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="messageForm" method="post" action="/guest/send-message">
+                            <div class="mb-3">
+                                <label for="message" class="form-label">Send a Message to Organizers</label>
+                                <textarea class="form-control" id="message" name="message" rows="4" placeholder="Type your message here..."></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary" id="sendMessageBtn">
+                                    <i class="fas fa-paper-plane me-2"></i> Send Message
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <hr>
+                        
+                        <h6 class="mb-3">Message History</h6>
+                        <div id="messageHistory">
+                            <!-- Message history will be displayed here -->
+                            <div class="text-center py-4">
+                                <p class="text-muted">No messages yet</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editProfileForm" method="post" action="/guest/update-profile">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ guest.Email or '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="text" class="form-control" id="phone" name="phone" value="{{ guest.Phone }}">
+                        <div class="form-text">10-digit phone number without spaces or hyphens</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Photo Modal -->
+<div class="modal fade" id="uploadPhotoModal" tabindex="-1" aria-labelledby="uploadPhotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadPhotoModalLabel">Upload Profile Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="uploadPhotoForm" method="post" action="/guest/upload-photo" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="photo" class="form-label">Select Photo</label>
+                        <input type="file" class="form-control" id="photo" name="photo" accept="image/jpeg,image/png,image/gif">
+                        <div class="form-text">Maximum file size: 2MB. Supported formats: JPG, PNG, GIF</div>
+                    </div>
+                    <div id="photoPreview" class="text-center mb-3" style="display:none;">
+                        <img src="" alt="Preview" class="img-thumbnail" style="max-height: 200px;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload Photo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Presentation Modal -->
+<div class="modal fade" id="uploadPresentationModal" tabindex="-1" aria-labelledby="uploadPresentationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadPresentationModalLabel">Upload Presentation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="uploadPresentationForm" method="post" action="/guest/upload-presentation" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Presentation Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Presentation File</label>
+                        <input type="file" class="form-control" id="file" name="file" required
+                               accept=".pdf,.ppt,.pptx,.doc,.docx,.mp4,.avi,.webm">
+                        <div class="form-text">Supported formats: PDF, PowerPoint, Word, and Video files</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload Presentation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Photo preview functionality
+    const photoInput = document.getElementById('photo');
+    const photoPreview = document.getElementById('photoPreview');
+    const previewImage = photoPreview.querySelector('img');
+    
+    if (photoInput) {
+        photoInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    photoPreview.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(this.files[0]);
+            } else {
+                photoPreview.style.display = 'none';
+            }
+        });
+    }
+    
+    // Form submission handling with Ajax
+    function handleFormSubmit(formId, successMessage) {
+        const form = document.getElementById(formId);
+        
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal if it's in a modal
+                        if (this.closest('.modal')) {
+                            const modalElement = this.closest('.modal');
+                            const modal = bootstrap.Modal.getInstance(modalElement);
+                            modal.hide();
+                        }
+                        
+                        // Show success message
+                        alert(successMessage || data.message);
+                        
+                        // Reload page to show updated data
+                        location.reload();
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An unexpected error occurred');
+                });
+            });
+        }
+    }
+    
+    // Initialize form handlers
+    handleFormSubmit('editProfileForm', 'Profile updated successfully');
+    handleFormSubmit('uploadPhotoForm', 'Photo uploaded successfully');
+    handleFormSubmit('uploadPresentationForm', 'Presentation uploaded successfully');
+    handleFormSubmit('journeyForm', 'Journey details updated successfully');
+    handleFormSubmit('messageForm', 'Message sent successfully');
+    
+    // Phone number validation
+    const phoneInputs = document.querySelectorAll('input[name="phone"]');
+    phoneInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').substring(0, 10);
+        });
+    });
+});
+</script>
+{% endblock %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="fw-bold mb-1">Daily Attendance:</label>
+                                    <div>
+                                        <span class="badge {% if guest.DailyAttendance == 'True' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if guest.DailyAttendance == 'True' %}Present Today{% else %}Not Checked In{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="fw-bold mb-1">Faculty Status:</label>
+                                    <div>
+                                        <span class="badge {% if guest.is_faculty %}bg-info{% else %}bg-light text-dark{% endif %}">
+                                            {% if guest.is_faculty %}Faculty Member{% else %}{{ guest.GuestRole }}{% endif %}
+                                        </span>
+                                    </div>
+                                </div>3">
+                                    <label class="fw-bold mb-1">Registration Status:</label>
+                                    <div>
+                                        <span class="badge bg-success">Active</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="fw-bold mb-1">Kit Status:</label>
+                                    <div>
+                                        <span class="badge {% if guest.KitReceived == 'True' %}bg-success{% else %}bg-warning{% endif %}">
+                                            {% if guest.KitReceived == 'True' %}Received{% else %}Not Received{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="fw-bold mb-1">Badge Status:</label>
+                                    <div>
+                                        <span class="badge {% if guest.BadgePrinted == 'True' %}bg-success{% else %}bg-warning{% endif %}">
+                                            {% if guest.BadgePrinted == 'True' %}Printed{% else %}Not Printed{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-
