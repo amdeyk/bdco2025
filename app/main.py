@@ -51,7 +51,11 @@ app.mount(
 )
 
 # Initialize templates
+from datetime import datetime
+
+# Initialize templates with global variables
 templates = Jinja2Templates(directory=config.get('PATHS', 'TemplatesDir'))
+templates.env.globals["now"] = datetime.now()
 
 # Include routers
 app.include_router(common.router)
@@ -68,10 +72,11 @@ os.makedirs(config.get('DATABASE', 'BackupDir'), exist_ok=True)
 async def root(request: Request):
     """Landing page for the application"""
     try:
+        from datetime import datetime
         logger.info("Accessing landing page")
         return templates.TemplateResponse(
             "index.html",
-            {"request": request}
+            {"request": request, "now": datetime.now()}
         )
     except Exception as e:
         logger.error(f"Error rendering landing page: {str(e)}")
@@ -87,12 +92,14 @@ async def root(request: Request):
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     """Handle HTTP exceptions"""
+    from datetime import datetime
     return templates.TemplateResponse(
         "error.html",
         {
             "request": request,
             "message": exc.detail,
-            "status_code": exc.status_code
+            "status_code": exc.status_code,
+            "now": datetime.now()
         },
         status_code=exc.status_code
     )
@@ -100,6 +107,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Handle all other exceptions"""
+    from datetime import datetime
     logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
     return templates.TemplateResponse(
         "error.html",
@@ -107,7 +115,8 @@ async def global_exception_handler(request: Request, exc: Exception):
             "request": request,
             "message": "An unexpected error occurred",
             "status_code": 500,
-            "error_details": str(exc) if config.getboolean('DEFAULT', 'Debug') else None
+            "error_details": str(exc) if config.getboolean('DEFAULT', 'Debug') else None,
+            "now": datetime.now()
         },
         status_code=500
     )

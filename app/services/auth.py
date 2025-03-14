@@ -1,7 +1,10 @@
 # Example of improved auth service (auth.py)
 import secrets
 from datetime import datetime, timedelta
+from fastapi import Request, HTTPException
+from app.config import Config
 
+# First, define the class
 class AuthService:
     """Authentication and authorization service"""
     
@@ -49,3 +52,20 @@ class AuthService:
         if not session or session["role"] not in ["admin", "faculty"]:
             return False
         return True
+
+# Then, instantiate it
+config = Config()
+auth_service = AuthService(config.get('DEFAULT', 'AdminPassword'))
+
+# Finally, add the missing function
+async def get_current_admin(request: Request):
+    """Verify admin is authenticated and return admin data"""
+    session_id = request.cookies.get("session_id")
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    session = auth_service.validate_session(session_id)
+    if not session or session["role"] != "admin":
+        raise HTTPException(status_code=401, detail="Not authorized")
+        
+    return {"user_id": session["user_id"], "role": session["role"]}
