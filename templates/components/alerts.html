@@ -1,0 +1,11 @@
+<!-- templates/components/alerts.html -->
+<div id="alertContainer" class="alert-container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.type }} alert-dismissible fade show" role="alert">
+                {{ message.text }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
