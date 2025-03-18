@@ -8,7 +8,7 @@ import logging
 from app.services.csv_db import CSVDatabase
 from app.services.auth import get_current_admin
 from app.services.email import EmailService
-
+from app.templates import templates
 # Configure logger
 logger = logging.getLogger(__name__)
 

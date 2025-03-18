@@ -2,7 +2,7 @@
 from typing import Dict, Optional, List
 from datetime import datetime
 import uuid
-
+from app.templates import templates
 class Faculty:
     """Model for faculty records"""
     

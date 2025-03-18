@@ -12,7 +12,7 @@ import shutil
 from app.services.csv_db import CSVDatabase
 from app.services.auth import AuthService
 from app.config import Config
-
+from app.templates import templates
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -542,3 +542,4 @@ async def upload_photo(
             status_code=500,
             content={"success": False, "message": f"Error uploading photo: {str(e)}"}
         )
+    

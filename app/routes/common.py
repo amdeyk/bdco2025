@@ -8,7 +8,7 @@ import logging
 from app.services.csv_db import CSVDatabase
 from app.services.auth import AuthService
 from app.config import Config
-
+from app.templates import templates
 # Configure logger
 logger = logging.getLogger(__name__)
 

@@ -28,7 +28,8 @@
     </div>
     <div class="row mt-4">
         <div class="col-12 text-center">
-            <small>&copy; {{ now.year }} Alumni Association of CNMC & Medicos' 89. All rights reserved.</small>
+            <!-- In templates/components/footer.html -->
+            <small>&copy; <script>document.write(new Date().getFullYear());</script> Alumni Association of CNMC & Medicos' 89. All rights reserved.</small>
         </div>
     </div>
 </div>

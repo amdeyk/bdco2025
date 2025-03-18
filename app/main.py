@@ -11,6 +11,8 @@ import time
 from app.config import Config
 from app.routes import admin, guest, common
 from app.services.csv_db import CSVDatabase
+# Replace the current templates initialization in main.py
+from app.templates import templates
 
 # Load configuration
 config = Config()
