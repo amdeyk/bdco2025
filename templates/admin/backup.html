@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block title %}Database Backups | Conference Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-2">Database Backups</h1>
+        <p class="text-muted">Manage database backups and restoration</p>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Backup Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <button id="createBackupBtn" class="btn btn-primary w-100">
+                                <i class="fas fa-database me-2"></i> Create New Backup
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <form id="restoreForm" method="post" action="/admin/restore_backup">
+                                <div class="input-group">
+                                    <select id="backupSelect" name="backup_file" class="form-select">
+                                        <option value="" selected disabled>Select backup to restore</option>
+                                        {% for backup in backups %}
+                                        <option value="{{ backup.name }}">{{ backup.date }} ({{ backup.size }})</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-warning" id="restoreBtn" disabled>
+                                        <i class="fas fa-history me-2"></i> Restore
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backups List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Available Backups</h5>
+                <span class="badge bg-primary">{{ backups|length }} Backups</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Backup Name</th>
+                                <th>Date</th>
+                                <th>Size</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for backup in backups %}
+                            <tr>
+                                <td>{{ backup.name }}</td>
+                                <td>{{ backup.date }}</td>
+                                <td>{{ backup.size }}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-warning restore-btn" data-backup="{{ backup.name }}">
+                                        <i class="fas fa-history"></i> Restore
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% if not backups %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <p class="text-muted mb-0">No backups available</p>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalTitle">Confirm Restoration</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to restore from this backup? This action will replace the current database.</p>
+                <p class="fw-bold" id="confirmBackupName"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirmRestoreBtn">Yes, Restore</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Create backup button
+    const createBackupBtn = document.getElementById('createBackupBtn');
+    if (createBackupBtn) {
+        createBackupBtn.addEventListener('click', function() {
+            // Disable button and show loading state
+            this.disabled = true;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Creating backup...';
+            
+            // Send request to create backup
+            fetch('/admin/create_backup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Backup created successfully');
+                    location.reload();
+                } else {
+                    alert('Error creating backup: ' + data.message);
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-database me-2"></i> Create New Backup';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while creating the backup');
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-database me-2"></i> Create New Backup';
+            });
+        });
+    }
+    
+    // Enable restore button when a backup is selected
+    const backupSelect = document.getElementById('backupSelect');
+    const restoreBtn = document.getElementById('restoreBtn');
+    
+    if (backupSelect && restoreBtn) {
+        backupSelect.addEventListener('change', function() {
+            restoreBtn.disabled = !this.value;
+        });
+    }
+    
+    // Restore form submission
+    const restoreForm = document.getElementById('restoreForm');
+    if (restoreForm) {
+        restoreForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const backupFile = backupSelect.value;
+            if (!backupFile) return;
+            
+            // Show confirmation modal
+            const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+            document.getElementById('confirmBackupName').textContent = backupFile;
+            
+            confirmModal.show();
+            
+            // Handle confirmation
+            document.getElementById('confirmRestoreBtn').onclick = function() {
+                // Submit the form
+                fetch('/admin/restore_backup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams(new FormData(restoreForm))
+                })
+                .then(response => response.json())
+                .then(data => {
+                    confirmModal.hide();
+                    if (data.success) {
+                        alert('Database restored successfully');
+                        location.reload();
+                    } else {
+                        alert('Error restoring database: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    confirmModal.hide();
+                    alert('An error occurred while restoring the database');
+                });
+            };
+        });
+    }
+    
+    // Individual restore buttons
+    const restoreBtns = document.querySelectorAll('.restore-btn');
+    if (restoreBtns.length > 0) {
+        restoreBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const backupFile = this.dataset.backup;
+                
+                // Update the select
+                backupSelect.value = backupFile;
+                restoreBtn.disabled = false;
+                
+                // Show confirmation modal
+                const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+                document.getElementById('confirmBackupName').textContent = backupFile;
+                
+                confirmModal.show();
+                
+                // Handle confirmation
+                document.getElementById('confirmRestoreBtn').onclick = function() {
+                    // Submit the form
+                    fetch('/admin/restore_backup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({'backup_file': backupFile})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        confirmModal.hide();
+                        if (data.success) {
+                            alert('Database restored successfully');
+                            location.reload();
+                        } else {
+                            alert('Error restoring database: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        confirmModal.hide();
+                        alert('An error occurred while restoring the database');
+                    });
+                };
+            });
+        });
+    }
+});
+</script>
+{% endblock %} 

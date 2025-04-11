@@ -64,9 +64,10 @@ class Config:
     def _create_default_config(self):
         """Create default configuration file"""
         try:
-            # Ensure directory exists
-            os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
-            
+            # Ensure directory exists if config file has a path
+            if os.path.dirname(self.config_file):
+                os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
+                
             # Write configuration
             with open(self.config_file, 'w') as f:
                 self.config.write(f)

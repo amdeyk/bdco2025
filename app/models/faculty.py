@@ -2,6 +2,53 @@
 from typing import Dict, Optional, List
 from datetime import datetime
 import uuid
+from pydantic import BaseModel, EmailStr, Field
+from enum import Enum
+
+class FacultyRole(str, Enum):
+    REVIEWER = "reviewer"
+    LECTURER = "lecturer"
+    MODERATOR = "moderator"
+
+class JourneyDetails(BaseModel):
+    """Model for faculty journey details"""
+    arrival_date: datetime
+    departure_date: datetime
+    origin_city: str
+    destination_city: str
+    remarks: Optional[str] = None
+
+class Presentation(BaseModel):
+    """Model for faculty presentations"""
+    title: str
+    description: Optional[str] = None
+    file_path: str
+    file_type: str  # pdf, ppt, video
+    upload_date: datetime = Field(default_factory=datetime.now)
+    session_type: str  # keynote, technical, workshop, etc.
+
+class FacultyProfile(BaseModel):
+    """Model for faculty profile"""
+    id: str
+    name: str
+    email: EmailStr
+    phone: str
+    photo_path: Optional[str] = None
+    roles: List[FacultyRole]
+    kit_faculty: bool = False
+    special_kit_faculty: bool = False
+    lunch_day1: bool = False
+    dinner_day1: bool = False
+    lunch_day2: bool = False
+    dinner_preconf: bool = False
+    journey_details: Optional[JourneyDetails] = None
+    presentations: List[Presentation] = []
+    remarks: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: datetime = Field(default_factory=datetime.now)
+
+    class Config:
+        use_enum_values = True
 
 class Faculty:
     """Model for faculty records"""

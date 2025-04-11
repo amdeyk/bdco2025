@@ -8,6 +8,18 @@ from app.config import Config
 class AuthService:
     """Authentication and authorization service"""
     
+    _instance = None
+    
+    @classmethod
+    def get_instance(cls, admin_password=None):
+        """Get singleton instance of AuthService"""
+        if cls._instance is None:
+            if admin_password is None:
+                config = Config()
+                admin_password = config.get('DEFAULT', 'AdminPassword')
+            cls._instance = cls(admin_password)
+        return cls._instance
+    
     def __init__(self, admin_password):
         self.admin_password = admin_password
         self.sessions = {}  # In-memory session store
@@ -53,11 +65,11 @@ class AuthService:
             return False
         return True
 
-# Then, instantiate it
+# Initialize the singleton instance
 config = Config()
-auth_service = AuthService(config.get('DEFAULT', 'AdminPassword'))
+auth_service = AuthService.get_instance(config.get('DEFAULT', 'AdminPassword'))
 
-# Finally, add the missing function
+# Function to get current admin from request
 async def get_current_admin(request: Request):
     """Verify admin is authenticated and return admin data"""
     session_id = request.cookies.get("session_id")

@@ -13,6 +13,7 @@ from app.routes import admin, guest, common
 from app.services.csv_db import CSVDatabase
 # Replace the current templates initialization in main.py
 from app.templates import templates
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 
 # Load configuration
 config = Config()
@@ -28,6 +29,30 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+# At the beginning of app/main.py after loading config
+# Ensure all required directories exist
+required_directories = [
+    config.get('PATHS', 'LogsDir'),
+    config.get('PATHS', 'StaticDir'),
+    config.get('PATHS', 'TemplatesDir'),
+    os.path.dirname(config.get('DATABASE', 'CSVPath')),
+    config.get('DATABASE', 'BackupDir'),
+    os.path.join(config.get('PATHS', 'StaticDir'), "css"),
+    os.path.join(config.get('PATHS', 'StaticDir'), "js"),
+    os.path.join(config.get('PATHS', 'StaticDir'), "images"),
+    os.path.join(config.get('PATHS', 'StaticDir'), "uploads"),
+    os.path.join(config.get('PATHS', 'StaticDir'), "uploads/presentations"),
+    os.path.join(config.get('PATHS', 'StaticDir'), "uploads/profile_photos"),
+    os.path.join(config.get('PATHS', 'StaticDir'), "qr_codes")
+]
+
+for directory in required_directories:
+    os.makedirs(directory, exist_ok=True)
+
+# Update templates directory
+from app.templates import update_template_directory
+update_template_directory(config.get('PATHS', 'TemplatesDir'))
 
 # Create FastAPI application
 app = FastAPI(
@@ -60,9 +85,13 @@ templates = Jinja2Templates(directory=config.get('PATHS', 'TemplatesDir'))
 templates.env.globals["now"] = datetime.now()
 
 # Include routers
+# Include routers
 app.include_router(common.router)
 app.include_router(guest.router)
 app.include_router(admin.router)
+# if os.path.exists(os.path.join(app.config.get('PATHS', 'TemplatesDir'), "faculty")):
+#     from app.routes import faculty
+#     app.include_router(faculty.router)
 
 # Create required directories
 os.makedirs(config.get('PATHS', 'LogsDir'), exist_ok=True)
@@ -140,3 +169,18 @@ async def shutdown_event():
     )
     db.create_backup("shutdown_backup.csv")
     logger.info("Application shutdown complete")
+    
+@app.get("/admin_dashboard")
+async def admin_dashboard_redirect(request: Request):
+    """Redirect /admin_dashboard to /admin/dashboard or login page if not authenticated"""
+    session_id = request.cookies.get("session_id")
+    
+    if session_id:
+        # Check if the session is valid and has admin role
+        from app.services.auth import auth_service
+        session = auth_service.validate_session(session_id)
+        if session and session["role"] == "admin":
+            return RedirectResponse(url="/admin/dashboard")
+    
+    # Redirect to login page if not authenticated
+    return RedirectResponse(url="/admin/login")

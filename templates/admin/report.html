@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Reports | Conference Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-2">Conference Reports</h1>
+        <p class="text-muted">Generate and view reports for the conference</p>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Summary Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3 text-center h-100">
+                            <h6 class="text-muted mb-2">Total Guests</h6>
+                            <h2 class="mb-0">{{ total_guests }}</h2>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3 text-center h-100">
+                            <h6 class="text-muted mb-2">Checked In</h6>
+                            <h2 class="mb-0">{{ checked_in }}</h2>
+                            <small class="text-muted">{{ (checked_in / total_guests * 100)|round|int if total_guests else 0 }}%</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3 text-center h-100">
+                            <h6 class="text-muted mb-2">Kits Received</h6>
+                            <h2 class="mb-0">{{ kit_received }}</h2>
+                            <small class="text-muted">{{ (kit_received / total_guests * 100)|round|int if total_guests else 0 }}%</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <div class="border rounded p-3 text-center h-100">
+                            <h6 class="text-muted mb-2">Badges Printed</h6>
+                            <h2 class="mb-0">{{ badges_printed }}</h2>
+                            <small class="text-muted">{{ (badges_printed / total_guests * 100)|round|int if total_guests else 0 }}%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Guest Distribution by Role</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="roleDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Payment Status</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="paymentStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Export Options -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Export Reports</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <a href="/admin/export/guests" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-users me-2"></i> Export Guest List
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <a href="/admin/export/attendance" class="btn btn-outline-success w-100">
+                            <i class="fas fa-check-circle me-2"></i> Export Attendance
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <a href="/admin/export/payments" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-money-bill-wave me-2"></i> Export Payments
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Role Distribution Chart
+    const roleCtx = document.getElementById('roleDistributionChart');
+    if (roleCtx) {
+        const roles = Object.keys({{ role_distribution|tojson }});
+        const roleCounts = Object.values({{ role_distribution|tojson }});
+        
+        new Chart(roleCtx, {
+            type: 'pie',
+            data: {
+                labels: roles,
+                datasets: [{
+                    data: roleCounts,
+                    backgroundColor: [
+                        '#4caf50', '#2196f3', '#ff9800', '#9c27b0', 
+                        '#e91e63', '#f44336', '#3f51b5', '#009688'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    title: {
+                        display: false,
+                        text: 'Guest Distribution by Role'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Payment Status Chart
+    const paymentCtx = document.getElementById('paymentStatusChart');
+    if (paymentCtx) {
+        const statuses = Object.keys({{ payment_status|tojson }});
+        const statusCounts = Object.values({{ payment_status|tojson }});
+        
+        new Chart(paymentCtx, {
+            type: 'bar',
+            data: {
+                labels: statuses,
+                datasets: [{
+                    label: 'Number of Guests',
+                    data: statusCounts,
+                    backgroundColor: '#1a237e'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: false,
+                        text: 'Payment Status'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

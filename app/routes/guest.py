@@ -10,7 +10,7 @@ from datetime import datetime
 import shutil
 
 from app.services.csv_db import CSVDatabase
-from app.services.auth import AuthService
+from app.services.auth import auth_service
 from app.config import Config
 from app.templates import templates
 # Configure logger
@@ -26,7 +26,7 @@ guests_db = CSVDatabase(
     config.get('DATABASE', 'CSVPath'),
     config.get('DATABASE', 'BackupDir')
 )
-auth_service = AuthService(config.get('DEFAULT', 'AdminPassword'))
+# Use singleton auth_service from app.services.auth
 
 # Define storage paths
 UPLOADS_DIR = os.path.join(config.get('PATHS', 'StaticDir'), "uploads")
@@ -541,5 +541,87 @@ async def upload_photo(
         return JSONResponse(
             status_code=500,
             content={"success": False, "message": f"Error uploading photo: {str(e)}"}
+        )
+
+@router.get("/register", response_class=HTMLResponse)
+async def register_page(request: Request):
+    """Guest registration page"""
+    return templates.TemplateResponse(
+        "guest_registration.html",
+        {
+            "request": request,
+            "active_page": "register"
+        }
+    )
+
+@router.post("/register", response_class=JSONResponse)
+async def register_guest(
+    request: Request,
+    name: str = Form(...),
+    phone: str = Form(...),
+    email: str = Form(None),
+    guest_role: str = Form(...),
+    registration_type: str = Form(...),
+    existing_id: str = Form(None)
+):
+    """Process guest registration"""
+    try:
+        # Validate phone number
+        if not phone.isdigit() or len(phone) != 10:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "Phone number must be exactly 10 digits"}
+            )
+        
+        # Validate email if provided
+        if email and ("@" not in email or "." not in email):
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "Invalid email format"}
+            )
+        
+        # Generate or use existing ID
+        if registration_type == "existing" and existing_id:
+            guest_id = existing_id
+            # Verify ID exists
+            guests = guests_db.read_all()
+            if not any(g["ID"] == guest_id for g in guests):
+                return JSONResponse(
+                    status_code=400,
+                    content={"success": False, "message": "Invalid registration ID"}
+                )
+        else:
+            guest_id = str(uuid.uuid4())[:8].upper()
+        
+        # Create guest record
+        guest = {
+            "ID": guest_id,
+            "Name": name,
+            "Phone": phone,
+            "Email": email or "",
+            "GuestRole": guest_role,
+            "RegistrationDate": datetime.now().strftime("%Y-%m-%d"),
+            "DailyAttendance": "False"
+        }
+        
+        # Add to database
+        guests = guests_db.read_all()
+        guests.append(guest)
+        guests_db.write_all(guests)
+        
+        return JSONResponse(
+            content={
+                "success": True,
+                "message": "Registration successful",
+                "guest_id": guest_id,
+                "name": name,
+                "role": guest_role
+            }
+        )
+    except Exception as e:
+        logger.error(f"Registration error: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Registration failed: {str(e)}"}
         )
     
