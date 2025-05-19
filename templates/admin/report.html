@@ -303,13 +303,15 @@
 {% block extra_js %}
 <!-- In templates/admin/report.html, update the chart initialization code -->
 
+<!-- Update in templates/admin/report.html -->
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Registration Trend Chart
     const registrationCtx = document.getElementById('registrationTrendChart');
     if (registrationCtx) {
-        const labels = {{ registration_trend.labels|tojson }};
-        const values = {{ registration_trend.values|tojson }};
+        const labels = {{ registration_labels|tojson }};
+        const values = {{ registration_values|tojson }};
         
         new Chart(registrationCtx, {
             type: 'line',
@@ -439,6 +441,41 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Attendance Trend Chart (if exists)
+    const attendanceCtx = document.getElementById('attendanceTrendChart');
+    if (attendanceCtx) {
+        const labels = {{ attendance_labels|tojson }};
+        const values = {{ attendance_values|tojson }};
+        
+        new Chart(attendanceCtx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Daily Attendance',
+                    data: values,
+                    borderColor: '#4caf50',
+                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: false,
+                        text: 'Attendance Trend'
+                    }
+                }
+            }
+        });
+    }
 });
 </script>
+
 {% endblock %}
