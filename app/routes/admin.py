@@ -1,4 +1,5 @@
 # app/routes/admin.py
+
 from fastapi import APIRouter, Request, Form, Depends, HTTPException, Response
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from typing import Optional, List, Dict
@@ -8,13 +9,15 @@ from datetime import datetime
 from collections import defaultdict
 from pathlib import Path
 import psutil
-
 from app.services.csv_db import CSVDatabase
 from app.services.auth import auth_service, get_current_admin
 from app.services.email import EmailService
 from app.config import Config
 from app.templates import templates
 from app.utils.logging_utils import log_activity
+from fastapi.responses import StreamingResponse
+import csv
+import io
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -28,6 +31,7 @@ guests_db = CSVDatabase(
     config.get('DATABASE', 'CSVPath'),
     config.get('DATABASE', 'BackupDir')
 )
+
 # Use singleton auth_service from app.services.auth
 email_service = EmailService(
     smtp_server=config.get('EMAIL', 'SMTPServer'),
@@ -41,17 +45,14 @@ email_service = EmailService(
 async def admin_dashboard(request: Request, admin: Dict = Depends(get_current_admin)):
     """
     Admin dashboard view showing overview statistics
-    
     Displays:
     - Total registrations
     - Attendance statistics
     - Payment overview
     - Recent activity
-    
     Args:
         request: FastAPI request object
         admin: Current admin user information (from dependency)
-        
     Returns:
         HTMLResponse: Rendered admin dashboard template
     """
@@ -97,13 +98,13 @@ async def admin_dashboard(request: Request, admin: Dict = Depends(get_current_ad
         # Get last backup info
         backup_dir = Path(config.get('DATABASE', 'BackupDir'))
         last_backup = None
-        
         if backup_dir.exists():
             backup_files = sorted(
                 [f for f in backup_dir.glob("*.csv") if f.is_file()],
                 key=lambda x: os.path.getmtime(x),
                 reverse=True
             )
+            
             if backup_files:
                 last_backup = datetime.fromtimestamp(
                     os.path.getmtime(backup_files[0])
@@ -144,14 +145,12 @@ async def admin_dashboard(request: Request, admin: Dict = Depends(get_current_ad
         
         # Create sample activity if none exists
         if not recent_activity:
-            recent_activity = [
-                {
-                    "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                    "title": "System Started",
-                    "description": "Application initialized successfully",
-                    "type": "System"
-                }
-            ]
+            recent_activity = [{
+                "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "title": "System Started",
+                "description": "Application initialized successfully",
+                "type": "System"
+            }]
         
         # Prepare stats for the template
         stats = {
@@ -159,8 +158,8 @@ async def admin_dashboard(request: Request, admin: Dict = Depends(get_current_ad
             "checked_in": checked_in_count,
             "faculty_count": faculty_count,
             "completion_rate": round(completion_rate, 1),
-            "trend_labels": trend_labels[-7:] if len(trend_labels) > 7 else trend_labels,  # Last 7 days
-            "trend_values": trend_values[-7:] if len(trend_values) > 7 else trend_values,  # Last 7 days
+            "trend_labels": trend_labels[-7:] if len(trend_labels) > 7 else trend_labels, # Last 7 days
+            "trend_values": trend_values[-7:] if len(trend_values) > 7 else trend_values, # Last 7 days
             "role_labels": role_labels,
             "role_values": role_values
         }
@@ -169,7 +168,7 @@ async def admin_dashboard(request: Request, admin: Dict = Depends(get_current_ad
         log_activity("Admin", f"Admin {admin['user_id']} viewed dashboard")
         
         return templates.TemplateResponse(
-            "admin/dashboard.html", 
+            "admin/dashboard.html",
             {
                 "request": request,
                 "admin": admin,
@@ -201,15 +200,13 @@ async def send_email_to_guests(
 ):
     """
     Send emails to guests based on role or specific IDs
-    
     Args:
         request: FastAPI request object
-        admin: Current admin user info 
+        admin: Current admin user info
         subject: Email subject
         message: Email message body (HTML)
         recipient_role: Optional role to filter recipients
         recipient_ids: Optional comma-separated list of guest IDs
-        
     Returns:
         JSONResponse: Result of email sending operation
     """
@@ -222,28 +219,28 @@ async def send_email_to_guests(
             # Send to specific guests
             guest_ids = [id.strip() for id in recipient_ids.split(',')]
             recipients = [
-                guest["Email"] for guest in guests 
+                guest["Email"] for guest in guests
                 if guest["ID"] in guest_ids and guest["Email"]
             ]
         elif recipient_role:
             # Send to all guests with specified role
             recipients = [
-                guest["Email"] for guest in guests 
+                guest["Email"] for guest in guests
                 if guest["GuestRole"] == recipient_role and guest["Email"]
             ]
         else:
             # Send to all guests
             recipients = [
-                guest["Email"] for guest in guests 
+                guest["Email"] for guest in guests
                 if guest["Email"]
             ]
-            
+        
         if not recipients:
             return JSONResponse(
                 status_code=400,
                 content={"success": False, "message": "No valid recipients found"}
             )
-            
+        
         # Send emails
         results = email_service.send_bulk_email(recipients, subject, message)
         
@@ -263,7 +260,6 @@ async def send_email_to_guests(
                 "failed": failures
             }
         })
-        
     except Exception as e:
         logger.error(f"Error sending emails: {str(e)}", exc_info=True)
         return JSONResponse(
@@ -292,17 +288,17 @@ async def all_guests_page(request: Request, admin: Dict = Depends(get_current_ad
         # Apply filters
         if role_filter:
             guests = [g for g in guests if g.get("GuestRole") == role_filter]
-            
+        
         if attendance_filter:
             is_present = attendance_filter == "present"
             guests = [g for g in guests if g.get("DailyAttendance") == str(is_present)]
-            
+        
         if search_query:
-            guests = [g for g in guests if 
-                      search_query in g.get("Name", "").lower() or
-                      search_query in g.get("ID", "").lower() or
-                      search_query in g.get("Phone", "").lower() or
-                      search_query in g.get("Email", "").lower()]
+            guests = [g for g in guests if
+                search_query in g.get("Name", "").lower() or
+                search_query in g.get("ID", "").lower() or
+                search_query in g.get("Phone", "").lower() or
+                search_query in g.get("Email", "").lower()]
         
         # Get unique roles for filter dropdown
         roles = sorted(set(g.get("GuestRole", "Unknown") for g in guests_db.read_all()))
@@ -497,8 +493,7 @@ async def report_page(request: Request, admin: Dict = Depends(get_current_admin)
                 "error_details": str(e) if config.getboolean('DEFAULT', 'Debug', fallback=False) else None
             }
         )
-    
-    
+
 @router.post("/login")
 async def process_admin_login(
     request: Request,
@@ -517,7 +512,7 @@ async def process_admin_login(
                 key="session_id",
                 value=session_id,
                 httponly=True,
-                max_age=43200  # 12 hours
+                max_age=43200 # 12 hours
             )
             
             # Log successful login
@@ -537,7 +532,6 @@ async def process_admin_login(
                     "active_page": "admin_login"
                 }
             )
-            
     except Exception as e:
         logger.error(f"Admin login error: {str(e)}")
         return templates.TemplateResponse(
@@ -548,3 +542,111 @@ async def process_admin_login(
                 "active_page": "admin_login"
             }
         )
+
+
+
+
+
+@router.get("/report/export_guest_list")
+async def export_guest_list(admin: Dict = Depends(get_current_admin)):
+    """Export guest list as CSV"""
+    try:
+        guests = guests_db.read_all()
+        
+        # Create CSV in memory
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow(["ID", "Name", "Email", "Phone", "Role", "Registration Date"])
+        
+        # Write data
+        for guest in guests:
+            writer.writerow([
+                guest.get("ID", ""),
+                guest.get("Name", ""),
+                guest.get("Email", ""),
+                guest.get("Phone", ""),
+                guest.get("GuestRole", ""),
+                guest.get("RegistrationDate", "")
+            ])
+        
+        # Return as downloadable CSV
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=guest_list.csv"}
+        )
+    except Exception as e:
+        logger.error(f"Error exporting guest list: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error exporting guest list")
+
+@router.get("/report/export_attendance")
+async def export_attendance(admin: Dict = Depends(get_current_admin)):
+    """Export attendance data as CSV"""
+    try:
+        guests = guests_db.read_all()
+        
+        # Create CSV in memory
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow(["ID", "Name", "Role", "Attendance Status", "Check-in Time"])
+        
+        # Write data
+        for guest in guests:
+            writer.writerow([
+                guest.get("ID", ""),
+                guest.get("Name", ""),
+                guest.get("GuestRole", ""),
+                "Present" if guest.get("DailyAttendance") == "True" else "Absent",
+                guest.get("CheckInTime", "")
+            ])
+        
+        # Return as downloadable CSV
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=attendance.csv"}
+        )
+    except Exception as e:
+        logger.error(f"Error exporting attendance: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error exporting attendance")
+
+@router.get("/report/export_payments")
+async def export_payments(admin: Dict = Depends(get_current_admin)):
+    """Export payment data as CSV"""
+    try:
+        guests = guests_db.read_all()
+        
+        # Create CSV in memory
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow(["ID", "Name", "Payment Status", "Payment Amount", "Payment Date", "Payment Method"])
+        
+        # Write data
+        for guest in guests:
+            writer.writerow([
+                guest.get("ID", ""),
+                guest.get("Name", ""),
+                guest.get("PaymentStatus", ""),
+                guest.get("PaymentAmount", ""),
+                guest.get("PaymentDate", ""),
+                guest.get("PaymentMethod", "")
+            ])
+        
+        # Return as downloadable CSV
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": "attachment; filename=payments.csv"}
+        )
+    except Exception as e:
+        logger.error(f"Error exporting payments: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error exporting payments")
