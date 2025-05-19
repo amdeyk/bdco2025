@@ -159,6 +159,38 @@ async def startup_event():
     app.state.start_time = time.time()
     logger.info("Application started")
 
+# Add this to app/main.py after the startup event
+@app.on_event("startup")
+async def startup_event():
+    """Initialize application state on startup"""
+    app.state.start_time = time.time()
+    logger.info("Application started")
+    
+    # Create initial changelog entry for the enhanced reporting system
+    try:
+        from app.utils.changelog import ChangelogManager
+        changelog_manager = ChangelogManager()
+        
+        # Check if there are existing entries
+        entries = changelog_manager.get_entries()
+        if not entries:
+            changelog_manager.add_entry(
+                "Enhanced Reporting System",
+                "Implemented comprehensive reporting system with detailed reports for guests, faculty, presentations, travel arrangements, and system changelog.",
+                "System Administrator",
+                [
+                    "Added guest report with filtering",
+                    "Added faculty-specific report",
+                    "Added presentations report",
+                    "Added travel/journey report",
+                    "Implemented system changelog",
+                    "Enhanced data visualization with charts",
+                    "Improved export functionality"
+                ]
+            )
+    except Exception as e:
+        logger.error(f"Error creating initial changelog entry: {str(e)}")
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on application shutdown"""
