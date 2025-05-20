@@ -6,10 +6,110 @@
 <style>
     .stats-card {
         transition: all 0.3s ease;
+        background-color: #fff;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        text-align: center;
     }
+    
     .stats-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stats-card.primary {
+        border-left: 4px solid #4361ee;
+    }
+    
+    .stats-card.success {
+        border-left: 4px solid #2ec4b6;
+    }
+    
+    .stats-card.warning {
+        border-left: 4px solid #ff9f1c;
+    }
+    
+    .stats-card.info {
+        border-left: 4px solid #3a86ff;
+    }
+    
+    .stats-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #4361ee;
+    }
+    
+    .stats-card.success .stats-icon {
+        color: #2ec4b6;
+    }
+    
+    .stats-card.warning .stats-icon {
+        color: #ff9f1c;
+    }
+    
+    .stats-card.info .stats-icon {
+        color: #3a86ff;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-title {
+        font-size: 0.9rem;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Timeline styling */
+    .timeline {
+        position: relative;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 2.5rem;
+        padding-bottom: 1.5rem;
+    }
+    
+    .timeline-item:before {
+        content: '';
+        position: absolute;
+        left: 0.75rem;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background-color: #e2e8f0;
+    }
+    
+    .timeline-date {
+        font-size: 0.75rem;
+        color: #718096;
+        margin-bottom: 0.25rem;
+    }
+    
+    .timeline-content {
+        position: relative;
+        padding: 1rem;
+        background-color: #f8fafc;
+        border-radius: 0.5rem;
+    }
+    
+    .timeline-item:after {
+        content: '';
+        position: absolute;
+        left: 0.35rem;
+        top: 0.25rem;
+        height: 0.85rem;
+        width: 0.85rem;
+        border-radius: 50%;
+        background-color: #4361ee;
     }
 </style>
 {% endblock %}
@@ -61,6 +161,62 @@
             </div>
             <div class="stats-number">{{ stats.completion_rate }}%</div>
             <div class="stats-title">Registration Rate</div>
+        </div>
+    </div>
+</div>
+
+<!-- Guest Management Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Guest Management Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <a href="/check_in" class="btn btn-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                            <i class="fas fa-qrcode fa-2x mb-2"></i>
+                            <span>Check-in & Attendance</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <a href="/admin/guest_badges" class="btn btn-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                            <i class="fas fa-id-badge fa-2x mb-2"></i>
+                            <span>Badge Management</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <a href="/admin/journey_management" class="btn btn-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                            <i class="fas fa-plane fa-2x mb-2"></i>
+                            <span>Journey Management</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <a href="/admin/food_management" class="btn btn-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                            <i class="fas fa-utensils fa-2x mb-2"></i>
+                            <span>Food Coupon Management</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <a href="/admin/gift_management" class="btn btn-danger w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                            <i class="fas fa-gift fa-2x mb-2"></i>
+                            <span>Gift Management</span>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <a href="/admin/report" class="btn btn-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                            <span>View Reports</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

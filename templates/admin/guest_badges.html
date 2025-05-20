@@ -1,0 +1,435 @@
+<!-- templates/admin/guest_badges.html -->
+{% extends "base.html" %}
+
+{% block title %}Badge Management | Conference Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-2">Badge Management</h1>
+        <p class="text-muted">Manage guest badges - printing and distribution</p>
+        <a href="/admin_dashboard" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Search and Filter Bar -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search by name, ID or phone...">
+                            <button class="btn btn-outline-secondary" type="submit">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <label class="input-group-text">Filter</label>
+                            <select class="form-select" name="status" onchange="this.form.submit()">
+                                <option value="">All Guests</option>
+                                <option value="not_printed" {% if status_filter == 'not_printed' %}selected{% endif %}>Badge Not Printed</option>
+                                <option value="printed" {% if status_filter == 'printed' %}selected{% endif %}>Badge Printed</option>
+                                <option value="not_given" {% if status_filter == 'not_given' %}selected{% endif %}>Badge Not Given</option>
+                                <option value="given" {% if status_filter == 'given' %}selected{% endif %}>Badge Given</option>
+                            </select>
+                            <a href="/guest_badges" class="btn btn-outline-secondary">
+                                Clear Filters
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Guest Badge Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Guest Badges</h5>
+                <div class="btn-group">
+                    <button id="printSelectedBtn" class="btn btn-sm btn-outline-primary" disabled>
+                        <i class="fas fa-print me-1"></i> Print Selected
+                    </button>
+                    <button id="markSelectedBtn" class="btn btn-sm btn-outline-success" disabled>
+                        <i class="fas fa-check me-1"></i> Mark Selected as Given
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover datatable mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="selectAll">
+                                    </div>
+                                </th>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Badge Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for guest in guests %}
+                            <tr>
+                                <td>
+                                    <div class="form-check">
+                                        <input class="form-check-input guest-checkbox" type="checkbox" value="{{ guest.ID }}">
+                                    </div>
+                                </td>
+                                <td>{{ guest.ID }}</td>
+                                <td>{{ guest.Name }}</td>
+                                <td><span class="badge bg-primary">{{ guest.GuestRole }}</span></td>
+                                <td>
+                                    <div>
+                                        <span class="badge {% if guest.BadgePrinted == 'True' %}bg-success{% else %}bg-warning{% endif %} me-1">
+                                            {% if guest.BadgePrinted == 'True' %}Printed{% else %}Not Printed{% endif %}
+                                        </span>
+                                        <span class="badge {% if guest.BadgeGiven == 'True' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if guest.BadgeGiven == 'True' %}Given{% else %}Not Given{% endif %}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <form action="/print_badge" method="post" class="d-inline">
+                                            <input type="hidden" name="guest_id" value="{{ guest.ID }}">
+                                            <button type="submit" class="btn btn-outline-primary btn-sm" {% if guest.BadgePrinted == 'True' %}disabled{% endif %}>
+                                                <i class="fas fa-print"></i> Print
+                                            </button>
+                                        </form>
+                                        <form action="/give_badge" method="post" class="d-inline ms-1">
+                                            <input type="hidden" name="guest_id" value="{{ guest.ID }}">
+                                            <button type="submit" class="btn btn-outline-success btn-sm" {% if guest.BadgeGiven == 'True' or guest.BadgePrinted != 'True' %}disabled{% endif %}>
+                                                <i class="fas fa-check"></i> Mark as Given
+                                            </button>
+                                        </form>
+                                        <a href="/single_guest/{{ guest.ID }}" class="btn btn-outline-info btn-sm ms-1">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% if not guests %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <p class="text-muted mb-0">No guests found matching the current filters</p>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Total: <strong>{{ guests|length }}</strong> guests</span>
+                    <button id="printBadgeScannerBtn" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-qrcode me-1"></i> QR Code Scanner
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Scanner Modal -->
+<div class="modal fade" id="qrScannerModal" tabindex="-1" aria-labelledby="qrScannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="qrScannerModalLabel">Scan Badge QR Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Scan a guest's QR code to quickly update their badge status
+                </div>
+                
+                <div id="qrScanner" style="width: 100%; height: 300px;"></div>
+                
+                <div id="scanResult" class="mt-3" style="display: none;">
+                    <div class="alert alert-success">
+                        <strong>Guest Found:</strong> <span id="scanGuestName"></span>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button id="scanPrintBtn" class="btn btn-primary">
+                            <i class="fas fa-print me-2"></i> Print Badge
+                        </button>
+                        <button id="scanGiveBtn" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i> Mark Badge as Given
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable
+    $('.datatable').DataTable({
+        responsive: true,
+        pageLength: 25,
+        language: {
+            search: "Search guests:"
+        }
+    });
+    
+    // Handle select all checkbox
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const guestCheckboxes = document.querySelectorAll('.guest-checkbox');
+    const printSelectedBtn = document.getElementById('printSelectedBtn');
+    const markSelectedBtn = document.getElementById('markSelectedBtn');
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            guestCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateSelectedButtonsState();
+        });
+    }
+    
+    // Handle individual checkboxes
+    guestCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectedButtonsState();
+        });
+    });
+    
+    // Update selected buttons state
+    function updateSelectedButtonsState() {
+        const selectedGuests = document.querySelectorAll('.guest-checkbox:checked');
+        printSelectedBtn.disabled = selectedGuests.length === 0;
+        markSelectedBtn.disabled = selectedGuests.length === 0;
+    }
+    
+    // Handle bulk print
+    if (printSelectedBtn) {
+        printSelectedBtn.addEventListener('click', function() {
+            const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+                
+            if (selectedGuestIds.length > 0) {
+                // Send request to print badges
+                fetch('/print_badges_bulk', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ guest_ids: selectedGuestIds })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message || 'Badges printed successfully');
+                        location.reload();
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An unexpected error occurred');
+                });
+            }
+        });
+    }
+    
+    // Handle bulk mark as given
+    if (markSelectedBtn) {
+        markSelectedBtn.addEventListener('click', function() {
+            const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+                
+            if (selectedGuestIds.length > 0) {
+                // Send request to mark badges as given
+                fetch('/give_badges_bulk', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ guest_ids: selectedGuestIds })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message || 'Badges marked as given successfully');
+                        location.reload();
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An unexpected error occurred');
+                });
+            }
+        });
+    }
+    
+    // QR Code Scanner
+    let html5QrCode;
+    const printBadgeScannerBtn = document.getElementById('printBadgeScannerBtn');
+    const qrScannerModal = document.getElementById('qrScannerModal');
+    const scanResult = document.getElementById('scanResult');
+    const scanGuestName = document.getElementById('scanGuestName');
+    const scanPrintBtn = document.getElementById('scanPrintBtn');
+    const scanGiveBtn = document.getElementById('scanGiveBtn');
+    
+    // Initialize scanner when button is clicked
+    if (printBadgeScannerBtn) {
+        printBadgeScannerBtn.addEventListener('click', function() {
+            const modal = new bootstrap.Modal(qrScannerModal);
+            modal.show();
+            
+            // Initialize scanner
+            html5QrCode = new Html5Qrcode("qrScanner");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            // Start scanning
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config,
+                onScanSuccess,
+                onScanFailure
+            );
+        });
+    }
+    
+    // Stop scanner when modal is closed
+    qrScannerModal.addEventListener('hidden.bs.modal', function() {
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().catch(err => {
+                console.error('Error stopping scanner:', err);
+            });
+        }
+        scanResult.style.display = 'none';
+    });
+    
+    // Handle QR scan success
+    function onScanSuccess(decodedText, decodedResult) {
+        // Process the scanned text (format expected: GUEST:GUESTID)
+        let guestId = decodedText;
+        
+        if (decodedText.includes(':')) {
+            const parts = decodedText.split(':');
+            guestId = parts[1];
+        }
+        
+        // Fetch guest info
+        fetch(`/api/guest/${guestId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                scanGuestName.textContent = data.guest.Name;
+                scanResult.style.display = 'block';
+                
+                // Set guest ID for buttons
+                scanPrintBtn.dataset.guestId = guestId;
+                scanGiveBtn.dataset.guestId = guestId;
+                
+                // Disable buttons based on current status
+                scanPrintBtn.disabled = data.guest.BadgePrinted === 'True';
+                scanGiveBtn.disabled = data.guest.BadgeGiven === 'True' || data.guest.BadgePrinted !== 'True';
+            } else {
+                alert('Guest not found. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while fetching guest information');
+        });
+    }
+    
+    // Handle QR scan failure
+    function onScanFailure(error) {
+        // We can ignore failures as they happen frequently during scanning
+        console.log('QR scan error: ', error);
+    }
+    
+    // Handle print button from scanner
+    if (scanPrintBtn) {
+        scanPrintBtn.addEventListener('click', function() {
+            const guestId = this.dataset.guestId;
+            if (guestId) {
+                fetch('/print_badge', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `guest_id=${guestId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Badge printed successfully');
+                        this.disabled = true;
+                        scanGiveBtn.disabled = false;
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An unexpected error occurred');
+                });
+            }
+        });
+    }
+    
+    // Handle give button from scanner
+    if (scanGiveBtn) {
+        scanGiveBtn.addEventListener('click', function() {
+            const guestId = this.dataset.guestId;
+            if (guestId) {
+                fetch('/give_badge', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `guest_id=${guestId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Badge marked as given successfully');
+                        this.disabled = true;
+                    } else {
+                        alert(data.message || 'An error occurred');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An unexpected error occurred');
+                });
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

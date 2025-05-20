@@ -1050,3 +1050,199 @@ async def add_changelog_entry(
             status_code=500,
             content={"success": False, "message": f"Error adding changelog entry: {str(e)}"}
         )
+
+# Add to app/routes/admin.py
+
+@router.get("/guest_badges", response_class=HTMLResponse)
+async def guest_badges_page(request: Request, admin: Dict = Depends(get_current_admin)):
+    """Badge management page"""
+    try:
+        guests = guests_db.read_all()
+        
+        # Get filter parameters from query
+        status_filter = request.query_params.get("status")
+        search_query = request.query_params.get("q", "").lower()
+        
+        # Apply filters
+        if status_filter == "printed":
+            guests = [g for g in guests if g.get("BadgePrinted") == "True"]
+        elif status_filter == "not_printed":
+            guests = [g for g in guests if g.get("BadgePrinted") != "True"]
+        elif status_filter == "given":
+            guests = [g for g in guests if g.get("BadgeGiven") == "True"]
+        elif status_filter == "not_given":
+            guests = [g for g in guests if g.get("BadgeGiven") != "True"]
+        
+        if search_query:
+            guests = [g for g in guests if
+                search_query in g.get("Name", "").lower() or
+                search_query in g.get("ID", "").lower() or
+                search_query in g.get("Phone", "").lower() or
+                search_query in g.get("Email", "").lower()]
+        
+        return templates.TemplateResponse(
+            "admin/guest_badges.html",
+            {
+                "request": request,
+                "admin": admin,
+                "guests": guests,
+                "status_filter": status_filter,
+                "search_query": search_query,
+                "active_page": "guest_badges"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error loading badge management page: {str(e)}")
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "message": "Error loading badge management page",
+                "error_details": str(e) if config.getboolean('DEFAULT', 'Debug', fallback=False) else None
+            }
+        )
+
+@router.get("/journey_management", response_class=HTMLResponse)
+async def journey_management_page(request: Request, admin: Dict = Depends(get_current_admin)):
+    """Journey management page"""
+    try:
+        guests = guests_db.read_all()
+        
+        # Get filter parameters from query
+        status_filter = request.query_params.get("status")
+        search_query = request.query_params.get("q", "").lower()
+        
+        # Apply filters
+        if status_filter == "updated":
+            guests = [g for g in guests if g.get("JourneyDetailsUpdated") == "True"]
+        elif status_filter == "not_updated":
+            guests = [g for g in guests if g.get("JourneyDetailsUpdated") != "True"]
+        elif status_filter == "completed":
+            guests = [g for g in guests if g.get("JourneyCompleted") == "True"]
+        elif status_filter == "ongoing":
+            guests = [g for g in guests if g.get("JourneyCompleted") != "True"]
+        
+        if search_query:
+            guests = [g for g in guests if
+                search_query in g.get("Name", "").lower() or
+                search_query in g.get("ID", "").lower() or
+                search_query in g.get("Phone", "").lower() or
+                search_query in g.get("Email", "").lower()]
+        
+        return templates.TemplateResponse(
+            "admin/journey_management.html",
+            {
+                "request": request,
+                "admin": admin,
+                "guests": guests,
+                "status_filter": status_filter,
+                "search_query": search_query,
+                "active_page": "journey_management"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error loading journey management page: {str(e)}")
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "message": "Error loading journey management page",
+                "error_details": str(e) if config.getboolean('DEFAULT', 'Debug', fallback=False) else None
+            }
+        )
+
+@router.get("/food_management", response_class=HTMLResponse)
+async def food_management_page(request: Request, admin: Dict = Depends(get_current_admin)):
+    """Food coupon management page"""
+    try:
+        guests = guests_db.read_all()
+        
+        # Get filter parameters from query
+        day_filter = request.query_params.get("day")
+        status_filter = request.query_params.get("status")
+        search_query = request.query_params.get("q", "").lower()
+        
+        # Apply filters
+        if day_filter == "1" and status_filter == "given":
+            guests = [g for g in guests if g.get("FoodCouponsDay1") == "True"]
+        elif day_filter == "1" and status_filter == "not_given":
+            guests = [g for g in guests if g.get("FoodCouponsDay1") != "True"]
+        elif day_filter == "2" and status_filter == "given":
+            guests = [g for g in guests if g.get("FoodCouponsDay2") == "True"]
+        elif day_filter == "2" and status_filter == "not_given":
+            guests = [g for g in guests if g.get("FoodCouponsDay2") != "True"]
+        
+        if search_query:
+            guests = [g for g in guests if
+                search_query in g.get("Name", "").lower() or
+                search_query in g.get("ID", "").lower() or
+                search_query in g.get("Phone", "").lower() or
+                search_query in g.get("Email", "").lower()]
+        
+        return templates.TemplateResponse(
+            "admin/food_management.html",
+            {
+                "request": request,
+                "admin": admin,
+                "guests": guests,
+                "day_filter": day_filter,
+                "status_filter": status_filter,
+                "search_query": search_query,
+                "active_page": "food_management"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error loading food management page: {str(e)}")
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "message": "Error loading food management page",
+                "error_details": str(e) if config.getboolean('DEFAULT', 'Debug', fallback=False) else None
+            }
+        )
+
+@router.get("/gift_management", response_class=HTMLResponse)
+async def gift_management_page(request: Request, admin: Dict = Depends(get_current_admin)):
+    """Gift management page"""
+    try:
+        guests = guests_db.read_all()
+        
+        # Get filter parameters from query
+        status_filter = request.query_params.get("status")
+        search_query = request.query_params.get("q", "").lower()
+        
+        # Apply filters
+        if status_filter == "given":
+            guests = [g for g in guests if g.get("GiftsGiven") == "True"]
+        elif status_filter == "not_given":
+            guests = [g for g in guests if g.get("GiftsGiven") != "True"]
+        
+        if search_query:
+            guests = [g for g in guests if
+                search_query in g.get("Name", "").lower() or
+                search_query in g.get("ID", "").lower() or
+                search_query in g.get("Phone", "").lower() or
+                search_query in g.get("Email", "").lower()]
+        
+        return templates.TemplateResponse(
+            "admin/gift_management.html",
+            {
+                "request": request,
+                "admin": admin,
+                "guests": guests,
+                "status_filter": status_filter,
+                "search_query": search_query,
+                "active_page": "gift_management"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error loading gift management page: {str(e)}")
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "message": "Error loading gift management page",
+                "error_details": str(e) if config.getboolean('DEFAULT', 'Debug', fallback=False) else None
+            }
+        )

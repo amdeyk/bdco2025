@@ -1,6 +1,6 @@
 # app/routes/common.py
 from fastapi import APIRouter, Request, Depends, HTTPException, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
 import logging
@@ -10,6 +10,7 @@ from app.services.csv_db import CSVDatabase
 from app.services.auth import auth_service
 from app.config import Config
 from app.templates import templates
+from app.utils.logging_utils import log_activity
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -203,3 +204,470 @@ async def speakers_redirect():
 async def registration_redirect():
     """Redirect /registration to /guest/register"""
     return RedirectResponse(url="/guest/register", status_code=303)
+
+# Add these routes to app/routes/common.py
+
+@router.post("/give_badge")
+async def give_badge(request: Request, guest_id: str = Form(...)):
+    """Mark badge as given to guest"""
+    try:
+        guests = guests_db.read_all()
+        updated = False
+        
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                # Only allow giving badge if it has been printed
+                if guest["BadgePrinted"] != "True":
+                    return JSONResponse(
+                        status_code=400,
+                        content={"success": False, "message": "Badge must be printed first"}
+                    )
+                
+                guest["BadgeGiven"] = "True"
+                updated = True
+                break
+                
+        if updated:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity("Badge", f"Badge given to guest {guest_id}")
+            
+            return JSONResponse(
+                content={"success": True, "message": "Badge marked as given successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Guest not found"}
+            )
+    except Exception as e:
+        logger.error(f"Error giving badge: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error giving badge: {str(e)}"}
+        )
+
+@router.post("/update_journey_status")
+async def update_journey_status(request: Request, guest_id: str = Form(...)):
+    """Mark journey details as updated"""
+    try:
+        guests = guests_db.read_all()
+        updated = False
+        
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                guest["JourneyDetailsUpdated"] = "True"
+                updated = True
+                break
+                
+        if updated:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity("Journey", f"Journey details updated for guest {guest_id}")
+            
+            return JSONResponse(
+                content={"success": True, "message": "Journey details marked as updated"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Guest not found"}
+            )
+    except Exception as e:
+        logger.error(f"Error updating journey status: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error updating journey status: {str(e)}"}
+        )
+
+@router.post("/complete_journey")
+async def complete_journey(request: Request, guest_id: str = Form(...)):
+    """Mark journey as completed"""
+    try:
+        guests = guests_db.read_all()
+        updated = False
+        
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                guest["JourneyCompleted"] = "True"
+                updated = True
+                break
+                
+        if updated:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity("Journey", f"Journey completed for guest {guest_id}")
+            
+            return JSONResponse(
+                content={"success": True, "message": "Journey marked as completed"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Guest not found"}
+            )
+    except Exception as e:
+        logger.error(f"Error completing journey: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error completing journey: {str(e)}"}
+        )
+
+@router.post("/give_food_coupon")
+async def give_food_coupon(request: Request, guest_id: str = Form(...), day: str = Form(...)):
+    """Give food coupons to guest for a specific day"""
+    try:
+        guests = guests_db.read_all()
+        updated = False
+        
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                if day == "1":
+                    guest["FoodCouponsDay1"] = "True"
+                elif day == "2":
+                    guest["FoodCouponsDay2"] = "True"
+                else:
+                    return JSONResponse(
+                        status_code=400,
+                        content={"success": False, "message": "Invalid day specified"}
+                    )
+                
+                updated = True
+                break
+                
+        if updated:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity("Food", f"Food coupons for day {day} given to guest {guest_id}")
+            
+            return JSONResponse(
+                content={"success": True, "message": f"Food coupons for day {day} marked as given"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Guest not found"}
+            )
+    except Exception as e:
+        logger.error(f"Error giving food coupons: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error giving food coupons: {str(e)}"}
+        )
+
+@router.post("/give_gift")
+async def give_gift(request: Request, guest_id: str = Form(...)):
+    """Mark gifts as given to guest"""
+    try:
+        guests = guests_db.read_all()
+        updated = False
+        
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                guest["GiftsGiven"] = "True"
+                updated = True
+                break
+                
+        if updated:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity("Gift", f"Conference gifts given to guest {guest_id}")
+            
+            return JSONResponse(
+                content={"success": True, "message": "Gifts marked as given successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Guest not found"}
+            )
+    except Exception as e:
+        logger.error(f"Error giving gifts: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error giving gifts: {str(e)}"}
+        )
+
+# Add to app/routes/common.py
+
+@router.post("/print_badges_bulk")
+async def print_badges_bulk(request: Request):
+    """Print badges for multiple guests"""
+    try:
+        data = await request.json()
+        guest_ids = data.get('guest_ids', [])
+        
+        if not guest_ids:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "No guest IDs provided"}
+            )
+            
+        guests = guests_db.read_all()
+        updated_count = 0
+        
+        for guest in guests:
+            if guest["ID"] in guest_ids:
+                guest["BadgePrinted"] = "True"
+                updated_count += 1
+                
+        if updated_count > 0:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity("Badge", f"Printed badges for {updated_count} guests")
+            
+            return JSONResponse(
+                content={"success": True, "message": f"Printed badges for {updated_count} guests successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "No matching guests found"}
+            )
+    except Exception as e:
+        logger.error(f"Error printing badges in bulk: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error printing badges: {str(e)}"}
+        )
+
+@router.post("/give_badges_bulk")
+async def give_badges_bulk(request: Request):
+    """Mark badges as given for multiple guests"""
+    try:
+        data = await request.json()
+        guest_ids = data.get('guest_ids', [])
+        
+        if not guest_ids:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "No guest IDs provided"}
+            )
+            
+        guests = guests_db.read_all()
+        updated_count = 0
+        
+        for guest in guests:
+            if guest["ID"] in guest_ids and guest.get("BadgePrinted") == "True":
+                guest["BadgeGiven"] = "True"
+                updated_count += 1
+                
+        if updated_count > 0:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity("Badge", f"Marked {updated_count} badges as given")
+            
+            return JSONResponse(
+                content={"success": True, "message": f"Marked {updated_count} badges as given successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "No matching guests with printed badges found"}
+            )
+    except Exception as e:
+        logger.error(f"Error giving badges in bulk: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error giving badges: {str(e)}"}
+        )
+
+@router.post("/update_journey_status_bulk")
+async def update_journey_status_bulk(request: Request):
+    """Mark journey details as updated for multiple guests"""
+    try:
+        data = await request.json()
+        guest_ids = data.get('guest_ids', [])
+        
+        if not guest_ids:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "No guest IDs provided"}
+            )
+            
+        guests = guests_db.read_all()
+        updated_count = 0
+        
+        for guest in guests:
+            if guest["ID"] in guest_ids:
+                guest["JourneyDetailsUpdated"] = "True"
+                updated_count += 1
+                
+        if updated_count > 0:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity("Journey", f"Updated journey details for {updated_count} guests")
+            
+            return JSONResponse(
+                content={"success": True, "message": f"Journey details updated for {updated_count} guests successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "No matching guests found"}
+            )
+    except Exception as e:
+        logger.error(f"Error updating journey details in bulk: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error updating journey details: {str(e)}"}
+        )
+
+@router.post("/complete_journey_bulk")
+async def complete_journey_bulk(request: Request):
+    """Mark journeys as completed for multiple guests"""
+    try:
+        data = await request.json()
+        guest_ids = data.get('guest_ids', [])
+        
+        if not guest_ids:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "No guest IDs provided"}
+            )
+            
+        guests = guests_db.read_all()
+        updated_count = 0
+        
+        for guest in guests:
+            if guest["ID"] in guest_ids:
+                guest["JourneyCompleted"] = "True"
+                updated_count += 1
+                
+        if updated_count > 0:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity("Journey", f"Completed journeys for {updated_count} guests")
+            
+            return JSONResponse(
+                content={"success": True, "message": f"Journeys completed for {updated_count} guests successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "No matching guests found"}
+            )
+    except Exception as e:
+        logger.error(f"Error completing journeys in bulk: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error completing journeys: {str(e)}"}
+        )
+
+@router.post("/give_food_coupons_bulk")
+async def give_food_coupons_bulk(request: Request):
+    """Give food coupons to multiple guests"""
+    try:
+        data = await request.json()
+        guest_ids = data.get('guest_ids', [])
+        day = data.get('day')
+        
+        if not guest_ids:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "No guest IDs provided"}
+            )
+            
+        if day not in ["1", "2"]:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "Invalid day specified"}
+            )
+            
+        guests = guests_db.read_all()
+        updated_count = 0
+        
+        for guest in guests:
+            if guest["ID"] in guest_ids:
+                if day == "1":
+                    guest["FoodCouponsDay1"] = "True"
+                else:
+                    guest["FoodCouponsDay2"] = "True"
+                updated_count += 1
+                
+        if updated_count > 0:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity("Food", f"Given day {day} food coupons to {updated_count} guests")
+            
+            return JSONResponse(
+                content={"success": True, "message": f"Day {day} food coupons given to {updated_count} guests successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "No matching guests found"}
+            )
+    except Exception as e:
+        logger.error(f"Error giving food coupons in bulk: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error giving food coupons: {str(e)}"}
+        )
+
+@router.post("/give_gifts_bulk")
+async def give_gifts_bulk(request: Request):
+    """Give gifts to multiple guests"""
+    try:
+        data = await request.json()
+        guest_ids = data.get('guest_ids', [])
+        
+        if not guest_ids:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "No guest IDs provided"}
+            )
+            
+        guests = guests_db.read_all()
+        updated_count = 0
+        
+        for guest in guests:
+            if guest["ID"] in guest_ids:
+                guest["GiftsGiven"] = "True"
+                updated_count += 1
+                
+        if updated_count > 0:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity("Gift", f"Given gifts to {updated_count} guests")
+            
+            return JSONResponse(
+                content={"success": True, "message": f"Gifts given to {updated_count} guests successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "No matching guests found"}
+            )
+    except Exception as e:
+        logger.error(f"Error giving gifts in bulk: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error giving gifts: {str(e)}"}
+        )
+
+@router.get("/api/guest/{guest_id}")
+async def get_guest_info(guest_id: str):
+    """Get guest information by ID"""
+    try:
+        guests = guests_db.read_all()
+        guest = next((g for g in guests if g["ID"] == guest_id), None)
+        
+        if guest:
+            return {"success": True, "guest": guest}
+        else:
+            return {"success": False, "message": "Guest not found"}
+    except Exception as e:
+        logger.error(f"Error getting guest info: {str(e)}")
+        return {"success": False, "message": f"Error getting guest info: {str(e)}"}

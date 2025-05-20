@@ -91,6 +91,7 @@
                             
                             <hr>
                             
+                            <!-- Updated section in templates/check_in.html -->
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <form id="checkInActionForm" method="post" action="/mark_attendance">
@@ -122,6 +123,70 @@
                                 </div>
                                 
                                 <div class="col-md-6 mb-3">
+                                    <form id="giveBadgeForm" method="post" action="/give_badge">
+                                        <input type="hidden" name="guest_id" value="{{ guest.ID }}">
+                                        <button type="submit" class="btn btn-info w-100 {% if guest.BadgeGiven == 'True' %}disabled{% endif %}" {% if guest.BadgePrinted != 'True' %}disabled{% endif %}>
+                                            <i class="fas fa-hand-holding me-2"></i> {% if guest.BadgeGiven == 'True' %}Badge Already Given{% else %}Give Badge{% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <form id="updateJourneyForm" method="post" action="/update_journey_status">
+                                        <input type="hidden" name="guest_id" value="{{ guest.ID }}">
+                                        <button type="submit" class="btn btn-primary w-100 {% if guest.JourneyDetailsUpdated == 'True' %}disabled{% endif %}">
+                                            <i class="fas fa-plane-arrival me-2"></i> {% if guest.JourneyDetailsUpdated == 'True' %}Journey Details Updated{% else %}Update Journey Details{% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <form id="completeJourneyForm" method="post" action="/complete_journey">
+                                        <input type="hidden" name="guest_id" value="{{ guest.ID }}">
+                                        <button type="submit" class="btn btn-primary w-100 {% if guest.JourneyCompleted == 'True' %}disabled{% endif %}">
+                                            <i class="fas fa-plane-departure me-2"></i> {% if guest.JourneyCompleted == 'True' %}Journey Completed{% else %}Complete Journey{% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <form id="giveFoodCouponDay1Form" method="post" action="/give_food_coupon">
+                                        <input type="hidden" name="guest_id" value="{{ guest.ID }}">
+                                        <input type="hidden" name="day" value="1">
+                                        <button type="submit" class="btn btn-success w-100 {% if guest.FoodCouponsDay1 == 'True' %}disabled{% endif %}">
+                                            <i class="fas fa-utensils me-2"></i> {% if guest.FoodCouponsDay1 == 'True' %}Day 1 Coupons Given{% else %}Give Day 1 Food Coupons{% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <form id="giveFoodCouponDay2Form" method="post" action="/give_food_coupon">
+                                        <input type="hidden" name="guest_id" value="{{ guest.ID }}">
+                                        <input type="hidden" name="day" value="2">
+                                        <button type="submit" class="btn btn-success w-100 {% if guest.FoodCouponsDay2 == 'True' %}disabled{% endif %}">
+                                            <i class="fas fa-utensils me-2"></i> {% if guest.FoodCouponsDay2 == 'True' %}Day 2 Coupons Given{% else %}Give Day 2 Food Coupons{% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <form id="giveGiftForm" method="post" action="/give_gift">
+                                        <input type="hidden" name="guest_id" value="{{ guest.ID }}">
+                                        <button type="submit" class="btn btn-warning w-100 {% if guest.GiftsGiven == 'True' %}disabled{% endif %}">
+                                            <i class="fas fa-gift me-2"></i> {% if guest.GiftsGiven == 'True' %}Gifts Already Given{% else %}Give Conference Gifts{% endif %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
                                     <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#paymentModal" {% if guest.PaymentStatus == 'Paid' %}disabled{% endif %}>
                                         <i class="fas fa-money-bill-wave me-2"></i> {% if guest.PaymentStatus == 'Paid' %}Payment Complete{% else %}Record Payment{% endif %}
                                     </button>

@@ -36,6 +36,12 @@ class Guest:
         self.payment_amount = "0"
         self.organization = ""
         self.notes = ""
+        # New fields
+        self.journey_details_updated = "False"
+        self.journey_completed = "False"
+        self.food_coupons_day1 = "False"
+        self.food_coupons_day2 = "False"
+        self.gifts_given = "False"
         
     @classmethod
     def from_dict(cls, data: Dict) -> 'Guest':
@@ -70,10 +76,16 @@ class Guest:
             "IsActive": str(self.is_active),
             "KitReceived": self.kit_received,
             "BadgePrinted": self.badge_printed,
+            "BadgeGiven": self.badge_given,
             "PaymentStatus": self.payment_status,
             "PaymentAmount": self.payment_amount,
             "Organization": self.organization,
-            "Notes": self.notes
+            "Notes": self.notes,
+            "JourneyDetailsUpdated": self.journey_details_updated,
+            "JourneyCompleted": self.journey_completed,
+            "FoodCouponsDay1": self.food_coupons_day1,
+            "FoodCouponsDay2": self.food_coupons_day2,
+            "GiftsGiven": self.gifts_given
         }
         
     def validate(self) -> List[str]:
