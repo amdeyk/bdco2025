@@ -28,7 +28,6 @@ router = APIRouter(tags=["common"])
 
 # Initialize services
 config = Config()
-templates = Jinja2Templates(directory=config.get('PATHS', 'TemplatesDir'))
 guests_db = CSVDatabase(
     config.get('DATABASE', 'CSVPath'),
     config.get('DATABASE', 'BackupDir')

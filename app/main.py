@@ -9,11 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 import time
 
 from app.config import Config
-from app.routes import admin, guest, common
-from app.services.csv_db import CSVDatabase
-# Replace the current templates initialization in main.py
-from app.templates import templates
+from app.templates import templates, update_template_directory
 from app.utils.conference_settings import load_settings
+from app.services.csv_db import CSVDatabase
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from app.services.qr_service import QRService
 from fastapi import Path
@@ -62,7 +60,6 @@ for directory in required_directories:
     os.makedirs(directory, exist_ok=True)
 
 # Update templates directory
-from app.templates import update_template_directory
 update_template_directory(config.get('PATHS', 'TemplatesDir'))
 
 # Create FastAPI application
@@ -91,13 +88,14 @@ app.mount(
     name="static"
 )
 
+
 # Initialize templates
 from datetime import datetime
-
-# Initialize templates with global variables
-templates = Jinja2Templates(directory=config.get('PATHS', 'TemplatesDir'))
 templates.env.globals["now"] = datetime.now()
 templates.env.globals["conference"] = load_settings()
+
+# Import routes after templates are configured
+from app.routes import admin, guest, common
 
 # Include routers
 # Include routers
