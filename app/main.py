@@ -4,7 +4,7 @@ import logging
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 import time
 
@@ -14,17 +14,8 @@ from app.services.csv_db import CSVDatabase
 # Replace the current templates initialization in main.py
 from app.templates import templates
 from app.utils.conference_settings import load_settings
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from app.services.qr_service import QRService
-from fastapi import Path
-from fastapi import APIRouter, Request, Form, HTTPException, Path
-from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
-from fastapi.templating import Jinja2Templates
-import logging
 from datetime import datetime
-import io
-from PIL import Image, ImageDraw, ImageFont
-import qrcode
 
 # Load configuration
 config = Config()
@@ -92,8 +83,6 @@ app.mount(
 )
 
 # Initialize templates
-from datetime import datetime
-
 # Initialize templates with global variables
 templates = Jinja2Templates(directory=config.get('PATHS', 'TemplatesDir'))
 templates.env.globals["now"] = datetime.now()
@@ -118,7 +107,6 @@ os.makedirs(config.get('DATABASE', 'BackupDir'), exist_ok=True)
 async def root(request: Request):
     """Landing page for the application"""
     try:
-        from datetime import datetime
         logger.info("Accessing landing page")
         return templates.TemplateResponse(
             "index.html",
@@ -138,7 +126,6 @@ async def root(request: Request):
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     """Handle HTTP exceptions"""
-    from datetime import datetime
     return templates.TemplateResponse(
         "error.html",
         {
@@ -153,7 +140,6 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """Handle all other exceptions"""
-    from datetime import datetime
     logger.error(f"Unhandled exception: {str(exc)}", exc_info=True)
     return templates.TemplateResponse(
         "error.html",
@@ -173,13 +159,7 @@ async def startup_event():
     """Initialize application state on startup"""
     app.state.start_time = time.time()
     logger.info("Application started")
-
-# Add this to app/main.py after the startup event
-@app.on_event("startup")
-async def startup_event():
-    """Initialize application state on startup"""
-    app.state.start_time = time.time()
-    logger.info("Application started")
+    templates.env.globals["conference"] = load_settings()
     
     # Create initial changelog entry for the enhanced reporting system
     try:
