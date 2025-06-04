@@ -265,6 +265,37 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
         logger.error(f"Error loading profile page: {str(e)}")
         raise HTTPException(status_code=500, detail="Error loading profile")
 
+@router.get("/presentations", response_class=HTMLResponse)
+async def presentations_page(request: Request, guest: Dict = Depends(get_current_guest)):
+    """Page showing guest presentations"""
+    try:
+        guest["is_faculty"] = is_faculty(guest["ID"])
+
+        import csv
+        presentations = []
+
+        if os.path.exists(PRESENTATIONS_CSV):
+            with open(PRESENTATIONS_CSV, mode='r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if row["guest_id"] == guest["ID"]:
+                        row["file_url"] = f"/static/uploads/presentations/{row['file_path']}"
+                        presentations.append(row)
+
+        return templates.TemplateResponse(
+            "guest/presentations.html",
+            {
+                "request": request,
+                "guest": guest,
+                "presentations": presentations,
+                "user_role": "faculty" if guest["is_faculty"] else "guest",
+                "active_page": "presentations",
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error loading presentations page: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error loading presentations")
+
 @router.post("/upload-presentation")
 async def upload_presentation(
     request: Request,

@@ -132,6 +132,51 @@ async def profile_page(
         }
     )
 
+@router.get("/presentations", response_class=HTMLResponse)
+async def presentations_page(
+    request: Request,
+    current_faculty: FacultyProfile = Depends(get_current_faculty)
+):
+    """View faculty presentations"""
+    return templates.TemplateResponse(
+        "faculty/presentations.html",
+        {
+            "request": request,
+            "faculty": current_faculty,
+            "active_page": "faculty_presentations",
+        },
+    )
+
+@router.get("/journey", response_class=HTMLResponse)
+async def journey_page(
+    request: Request,
+    current_faculty: FacultyProfile = Depends(get_current_faculty)
+):
+    """View faculty journey details"""
+    return templates.TemplateResponse(
+        "faculty/journey.html",
+        {
+            "request": request,
+            "faculty": current_faculty,
+            "active_page": "faculty_journey",
+        },
+    )
+
+@router.get("/messages", response_class=HTMLResponse)
+async def messages_page(
+    request: Request,
+    current_faculty: FacultyProfile = Depends(get_current_faculty)
+):
+    """Placeholder page for faculty messages"""
+    return templates.TemplateResponse(
+        "faculty/messages.html",
+        {
+            "request": request,
+            "faculty": current_faculty,
+            "active_page": "faculty_messages",
+        },
+    )
+
 @router.post("/profile/update")
 async def update_profile(
     request: Request,
