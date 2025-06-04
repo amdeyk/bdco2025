@@ -1255,6 +1255,49 @@ async def gift_management_page(request: Request, admin: Dict = Depends(get_curre
             }
         )
 
+@router.get("/presentations_management", response_class=HTMLResponse)
+async def presentations_management(request: Request, admin: Dict = Depends(get_current_admin)):
+    """View and download uploaded presentations"""
+    try:
+        presentations_csv = os.path.join(os.path.dirname(config.get('DATABASE', 'CSVPath')), 'presentations.csv')
+        presentations = []
+        if os.path.exists(presentations_csv):
+            with open(presentations_csv, 'r', newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                presentations = list(reader)
+
+        guests = guests_db.read_all()
+        guest_map = {g['ID']: g for g in guests}
+        for p in presentations:
+            g = guest_map.get(p.get('guest_id'))
+            if g:
+                p['guest_name'] = g.get('Name', 'Unknown')
+                p['guest_role'] = g.get('GuestRole', '')
+            p['file_url'] = f"/admin/download_presentation/{p.get('file_path')}"
+
+        return templates.TemplateResponse(
+            "admin/presentations_management.html",
+            {"request": request, "admin": admin, "presentations": presentations, "active_page": "presentations_management"}
+        )
+    except Exception as e:
+        logger.error(f"Error loading presentations management page: {str(e)}")
+        return templates.TemplateResponse(
+            "error.html",
+            {"request": request, "message": "Error loading presentations", "error_details": str(e) if config.getboolean('DEFAULT', 'Debug', fallback=False) else None}
+        )
+
+@router.get("/download_presentation/{file_name}")
+async def download_presentation(admin: Dict = Depends(get_current_admin), file_name: str = FastAPIPath(...)):
+    """Download an uploaded presentation file"""
+    try:
+        file_path = os.path.join(config.get('PATHS', 'StaticDir'), 'uploads', 'presentations', file_name)
+        if not os.path.exists(file_path):
+            raise HTTPException(status_code=404, detail="File not found")
+        return StreamingResponse(open(file_path, 'rb'), headers={'Content-Disposition': f'attachment; filename="{file_name}"'})
+    except Exception as e:
+        logger.error(f"Error downloading presentation: {e}")
+        raise HTTPException(status_code=500, detail="Error downloading presentation")
+
 # BADGE MANAGEMENT ROUTES
 
 @router.post("/print_badge")
@@ -1440,6 +1483,28 @@ async def single_guest_view(request: Request, admin: Dict = Depends(get_current_
                 status_code=404
             )
             
+        # Get guest presentations
+        presentations_csv = os.path.join(os.path.dirname(config.get('DATABASE', 'CSVPath')), 'presentations.csv')
+        presentations = []
+        if os.path.exists(presentations_csv):
+            with open(presentations_csv, 'r', newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row.get('guest_id') == guest_id:
+                        row['file_url'] = f"/admin/download_presentation/{row.get('file_path')}"
+                        presentations.append(row)
+
+        # Get guest messages
+        messages_csv = os.path.join(os.path.dirname(config.get('DATABASE', 'CSVPath')), 'messages.csv')
+        messages = []
+        if os.path.exists(messages_csv):
+            with open(messages_csv, 'r', newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    if row.get('guest_id') == guest_id:
+                        row['message'] = row.get('message') or row.get('content', '')
+                        messages.append(row)
+
         # Get guest activities (placeholder for now)
         activities = []
         
@@ -1450,6 +1515,8 @@ async def single_guest_view(request: Request, admin: Dict = Depends(get_current_
                 "admin": admin,
                 "guest": guest,
                 "guest_activities": activities,
+                "presentations": presentations,
+                "messages": messages,
                 "active_page": "all_guests"
             }
         )
@@ -2416,16 +2483,20 @@ async def messages_management(request: Request, q: str = ""):
                 # Search filter
                 if q and all(
                     q.lower() not in (str(msg.get(f, "")).lower() + str(guest.get(f, "")).lower())
-                    for f in ['message', 'Name', 'Phone']
+                    for f in ['message', 'content', 'Name', 'Phone']
                 ):
                     continue
+                message_text = msg.get('message') or msg.get('content', '')
                 messages.append({
+                    "id": msg.get('id'),
                     "guest_id": msg['guest_id'],
                     "name": guest.get('Name', 'Unknown'),
                     "phone": guest.get('Phone', ''),
                     "role": guest.get('GuestRole', ''),
-                    "message": msg.get('message', ''),
-                    "timestamp": msg.get('timestamp', '')
+                    "message": message_text,
+                    "timestamp": msg.get('timestamp', ''),
+                    "response": msg.get('response', ''),
+                    "response_timestamp": msg.get('response_timestamp', '')
                 })
     except Exception as e:
         logging.error(f"[{trace_id}] Failed reading messages: {e}")
@@ -2435,6 +2506,34 @@ async def messages_management(request: Request, q: str = ""):
         "admin/messages_management.html",
         {"request": request, "messages": messages, "search_query": q, "trace_id": trace_id}
     )
+
+@router.post("/respond_message")
+async def respond_message(request: Request, admin: Dict = Depends(get_current_admin), message_id: str = Form(...), response: str = Form(...)):
+    """Store admin response to a guest message"""
+    try:
+        messages_path = config.get('DATABASE', 'MessagesCSV', fallback='./data/messages.csv')
+        rows = []
+        fieldnames = []
+        if os.path.exists(messages_path):
+            with open(messages_path, newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                fieldnames = reader.fieldnames
+                for row in reader:
+                    if row.get('id') == message_id:
+                        row['response'] = response
+                        row['response_timestamp'] = datetime.now().isoformat()
+                        row['read'] = 'True'
+                    rows.append(row)
+
+        if rows and fieldnames:
+            with open(messages_path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                writer.writerows(rows)
+        return RedirectResponse(url="/admin/messages", status_code=303)
+    except Exception as e:
+        logging.error(f"Error responding to message: {e}")
+        raise HTTPException(status_code=500, detail="Error responding to message")
 
 # HELPER FUNCTIONS
 

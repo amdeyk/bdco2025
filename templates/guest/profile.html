@@ -316,10 +316,24 @@
                         
                         <h6 class="mb-3">Message History</h6>
                         <div id="messageHistory">
-                            <!-- Message history will be displayed here -->
+                            {% if messages %}
+                                {% for msg in messages %}
+                                <div class="mb-3 border rounded p-2">
+                                    <div class="small text-muted">{{ msg.timestamp }}</div>
+                                    <p class="mb-1">{{ msg.message }}</p>
+                                    {% if msg.response %}
+                                    <div class="bg-light p-2 mt-2 rounded">
+                                        <strong>Admin:</strong> {{ msg.response }}
+                                        <div class="small text-muted">{{ msg.response_timestamp }}</div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            {% else %}
                             <div class="text-center py-4">
                                 <p class="text-muted">No messages yet</p>
                             </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
