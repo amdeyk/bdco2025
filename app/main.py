@@ -13,6 +13,7 @@ from app.routes import admin, guest, common
 from app.services.csv_db import CSVDatabase
 # Replace the current templates initialization in main.py
 from app.templates import templates
+from app.utils.conference_settings import load_settings
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from app.services.qr_service import QRService
 from fastapi import Path
@@ -96,6 +97,7 @@ from datetime import datetime
 # Initialize templates with global variables
 templates = Jinja2Templates(directory=config.get('PATHS', 'TemplatesDir'))
 templates.env.globals["now"] = datetime.now()
+templates.env.globals["conference"] = load_settings()
 
 # Include routers
 # Include routers

@@ -41,6 +41,9 @@ logger = logging.getLogger(__name__)
 # Create router
 router = APIRouter(prefix="/admin", tags=["admin"])
 
+# Secret path for conference settings
+CONFERENCE_SETTINGS_PATH = "/admin/a27nm64orp8c"
+
 # Initialize services
 config = Config()
 guests_db = CSVDatabase(
@@ -3040,3 +3043,53 @@ ensure_badge_fields()
 ensure_journey_detail_fields()
 ensure_enhanced_food_fields()
 ensure_enhanced_gift_fields()
+
+# -----------------------------------------
+# Conference settings management
+from app.utils.conference_settings import load_settings, save_settings
+from fastapi import UploadFile, File
+from pathlib import Path
+
+
+@router.get(CONFERENCE_SETTINGS_PATH, response_class=HTMLResponse)
+async def conference_settings_page(request: Request, admin: Dict = Depends(get_current_admin)):
+    settings = load_settings()
+    return templates.TemplateResponse(
+        "admin/conference_settings.html",
+        {"request": request, "settings": settings, "active_page": "dashboard", "admin": admin}
+    )
+
+
+@router.post(CONFERENCE_SETTINGS_PATH)
+async def update_conference_settings(
+    request: Request,
+    admin: Dict = Depends(get_current_admin),
+    name: str = Form(...),
+    address: str = Form(...),
+    date: str = Form(...),
+    header_image: UploadFile = File(None),
+    agenda: UploadFile = File(None)
+):
+    settings = load_settings()
+    settings["name"] = name
+    settings["address"] = address
+    settings["date"] = date
+
+    if header_image:
+        images_dir = os.path.join(config.get('PATHS', 'StaticDir'), 'images')
+        os.makedirs(images_dir, exist_ok=True)
+        filename = f"header{Path(header_image.filename).suffix}"
+        file_path = os.path.join(images_dir, filename)
+        with open(file_path, 'wb') as f:
+            f.write(await header_image.read())
+        settings["header_image"] = f"/static/images/{filename}"
+
+    if agenda:
+        agenda_path = os.path.join('data', 'agenda.csv')
+        with open(agenda_path, 'wb') as f:
+            f.write(await agenda.read())
+        settings["agenda_csv"] = agenda_path
+
+    save_settings(settings)
+    templates.env.globals["conference"] = settings
+    return RedirectResponse(url=CONFERENCE_SETTINGS_PATH, status_code=303)

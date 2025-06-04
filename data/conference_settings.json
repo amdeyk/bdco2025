@@ -1,0 +1,7 @@
+{
+    "name": "Sample Conference",
+    "address": "Conference Venue",
+    "date": "2025-01-01",
+    "header_image": "/static/images/header.jpeg",
+    "agenda_csv": ""
+}

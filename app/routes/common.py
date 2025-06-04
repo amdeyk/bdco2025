@@ -74,6 +74,64 @@ async def check_in_page(request: Request):
         logger.error(f"Error rendering check-in page: {str(e)}")
         raise HTTPException(status_code=500, detail="Error loading check-in page")
 
+
+@router.post("/check_in_guest", response_class=HTMLResponse)
+async def check_in_guest(request: Request, guest_id: str = Form(...)):
+    """Lookup a guest for check-in and display information"""
+    try:
+        guests = guests_db.read_all()
+        guest = next((g for g in guests if g.get("ID") == guest_id), None)
+
+        recent_checkins = []
+        checkin_log_path = os.path.join(config.get('PATHS', 'LogsDir'), 'checkin.log')
+        if os.path.exists(checkin_log_path):
+            try:
+                with open(checkin_log_path, 'r') as f:
+                    lines = f.readlines()[-10:]
+                    for line in lines:
+                        parts = line.strip().split(',')
+                        if len(parts) >= 4:
+                            recent_checkins.append({
+                                "guest_id": parts[0],
+                                "name": parts[1],
+                                "role": parts[2],
+                                "timestamp": parts[3]
+                            })
+            except Exception as e:
+                logger.error(f"Error reading check-in log: {str(e)}")
+
+        return templates.TemplateResponse(
+            "check_in.html",
+            {
+                "request": request,
+                "guest": guest,
+                "recent_checkins": recent_checkins,
+                "active_page": "check_in",
+                "error": None if guest else "Guest not found"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error processing check-in: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error processing check-in")
+
+
+@router.post("/mark_attendance")
+async def mark_attendance(request: Request, guest_id: str = Form(...)):
+    """Mark a guest as present"""
+    try:
+        guests = guests_db.read_all()
+        for guest in guests:
+            if guest.get("ID") == guest_id:
+                guest["DailyAttendance"] = "True"
+                guests_db.write_all(guests)
+                from app.utils.logging_utils import log_checkin
+                log_checkin(guest_id, guest.get("Name", ""), guest.get("GuestRole", ""))
+                return JSONResponse({"success": True, "message": "Attendance marked"})
+        return JSONResponse({"success": False, "message": "Guest not found"}, status_code=404)
+    except Exception as e:
+        logger.error(f"Error marking attendance: {str(e)}")
+        return JSONResponse({"success": False, "message": "Error marking attendance"}, status_code=500)
+
 @router.get("/thank_you", response_class=HTMLResponse)
 async def thank_you(request: Request, name: str, phone: str):
     """Thank you page after successful registration"""
