@@ -13,6 +13,9 @@
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i> Scan a guest's QR code or enter their ID to check them in
                 </div>
+                {% if error %}
+                <div class="alert alert-danger mt-2">{{ error }}</div>
+                {% endif %}
                 
                 <div class="mb-4">
                     <form id="checkInForm" method="post" action="/check_in_guest" class="needs-validation" novalidate>
@@ -198,8 +201,8 @@
                 {% endif %}
                 
                 <div class="text-center mt-4">
-                    <a href="/" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-left me-2"></i> Back to Home
+                    <a href="/admin/dashboard" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i> Back to Dashboard
                     </a>
                 </div>
             </div>
