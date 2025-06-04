@@ -214,6 +214,15 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
                     if row["guest_id"] == guest["ID"]:
                         row["file_url"] = f"/static/uploads/presentations/{row['file_path']}"
                         presentations.append(row)
+
+        # Get messages
+        messages = []
+        if os.path.exists(MESSAGES_CSV):
+            with open(MESSAGES_CSV, mode='r', newline='', encoding='utf-8') as file:
+                reader = csv.DictReader(file)
+                for row in reader:
+                    if row.get("guest_id") == guest["ID"]:
+                        messages.append(row)
         
         # Get journey details
         journey_data = None
@@ -255,6 +264,7 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
                 "request": request,
                 "guest": guest,
                 "presentations": presentations,
+                "messages": messages,
                 "inward_journey": inward_journey,
                 "outward_journey": outward_journey,
                 "user_role": "faculty" if guest["is_faculty"] else "guest",
@@ -458,21 +468,23 @@ async def send_message(
             )
         
         # Ensure file exists
-        fieldnames = ["id", "guest_id", "content", "timestamp", "read"]
+        fieldnames = ["id", "guest_id", "message", "timestamp", "read", "response", "response_timestamp"]
         if not os.path.exists(MESSAGES_CSV):
             with open(MESSAGES_CSV, mode='w', newline='', encoding='utf-8') as file:
                 writer = csv.writer(file)
                 writer.writerow(fieldnames)
-        
+
         # Add message
         with open(MESSAGES_CSV, mode='a', newline='', encoding='utf-8') as file:
             writer = csv.DictWriter(file, fieldnames=fieldnames)
             writer.writerow({
                 "id": str(uuid.uuid4()),
                 "guest_id": guest["ID"],
-                "content": message,
+                "message": message,
                 "timestamp": datetime.now().isoformat(),
-                "read": "False"
+                "read": "False",
+                "response": "",
+                "response_timestamp": ""
             })
         
         return JSONResponse(
