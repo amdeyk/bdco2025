@@ -11,6 +11,15 @@ from app.services.auth import auth_service
 from app.config import Config
 from app.templates import templates
 from app.utils.logging_utils import log_activity
+
+from fastapi import Path as FastAPIPath  # Rename FastAPI Path
+from pathlib import Path  # Keep pathlib Path for file operations
+from fastapi.responses import StreamingResponse
+import io
+from PIL import Image, ImageDraw
+import qrcode
+
+
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -671,3 +680,288 @@ async def get_guest_info(guest_id: str):
     except Exception as e:
         logger.error(f"Error getting guest info: {str(e)}")
         return {"success": False, "message": f"Error getting guest info: {str(e)}"}
+    
+# Add these routes to app/routes/common.py (before the end of the file)
+
+@router.post("/print_badge")
+async def print_badge_common(request: Request, guest_id: str = Form(...)):
+    """Mark badge as printed for a guest - global access"""
+    try:
+        guests = guests_db.read_all()
+        updated = False
+        
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                # Check if badge is already printed
+                if guest.get("BadgePrinted") == "True":
+                    return JSONResponse(
+                        status_code=400,
+                        content={"success": False, "message": "Badge has already been printed"}
+                    )
+                
+                guest["BadgePrinted"] = "True"
+                updated = True
+                break
+                
+        if updated:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity(guest_id, "Badge marked as printed")
+            
+            return JSONResponse(
+                content={"success": True, "message": "Badge marked as printed successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Guest not found"}
+            )
+    except Exception as e:
+        logger.error(f"Error printing badge: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error printing badge: {str(e)}"}
+        )
+
+@router.post("/give_badge")
+async def give_badge_common(request: Request, guest_id: str = Form(...)):
+    """Mark badge as given to guest - global access"""
+    try:
+        guests = guests_db.read_all()
+        updated = False
+        
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                # Only allow giving badge if it has been printed
+                if guest.get("BadgePrinted") != "True":
+                    return JSONResponse(
+                        status_code=400,
+                        content={"success": False, "message": "Badge must be printed first"}
+                    )
+                
+                # Check if badge is already given
+                if guest.get("BadgeGiven") == "True":
+                    return JSONResponse(
+                        status_code=400,
+                        content={"success": False, "message": "Badge has already been given"}
+                    )
+                
+                guest["BadgeGiven"] = "True"
+                updated = True
+                break
+                
+        if updated:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity(guest_id, "Badge marked as given")
+            
+            return JSONResponse(
+                content={"success": True, "message": "Badge marked as given successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Guest not found"}
+            )
+    except Exception as e:
+        logger.error(f"Error giving badge: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error giving badge: {str(e)}"}
+        )
+
+@router.get("/single_guest/{guest_id}", response_class=HTMLResponse)
+async def single_guest_view_common(request: Request, guest_id: str = FastAPIPath(...)):
+    """Show single guest details - global access"""
+    try:
+        logger.info(f"Accessing guest details for ID: {guest_id}")
+        guests = guests_db.read_all()
+        guest = next((g for g in guests if g["ID"] == guest_id), None)
+        
+        if not guest:
+            logger.error(f"Guest not found with ID: {guest_id}")
+            return templates.TemplateResponse(
+                "error.html",
+                {
+                    "request": request,
+                    "message": "Guest not found"
+                },
+                status_code=404
+            )
+            
+        # Get guest activities (placeholder for now)
+        activities = []
+        
+        return templates.TemplateResponse(
+            "single_guest.html",
+            {
+                "request": request,
+                "guest": guest,
+                "guest_activities": activities,
+                "active_page": "guest_details"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error loading single guest page: {str(e)}")
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "message": "Error loading guest details",
+                "error_details": str(e) if config.getboolean('DEFAULT', 'Debug', fallback=False) else None
+            },
+            status_code=500
+        )
+
+@router.get("/generate_badge/{guest_id}")
+async def generate_badge_common(guest_id: str = FastAPIPath(...)):
+    """Generate and download badge for a guest - global access"""
+    try:
+        guests = guests_db.read_all()
+        guest = next((g for g in guests if g["ID"] == guest_id), None)
+        
+        if not guest:
+            raise HTTPException(status_code=404, detail="Guest not found")
+
+        # Create a simple badge design
+        badge_image = create_simple_badge_common(guest)
+        
+        # Convert to bytes
+        img_byte_array = io.BytesIO()
+        badge_image.save(img_byte_array, format='PNG')
+        img_byte_array.seek(0)
+        
+        # Log this activity
+        log_activity(guest_id, "Badge generated")
+        
+        return StreamingResponse(
+            img_byte_array,
+            media_type="image/png",
+            headers={
+                "Content-Disposition": f'attachment; filename="{guest_id}_badge.png"'
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating badge: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error generating badge")
+
+
+
+def create_simple_badge_common(guest: dict) -> Image.Image:
+    """Create a simple badge design"""
+    try:
+        # Create a badge with BDCON 2025 theme
+        width, height = 800, 600
+        badge = Image.new('RGB', (width, height), '#1a237e')  # Dark blue background
+        draw = ImageDraw.Draw(badge)
+        
+        # Draw white content area
+        content_margin = 20
+        draw.rectangle([(content_margin, content_margin), (width-content_margin, height-content_margin)], 
+                      fill='white', outline='#1a237e', width=3)
+        
+        # Header section
+        header_height = 120
+        draw.rectangle([(content_margin, content_margin), (width-content_margin, content_margin + header_height)], 
+                      fill='#1a237e')
+        
+        # Conference title (simplified without external fonts)
+        try:
+            # Try to use a default font
+            title_y = content_margin + 30
+            draw.text((width//2, title_y), "BDCON 2025", fill='white', anchor="mm")
+            draw.text((width//2, title_y + 30), "BENGAL DIABETES CONFERENCE", fill='white', anchor="mm")
+            draw.text((width//2, title_y + 55), "June 14-15, 2025", fill='white', anchor="mm")
+        except:
+            # Fallback if font issues
+            draw.text((50, content_margin + 40), "BDCON 2025 - BENGAL DIABETES CONFERENCE", fill='white')
+        
+        # Guest information section
+        info_start_y = content_margin + header_height + 40
+        
+        # Guest ID (prominent)
+        draw.text((50, info_start_y), f"ID: {guest['ID']}", fill='#1a237e')
+        
+        # Guest name
+        name = guest.get('Name', 'N/A')
+        if name and name != 'N/A':
+            # Add "Dr." prefix for medical professionals if not already present
+            if guest.get('GuestRole') in ['Delegates', 'Faculty'] and not name.upper().startswith('DR.'):
+                name = f"Dr. {name}"
+        draw.text((50, info_start_y + 40), f"Name: {name}", fill='black')
+        
+        # Role with colored background
+        role = guest.get('GuestRole', 'Guest')
+        role_colors = {
+            'Delegates': '#28a745',
+            'Faculty': '#007bff', 
+            'Sponsors': '#ffc107',
+            'Staff': '#6c757d',
+            'OrgBatch': '#dc3545'
+        }
+        role_color = role_colors.get(role, '#6c757d')
+        
+        # Draw role badge
+        role_y = info_start_y + 80
+        role_width = len(role) * 12 + 20
+        draw.rectangle([(50, role_y), (50 + role_width, role_y + 30)], fill=role_color)
+        draw.text((60, role_y + 8), role.upper(), fill='white')
+        
+        # Additional info based on role
+        extra_info_y = info_start_y + 130
+        if guest.get('Batch'):
+            draw.text((50, extra_info_y), f"Batch: {guest['Batch']}", fill='black')
+            extra_info_y += 30
+        
+        if guest.get('CompanyName'):
+            draw.text((50, extra_info_y), f"Company: {guest['CompanyName']}", fill='black')
+            extra_info_y += 30
+        
+        # Generate QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=8,
+            border=2
+        )
+        qr.add_data(f"GUEST:{guest['ID']}")
+        qr.make()
+        qr_img = qr.make_image(fill_color="#1a237e", back_color="white")
+        
+        # Resize and paste QR code
+        qr_size = 200
+        qr_resized = qr_img.resize((qr_size, qr_size))
+        qr_x = width - qr_size - 50
+        qr_y = info_start_y
+        badge.paste(qr_resized, (qr_x, qr_y))
+        
+        # QR code label
+        draw.text((qr_x + qr_size//2, qr_y + qr_size + 10), "Scan for Check-in", fill='black', anchor="mm")
+        
+        # Footer with venue info
+        footer_y = height - 80
+        draw.text((50, footer_y), "Venue: ITC Fortune Park, Pushpanjali, Durgapur", fill='#666666')
+        draw.text((50, footer_y + 20), "Under the Banner of Bengal Diabetes Foundation", fill='#666666')
+        
+        # Conference logo placeholder (simple circle)
+        logo_size = 60
+        logo_x = width - logo_size - 30
+        logo_y = 30
+        draw.ellipse([(logo_x, logo_y), (logo_x + logo_size, logo_y + logo_size)], 
+                    outline='white', width=3)
+        draw.text((logo_x + logo_size//2, logo_y + logo_size//2), "BDF", fill='white', anchor="mm")
+        
+        return badge
+        
+    except Exception as e:
+        logger.error(f"Error creating badge: {str(e)}")
+        # Return a simple placeholder image
+        placeholder = Image.new('RGB', (800, 600), 'lightgray')
+        draw = ImageDraw.Draw(placeholder)
+        draw.text((50, 300), f"Badge for {guest['ID']}", fill='black')
+        draw.text((50, 330), f"Name: {guest.get('Name', 'N/A')}", fill='black')
+        draw.text((50, 360), f"Role: {guest.get('GuestRole', 'Guest')}", fill='black')
+        return placeholder

@@ -105,20 +105,38 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <form action="/print_badge" method="post" class="d-inline">
+                                        <a href="/admin/download_badge/{{ guest.ID }}" 
+                                           class="btn btn-outline-primary btn-sm" 
+                                           title="Download Badge">
+                                            <i class="fas fa-download"></i> Download
+                                        </a>
+                                        <form action="/admin/print_badge" method="post" class="d-inline">
                                             <input type="hidden" name="guest_id" value="{{ guest.ID }}">
-                                            <button type="submit" class="btn btn-outline-primary btn-sm" {% if guest.BadgePrinted == 'True' %}disabled{% endif %}>
-                                                <i class="fas fa-print"></i> Print
+                                            <button type="submit" 
+                                                    class="btn btn-outline-info btn-sm" 
+                                                    {% if guest.BadgePrinted == 'True' %}disabled{% endif %}
+                                                    title="Mark as Printed">
+                                                <i class="fas fa-check-circle"></i>
+                                                {% if guest.BadgePrinted == 'True' %}Marked{% else %}Mark Printed{% endif %}
                                             </button>
                                         </form>
-                                        <form action="/give_badge" method="post" class="d-inline ms-1">
+                                        
+                                        <form action="/admin/give_badge" method="post" class="d-inline">
                                             <input type="hidden" name="guest_id" value="{{ guest.ID }}">
-                                            <button type="submit" class="btn btn-outline-success btn-sm" {% if guest.BadgeGiven == 'True' or guest.BadgePrinted != 'True' %}disabled{% endif %}>
-                                                <i class="fas fa-check"></i> Mark as Given
+                                            <button type="submit" 
+                                                    class="btn btn-outline-success btn-sm" 
+                                                    {% if guest.BadgeGiven == 'True' or guest.BadgePrinted != 'True' %}disabled{% endif %}
+                                                    title="Mark as Given">
+                                                <i class="fas fa-hand-holding"></i>
+                                                {% if guest.BadgeGiven == 'True' %}Given{% else %}Mark Given{% endif %}
                                             </button>
                                         </form>
-                                        <a href="/single_guest/{{ guest.ID }}" class="btn btn-outline-info btn-sm ms-1">
-                                            <i class="fas fa-eye"></i> View
+                                        
+                                        <!-- View Guest Details -->
+                                        <a href="/admin/single_guest/{{ guest.ID }}" 
+                                           class="btn btn-outline-secondary btn-sm"
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
                                         </a>
                                     </div>
                                 </td>

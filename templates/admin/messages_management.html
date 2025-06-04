@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Messages Management | Conference Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-1">Messages Management</h1>
+        <p class="text-muted mb-0">Review all messages submitted by guests</p>
+        <form method="get" class="my-3">
+            <div class="input-group">
+                <input type="text" class="form-control" name="q" value="{{ search_query or '' }}" placeholder="Search by guest name, phone or message...">
+                <button class="btn btn-outline-secondary" type="submit"><i class="fas fa-search"></i> Search</button>
+            </div>
+        </form>
+        <div class="table-responsive mt-4">
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Guest ID</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Role</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for msg in messages %}
+                    <tr>
+                        <td>{{ msg.timestamp }}</td>
+                        <td>{{ msg.guest_id }}</td>
+                        <td>{{ msg.name }}</td>
+                        <td>{{ msg.phone }}</td>
+                        <td>{{ msg.role }}</td>
+                        <td>{{ msg.message }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6" class="text-center">No messages found.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="mt-2 text-end text-muted" style="font-size:small;">Trace ID: {{ trace_id }}</div>
+    </div>
+</div>
+{% endblock %}

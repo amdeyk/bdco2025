@@ -8,9 +8,73 @@
     <div class="col-12">
         <h1 class="h3 mb-2">Journey Management</h1>
         <p class="text-muted">Manage guest journey details and travel arrangements</p>
-        <a href="/admin_dashboard" class="btn btn-outline-secondary btn-sm">
+        <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm">
             <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
         </a>
+    </div>
+</div>
+
+<!-- Quick Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Total Guests</h5>
+                        <h3>{{ guests|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Details Updated</h5>
+                        <h3>{{ guests|selectattr("JourneyDetailsUpdated", "equalto", "True")|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Completed</h5>
+                        <h3>{{ guests|selectattr("JourneyCompleted", "equalto", "True")|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-double fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Pending</h5>
+                        <h3>{{ guests|selectattr("JourneyDetailsUpdated", "equalto", "False")|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -22,7 +86,7 @@
                 <form method="get" class="row g-3">
                     <div class="col-md-6">
                         <div class="input-group">
-                            <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search by name, ID or phone...">
+                            <input type="text" class="form-control" name="q" value="{{ search_query or '' }}" placeholder="Search by name, ID or phone...">
                             <button class="btn btn-outline-secondary" type="submit">
                                 <i class="fas fa-search"></i> Search
                             </button>
@@ -39,7 +103,7 @@
                                 <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Journey Completed</option>
                                 <option value="ongoing" {% if status_filter == 'ongoing' %}selected{% endif %}>Journey Ongoing</option>
                             </select>
-                            <a href="/journey_management" class="btn btn-outline-secondary">
+                            <a href="/admin/journey_management" class="btn btn-outline-secondary">
                                 Clear Filters
                             </a>
                         </div>
@@ -63,6 +127,9 @@
                     <button id="markSelectedCompletedBtn" class="btn btn-sm btn-outline-success" disabled>
                         <i class="fas fa-check-double me-1"></i> Mark Selected as Completed
                     </button>
+                    <button class="btn btn-sm btn-outline-info" onclick="exportJourneyData()">
+                        <i class="fas fa-download me-1"></i> Export Data
+                    </button>
                 </div>
             </div>
             <div class="card-body p-0">
@@ -78,7 +145,9 @@
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>Role</th>
+                                <th>Phone</th>
                                 <th>Journey Status</th>
+                                <th>Last Updated</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -90,9 +159,10 @@
                                         <input class="form-check-input guest-checkbox" type="checkbox" value="{{ guest.ID }}">
                                     </div>
                                 </td>
-                                <td>{{ guest.ID }}</td>
-                                <td>{{ guest.Name }}</td>
+                                <td><strong>{{ guest.ID }}</strong></td>
+                                <td>{{ guest.Name or 'Not provided' }}</td>
                                 <td><span class="badge bg-primary">{{ guest.GuestRole }}</span></td>
+                                <td>{{ guest.Phone or 'Not provided' }}</td>
                                 <td>
                                     <div>
                                         <span class="badge {% if guest.JourneyDetailsUpdated == 'True' %}bg-success{% else %}bg-warning{% endif %} me-1">
@@ -104,22 +174,29 @@
                                     </div>
                                 </td>
                                 <td>
+                                    <small class="text-muted">
+                                        {{ guest.LastJourneyUpdate or 'Never' }}
+                                    </small>
+                                </td>
+                                <td>
                                     <div class="btn-group btn-group-sm">
-                                        <form action="/update_journey_status" method="post" class="d-inline">
-                                            <input type="hidden" name="guest_id" value="{{ guest.ID }}">
-                                            <button type="submit" class="btn btn-outline-primary btn-sm" {% if guest.JourneyDetailsUpdated == 'True' %}disabled{% endif %}>
-                                                <i class="fas fa-pen"></i> Mark Updated
-                                            </button>
-                                        </form>
-                                        <form action="/complete_journey" method="post" class="d-inline ms-1">
-                                            <input type="hidden" name="guest_id" value="{{ guest.ID }}">
-                                            <button type="submit" class="btn btn-outline-success btn-sm" {% if guest.JourneyCompleted == 'True' %}disabled{% endif %}>
-                                                <i class="fas fa-check"></i> Mark Completed
-                                            </button>
-                                        </form>
-                                        <a href="/single_guest/{{ guest.ID }}" class="btn btn-outline-info btn-sm ms-1">
-                                            <i class="fas fa-eye"></i> View
+                                        <button type="button" class="btn btn-outline-primary btn-sm" 
+                                                onclick="markJourneyUpdated('{{ guest.ID }}')"
+                                                {% if guest.JourneyDetailsUpdated == 'True' %}disabled{% endif %}>
+                                            <i class="fas fa-pen"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-success btn-sm" 
+                                                onclick="markJourneyCompleted('{{ guest.ID }}')"
+                                                {% if guest.JourneyCompleted == 'True' %}disabled{% endif %}>
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <a href="/admin/single_guest/{{ guest.ID }}" class="btn btn-outline-info btn-sm">
+                                            <i class="fas fa-eye"></i>
                                         </a>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                                onclick="viewJourneyDetails('{{ guest.ID }}')">
+                                            <i class="fas fa-route"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -127,7 +204,7 @@
                             
                             {% if not guests %}
                             <tr>
-                                <td colspan="6" class="text-center py-4">
+                                <td colspan="8" class="text-center py-4">
                                     <p class="text-muted mb-0">No guests found matching the current filters</p>
                                 </td>
                             </tr>
@@ -143,6 +220,31 @@
                         <i class="fas fa-qrcode me-1"></i> QR Code Scanner
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Journey Details Modal -->
+<div class="modal fade" id="journeyDetailsModal" tabindex="-1" aria-labelledby="journeyDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="journeyDetailsModalLabel">
+                    <i class="fas fa-route me-2"></i>Journey Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="journeyDetailsContent">
+                    <!-- Journey details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editJourneyDetails()">
+                    <i class="fas fa-edit me-1"></i> Edit Details
+                </button>
             </div>
         </div>
     </div>
@@ -187,14 +289,22 @@
 
 {% block extra_js %}
 <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
+<!-- DataTables -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize DataTable
     $('.datatable').DataTable({
         responsive: true,
         pageLength: 25,
+        order: [[1, 'asc']],
         language: {
-            search: "Search guests:"
+            search: "Search guests:",
+            lengthMenu: "Show _MENU_ guests per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ guests"
         }
     });
     
@@ -226,70 +336,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedGuests = document.querySelectorAll('.guest-checkbox:checked');
         markSelectedUpdatedBtn.disabled = selectedGuests.length === 0;
         markSelectedCompletedBtn.disabled = selectedGuests.length === 0;
-    }
-    
-    // Handle bulk mark as updated
-    if (markSelectedUpdatedBtn) {
-        markSelectedUpdatedBtn.addEventListener('click', function() {
-            const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
-                .map(checkbox => checkbox.value);
-                
-            if (selectedGuestIds.length > 0) {
-                // Send request to mark journeys as updated
-                fetch('/update_journey_status_bulk', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ guest_ids: selectedGuestIds })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message || 'Journey details marked as updated successfully');
-                        location.reload();
-                    } else {
-                        alert(data.message || 'An error occurred');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An unexpected error occurred');
-                });
-            }
-        });
-    }
-    
-    // Handle bulk mark as completed
-    if (markSelectedCompletedBtn) {
-        markSelectedCompletedBtn.addEventListener('click', function() {
-            const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
-                .map(checkbox => checkbox.value);
-                
-            if (selectedGuestIds.length > 0) {
-                // Send request to mark journeys as completed
-                fetch('/complete_journey_bulk', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ guest_ids: selectedGuestIds })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert(data.message || 'Journeys marked as completed successfully');
-                        location.reload();
-                    } else {
-                        alert(data.message || 'An error occurred');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An unexpected error occurred');
-                });
-            }
-        });
     }
     
     // QR Code Scanner
@@ -332,9 +378,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Handle QR scan success
-    // Handle QR scan success
     function onScanSuccess(decodedText, decodedResult) {
-        // Process the scanned text (format expected: GUEST:GUESTID)
         let guestId = decodedText;
         
         if (decodedText.includes(':')) {
@@ -350,26 +394,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 scanGuestName.textContent = data.guest.Name;
                 scanResult.style.display = 'block';
                 
-                // Set guest ID for buttons
                 scanUpdateBtn.dataset.guestId = guestId;
                 scanCompleteBtn.dataset.guestId = guestId;
                 
-                // Disable buttons based on current status
                 scanUpdateBtn.disabled = data.guest.JourneyDetailsUpdated === 'True';
                 scanCompleteBtn.disabled = data.guest.JourneyCompleted === 'True';
             } else {
-                alert('Guest not found. Please try again.');
+                showNotification('Guest not found. Please try again.', 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while fetching guest information');
+            showNotification('An error occurred while fetching guest information', 'error');
         });
     }
     
     // Handle QR scan failure
     function onScanFailure(error) {
-        // We can ignore failures as they happen frequently during scanning
         console.log('QR scan error: ', error);
     }
     
@@ -378,26 +419,7 @@ document.addEventListener('DOMContentLoaded', function() {
         scanUpdateBtn.addEventListener('click', function() {
             const guestId = this.dataset.guestId;
             if (guestId) {
-                fetch('/update_journey_status', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `guest_id=${guestId}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Journey details marked as updated successfully');
-                        this.disabled = true;
-                    } else {
-                        alert(data.message || 'An error occurred');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An unexpected error occurred');
-                });
+                markJourneyUpdated(guestId);
             }
         });
     }
@@ -407,29 +429,231 @@ document.addEventListener('DOMContentLoaded', function() {
         scanCompleteBtn.addEventListener('click', function() {
             const guestId = this.dataset.guestId;
             if (guestId) {
-                fetch('/complete_journey', {
+                markJourneyCompleted(guestId);
+            }
+        });
+    }
+    
+    // Handle bulk mark as updated
+    if (markSelectedUpdatedBtn) {
+        markSelectedUpdatedBtn.addEventListener('click', function() {
+            const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+                
+            if (selectedGuestIds.length > 0) {
+                fetch('/update_journey_status_bulk', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                        'Content-Type': 'application/json'
                     },
-                    body: `guest_id=${guestId}`
+                    body: JSON.stringify({ guest_ids: selectedGuestIds })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Journey marked as completed successfully');
-                        this.disabled = true;
+                        showNotification(data.message || 'Journey details marked as updated successfully', 'success');
+                        setTimeout(() => location.reload(), 1500);
                     } else {
-                        alert(data.message || 'An error occurred');
+                        showNotification(data.message || 'An error occurred', 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An unexpected error occurred');
+                    showNotification('An unexpected error occurred', 'error');
+                });
+            }
+        });
+    }
+    
+    // Handle bulk mark as completed
+    if (markSelectedCompletedBtn) {
+        markSelectedCompletedBtn.addEventListener('click', function() {
+            const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+                
+            if (selectedGuestIds.length > 0) {
+                fetch('/complete_journey_bulk', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ guest_ids: selectedGuestIds })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(data.message || 'Journeys marked as completed successfully', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showNotification(data.message || 'An error occurred', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('An unexpected error occurred', 'error');
                 });
             }
         });
     }
 });
+
+// Individual action functions
+function markJourneyUpdated(guestId) {
+    if (confirm('Mark journey details as updated for this guest?')) {
+        fetch('/update_journey_status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `guest_id=${guestId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Journey details marked as updated successfully', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification(data.message || 'An error occurred', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An unexpected error occurred', 'error');
+        });
+    }
+}
+
+function markJourneyCompleted(guestId) {
+    if (confirm('Mark journey as completed for this guest?')) {
+        fetch('/complete_journey', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `guest_id=${guestId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Journey marked as completed successfully', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification(data.message || 'An error occurred', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An unexpected error occurred', 'error');
+        });
+    }
+}
+
+function viewJourneyDetails(guestId) {
+    const modal = new bootstrap.Modal(document.getElementById('journeyDetailsModal'));
+    const content = document.getElementById('journeyDetailsContent');
+    
+    content.innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+            <p class="mt-2">Loading journey details...</p>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Fetch journey details (implement this endpoint)
+    fetch(`/api/journey-details/${guestId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const journey = data.journey;
+                content.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-plane-arrival me-2"></i>Inward Journey</h6>
+                            <table class="table table-sm">
+                                <tr><td>Date:</td><td>${journey.inward_date || 'Not provided'}</td></tr>
+                                <tr><td>Origin:</td><td>${journey.inward_origin || 'Not provided'}</td></tr>
+                                <tr><td>Destination:</td><td>${journey.inward_destination || 'Not provided'}</td></tr>
+                                <tr><td>Remarks:</td><td>${journey.inward_remarks || 'None'}</td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-plane-departure me-2"></i>Outward Journey</h6>
+                            <table class="table table-sm">
+                                <tr><td>Date:</td><td>${journey.outward_date || 'Not provided'}</td></tr>
+                                <tr><td>Origin:</td><td>${journey.outward_origin || 'Not provided'}</td></tr>
+                                <tr><td>Destination:</td><td>${journey.outward_destination || 'Not provided'}</td></tr>
+                                <tr><td>Remarks:</td><td>${journey.outward_remarks || 'None'}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        No journey details found for this guest.
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            content.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Error loading journey details: ${error.message}
+                </div>
+            `;
+        });
+}
+
+function exportJourneyData() {
+    window.location.href = '/admin/report/export/journey_list?format=csv';
+}
+
+function editJourneyDetails() {
+    // Implement journey editing functionality
+    showNotification('Journey editing feature coming soon!', 'info');
+}
+
+// Notification function
+function showNotification(message, type) {
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'} notification`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        max-width: 500px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        border-radius: 8px;
+    `;
+    
+    const iconClass = type === 'success' ? 'check-circle' : 
+                     type === 'error' ? 'exclamation-circle' : 
+                     type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+    
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${iconClass} me-2"></i>
+            <span class="flex-grow-1">${message}</span>
+            <button type="button" class="btn-close ms-2" onclick="this.closest('.notification').remove()"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
 </script>
 {% endblock %}

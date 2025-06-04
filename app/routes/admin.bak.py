@@ -27,14 +27,6 @@ import io
 from PIL import Image, ImageDraw
 import qrcode
 
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
-import csv
-import logging
-import uuid
-from app.config import Config
-from app.templates import templates
-
 # Configure logger
 logger = logging.getLogger(__name__)
 
@@ -669,6 +661,10 @@ async def process_admin_login(
             }
         )
 
+
+
+
+
 @router.get("/report/export/guest_list")
 async def export_guest_list(
     admin: Dict = Depends(get_current_admin),
@@ -1061,6 +1057,8 @@ async def add_changelog_entry(
             content={"success": False, "message": f"Error adding changelog entry: {str(e)}"}
         )
 
+# Add to app/routes/admin.py
+
 @router.get("/guest_badges", response_class=HTMLResponse)
 async def guest_badges_page(request: Request, admin: Dict = Depends(get_current_admin)):
     """Badge management page"""
@@ -1254,8 +1252,8 @@ async def gift_management_page(request: Request, admin: Dict = Depends(get_curre
                 "error_details": str(e) if config.getboolean('DEFAULT', 'Debug', fallback=False) else None
             }
         )
-
-# BADGE MANAGEMENT ROUTES
+    
+# Add these routes to app/routes/admin.py (before the end of the file)
 
 @router.post("/print_badge")
 async def print_badge(request: Request, admin: Dict = Depends(get_current_admin), guest_id: str = Form(...)):
@@ -1583,7 +1581,184 @@ async def give_badges_bulk(request: Request, admin: Dict = Depends(get_current_a
             content={"success": False, "message": f"Error giving badges: {str(e)}"}
         )
 
-# JOURNEY MANAGEMENT ROUTES
+# Enhanced badge creation function with better styling
+def create_simple_badge(guest: Dict) -> Image.Image:
+    """Create a professional badge design for BDCON 2025"""
+    try:
+        # Create a badge with BDCON 2025 theme
+        width, height = 1000, 700  # Increased size for better quality
+        
+        # Background with gradient effect
+        badge = Image.new('RGB', (width, height), '#ffffff')
+        draw = ImageDraw.Draw(badge)
+        
+        # Draw blue header section
+        header_height = 150
+        draw.rectangle([(0, 0), (width, header_height)], fill='#1a237e')
+        
+        # Conference branding
+        try:
+            # Main title
+            draw.text((width//2, 30), "BDCON 2025", fill='white', anchor="mm", font_size=36)
+            draw.text((width//2, 70), "14th Annual Conference", fill='white', anchor="mm", font_size=20)
+            draw.text((width//2, 100), "Bengal Diabetes Foundation", fill='white', anchor="mm", font_size=18)
+            draw.text((width//2, 125), "June 14-15, 2025", fill='#ffeb3b', anchor="mm", font_size=16)
+        except:
+            # Fallback without font_size parameter
+            draw.text((50, 30), "BDCON 2025 - 14th Annual Conference", fill='white')
+            draw.text((50, 60), "Bengal Diabetes Foundation", fill='white')
+            draw.text((50, 90), "June 14-15, 2025", fill='#ffeb3b')
+        
+        # Guest information section
+        info_start_y = header_height + 40
+        
+        # Guest ID with background
+        id_bg_height = 50
+        draw.rectangle([(50, info_start_y), (width-50, info_start_y + id_bg_height)], 
+                      fill='#f5f5f5', outline='#1a237e', width=2)
+        draw.text((width//2, info_start_y + 25), f"ID: {guest['ID']}", 
+                 fill='#1a237e', anchor="mm")
+        
+        # Guest name - prominent display
+        name_y = info_start_y + 80
+        name = guest.get('Name', 'N/A')
+        if name and name != 'N/A':
+            # Add "Dr." prefix for medical professionals if not already present
+            if guest.get('GuestRole') in ['Delegates', 'Faculty', 'OrgBatch'] and not name.upper().startswith('DR.'):
+                name = f"Dr. {name}"
+        
+        # Name with background
+        name_bg_height = 60
+        draw.rectangle([(50, name_y), (width-50, name_y + name_bg_height)], 
+                      fill='#e3f2fd', outline='#1976d2', width=2)
+        draw.text((width//2, name_y + 30), name, fill='#1976d2', anchor="mm")
+        
+        # Role badge
+        role = guest.get('GuestRole', 'Guest')
+        role_colors = {
+            'Delegates': '#28a745',
+            'Faculty': '#007bff', 
+            'Sponsors': '#ffc107',
+            'Staff': '#6c757d',
+            'OrgBatch': '#dc3545',
+            'Roots': '#17a2b8',
+            'Event': '#fd7e14'
+        }
+        role_color = role_colors.get(role, '#6c757d')
+        
+        role_y = name_y + 80
+        role_width = 300
+        role_height = 40
+        role_x = (width - role_width) // 2
+        
+        draw.rectangle([(role_x, role_y), (role_x + role_width, role_y + role_height)], 
+                      fill=role_color)
+        draw.text((width//2, role_y + 20), role.upper(), fill='white', anchor="mm")
+        
+        # Additional information
+        extra_info_y = role_y + 60
+        info_items = []
+        
+        if guest.get('Batch'):
+            info_items.append(f"Batch: {guest['Batch']}")
+        if guest.get('CompanyName'):
+            info_items.append(f"Company: {guest['CompanyName']}")
+        if guest.get('PaymentAmount') and float(guest.get('PaymentAmount', 0)) > 0:
+            info_items.append(f"Amount: ₹{guest['PaymentAmount']}")
+        
+        for i, info in enumerate(info_items):
+            draw.text((70, extra_info_y + (i * 25)), info, fill='#424242')
+        
+        # Generate QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=2
+        )
+        qr.add_data(f"GUEST:{guest['ID']}")
+        qr.make()
+        qr_img = qr.make_image(fill_color="#1a237e", back_color="white")
+        
+        # Resize and paste QR code
+        qr_size = 180
+        qr_resized = qr_img.resize((qr_size, qr_size))
+        qr_x = width - qr_size - 50
+        qr_y = info_start_y + 60
+        badge.paste(qr_resized, (qr_x, qr_y))
+        
+        # QR code label
+        draw.text((qr_x + qr_size//2, qr_y + qr_size + 15), "Scan for Check-in", 
+                 fill='#666666', anchor="mm")
+        
+        # Footer information
+        footer_y = height - 100
+        draw.rectangle([(0, footer_y), (width, height)], fill='#f8f9fa')
+        
+        footer_items = [
+            "Venue: ITC Fortune Park, Pushpanjali, Durgapur",
+            "Under the Banner of Bengal Diabetes Foundation",
+            "Bridging the Gaps in Diabetes Management"
+        ]
+        
+        for i, item in enumerate(footer_items):
+            draw.text((width//2, footer_y + 20 + (i * 20)), item, 
+                     fill='#666666', anchor="mm")
+        
+        # Decorative elements
+        # Top border
+        draw.rectangle([(0, header_height), (width, header_height + 5)], fill='#ffeb3b')
+        
+        # Side borders
+        draw.rectangle([(0, 0), (5, height)], fill='#1a237e')
+        draw.rectangle([(width-5, 0), (width, height)], fill='#1a237e')
+        
+        return badge
+        
+    except Exception as e:
+        logger.error(f"Error creating badge: {str(e)}")
+        # Return a simple placeholder image
+        placeholder = Image.new('RGB', (1000, 700), 'lightgray')
+        draw = ImageDraw.Draw(placeholder)
+        draw.text((100, 350), f"Badge for {guest['ID']}", fill='black')
+        draw.text((100, 380), f"Name: {guest.get('Name', 'N/A')}", fill='black')
+        draw.text((100, 410), f"Role: {guest.get('GuestRole', 'Guest')}", fill='black')
+        return placeholder
+
+def ensure_badge_fields():
+    """Ensure badge-related fields exist in CSV"""
+    try:
+        guests = guests_db.read_all()
+        if not guests:
+            return
+            
+        # Check if badge fields exist
+        first_guest = guests[0]
+        fields_to_add = []
+        
+        if "BadgePrinted" not in first_guest:
+            fields_to_add.append("BadgePrinted")
+        if "BadgeGiven" not in first_guest:
+            fields_to_add.append("BadgeGiven")
+            
+        if fields_to_add:
+            # Add missing fields to all guests
+            for guest in guests:
+                for field in fields_to_add:
+                    guest[field] = "False"
+            
+            # Write back to CSV
+            guests_db.write_all(guests)
+            logger.info(f"Added badge fields to CSV: {fields_to_add}")
+            
+    except Exception as e:
+        logger.error(f"Error ensuring badge fields: {str(e)}")
+
+# Call this function when the module is loaded
+ensure_badge_fields()
+
+
+# Add these routes to app/routes/admin.py for Journey Management
 
 @router.post("/update_journey_status")
 async def update_journey_status(request: Request, admin: Dict = Depends(get_current_admin), guest_id: str = Form(...)):
@@ -1770,101 +1945,86 @@ async def download_itinerary(admin: Dict = Depends(get_current_admin), guest_id:
         logger.error(f"Error downloading itinerary: {str(e)}")
         raise HTTPException(status_code=500, detail="Error downloading itinerary")
 
-@router.post("/update_journey_details")
-async def update_journey_details(request: Request, admin: Dict = Depends(get_current_admin)):
-    """Update complete journey details with all fields"""
+def create_itinerary_document(guest: Dict) -> str:
+    """Create itinerary document content"""
     try:
-        data = await request.json()
-        guest_id = data.get('guest_id')
+        content = f"""
+===========================================
+BDCON 2025 - JOURNEY ITINERARY
+===========================================
+
+Guest Information:
+- ID: {guest['ID']}
+- Name: {guest.get('Name', 'N/A')}
+- Role: {guest.get('GuestRole', 'N/A')}
+- Phone: {guest.get('Phone', 'N/A')}
+- Email: {guest.get('Email', 'N/A')}
+
+Conference Details:
+- Event: 14th Annual Conference - BDCON 2025
+- Dates: June 14-15, 2025
+- Venue: ITC Fortune Park, Pushpanjali, Durgapur
+- Organizer: Bengal Diabetes Foundation
+
+Journey Status:
+- Details Updated: {'Yes' if guest.get('JourneyDetailsUpdated') == 'True' else 'No'}
+- Journey Completed: {'Yes' if guest.get('JourneyCompleted') == 'True' else 'No'}
+
+Contact Information:
+- Conference Helpline: +91 84800 02958
+- Email: info@bdcon2025.org
+
+Important Notes:
+1. Please carry this itinerary and your registration confirmation
+2. Report to the registration desk upon arrival
+3. Conference materials will be provided at the venue
+4. For any journey-related queries, contact the organizing committee
+
+===========================================
+Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+===========================================
+        """
+        return content.strip()
         
+    except Exception as e:
+        logger.error(f"Error creating itinerary: {str(e)}")
+        return f"Error generating itinerary for guest {guest.get('ID', 'Unknown')}"
+
+def ensure_journey_fields():
+    """Ensure journey-related fields exist in CSV"""
+    try:
         guests = guests_db.read_all()
-        updated = False
+        if not guests:
+            return
+            
+        # Check if journey fields exist
+        first_guest = guests[0]
+        fields_to_add = []
         
-        for guest in guests:
-            if guest["ID"] == guest_id:
-                # Update inward journey details
-                guest["InwardJourneyDate"] = data.get('inward_date', '')
-                guest["InwardJourneyFrom"] = data.get('inward_from', '')
-                guest["InwardJourneyTo"] = data.get('inward_to', '')
-                guest["InwardJourneyDetails"] = data.get('inward_details', '')
-                guest["InwardPickupRequired"] = "True" if data.get('inward_pickup') else "False"
-                guest["InwardJourneyRemarks"] = data.get('inward_remarks', '')
-                
-                # Update outward journey details
-                guest["OutwardJourneyDate"] = data.get('outward_date', '')
-                guest["OutwardJourneyFrom"] = data.get('outward_from', '')
-                guest["OutwardJourneyTo"] = data.get('outward_to', '')
-                guest["OutwardJourneyDetails"] = data.get('outward_details', '')
-                guest["OutwardDropRequired"] = "True" if data.get('outward_drop') else "False"
-                guest["OutwardJourneyRemarks"] = data.get('outward_remarks', '')
-                
-                # Mark journey details as updated
-                guest["JourneyDetailsUpdated"] = "True"
-                guest["LastJourneyUpdate"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                
-                updated = True
-                break
-                
-        if updated:
+        if "JourneyDetailsUpdated" not in first_guest:
+            fields_to_add.append("JourneyDetailsUpdated")
+        if "JourneyCompleted" not in first_guest:
+            fields_to_add.append("JourneyCompleted")
+            
+        if fields_to_add:
+            # Add missing fields to all guests
+            for guest in guests:
+                for field in fields_to_add:
+                    guest[field] = "False"
+            
+            # Write back to CSV
             guests_db.write_all(guests)
+            logger.info(f"Added journey fields to CSV: {fields_to_add}")
             
-            # Log this activity
-            log_activity(guest_id, f"Admin {admin['user_id']} updated complete journey details")
-            
-            return JSONResponse(
-                content={"success": True, "message": "Journey details updated successfully"}
-            )
-        else:
-            return JSONResponse(
-                status_code=404,
-                content={"success": False, "message": "Guest not found"}
-            )
     except Exception as e:
-        logger.error(f"Error updating journey details: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": f"Error updating journey details: {str(e)}"}
-        )
+        logger.error(f"Error ensuring journey fields: {str(e)}")
 
-@router.get("/api/journey-details/{guest_id}")
-async def get_journey_details(guest_id: str, admin: Dict = Depends(get_current_admin)):
-    """Get detailed journey information for a specific guest"""
-    try:
-        guests = guests_db.read_all()
-        guest = next((g for g in guests if g["ID"] == guest_id), None)
-        
-        if not guest:
-            return JSONResponse(
-                status_code=404,
-                content={"success": False, "message": "Guest not found"}
-            )
-        
-        journey_details = {
-            "inward_date": guest.get("InwardJourneyDate", ""),
-            "inward_origin": guest.get("InwardJourneyFrom", ""),
-            "inward_destination": guest.get("InwardJourneyTo", ""),
-            "inward_details": guest.get("InwardJourneyDetails", ""),
-            "inward_pickup": guest.get("InwardPickupRequired", "False"),
-            "inward_remarks": guest.get("InwardJourneyRemarks", ""),
-            "outward_date": guest.get("OutwardJourneyDate", ""),
-            "outward_origin": guest.get("OutwardJourneyFrom", ""),
-            "outward_destination": guest.get("OutwardJourneyTo", ""),
-            "outward_details": guest.get("OutwardJourneyDetails", ""),
-            "outward_drop": guest.get("OutwardDropRequired", "False"),
-            "outward_remarks": guest.get("OutwardJourneyRemarks", ""),
-        }
-        
-        return JSONResponse(
-            content={"success": True, "journey": journey_details}
-        )
-    except Exception as e:
-        logger.error(f"Error getting journey details: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": f"Error getting journey details: {str(e)}"}
-        )
+# Call this function when the module is loaded
+ensure_journey_fields()
 
-# ENHANCED FOOD MANAGEMENT ROUTES (Updated from paste content)
+
+
+# Add these routes to app/routes/admin.py for Food Management
 
 @router.post("/give_food_coupon")
 async def give_food_coupon(request: Request, admin: Dict = Depends(get_current_admin), guest_id: str = Form(...), day: str = Form(...)):
@@ -1882,7 +2042,6 @@ async def give_food_coupon(request: Request, admin: Dict = Depends(get_current_a
                             content={"success": False, "message": "Food coupons for Day 1 already given"}
                         )
                     guest["FoodCouponsDay1"] = "True"
-                    guest["FoodCouponsDay1Date"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 elif day == "2":
                     if guest.get("FoodCouponsDay2") == "True":
                         return JSONResponse(
@@ -1890,7 +2049,6 @@ async def give_food_coupon(request: Request, admin: Dict = Depends(get_current_a
                             content={"success": False, "message": "Food coupons for Day 2 already given"}
                         )
                     guest["FoodCouponsDay2"] = "True"
-                    guest["FoodCouponsDay2Date"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 else:
                     return JSONResponse(
                         status_code=400,
@@ -1943,16 +2101,13 @@ async def give_food_coupons_bulk(request: Request, admin: Dict = Depends(get_cur
             
         guests = guests_db.read_all()
         updated_count = 0
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         for guest in guests:
             if guest["ID"] in guest_ids:
                 if day == "1":
                     guest["FoodCouponsDay1"] = "True"
-                    guest["FoodCouponsDay1Date"] = current_time
                 else:
                     guest["FoodCouponsDay2"] = "True"
-                    guest["FoodCouponsDay2Date"] = current_time
                 updated_count += 1
                 
         if updated_count > 0:
@@ -2009,114 +2164,107 @@ async def download_meal_plan(admin: Dict = Depends(get_current_admin), guest_id:
         logger.error(f"Error downloading meal plan: {str(e)}")
         raise HTTPException(status_code=500, detail="Error downloading meal plan")
 
-@router.post("/update_food_notes")
-async def update_food_notes(request: Request, admin: Dict = Depends(get_current_admin)):
-    """Update food notes for a guest"""
+def create_meal_plan_document(guest: Dict) -> str:
+    """Create meal plan document content"""
     try:
-        data = await request.json()
-        guest_id = data.get('guest_id')
-        notes = data.get('notes', '')
-        
-        guests = guests_db.read_all()
-        updated = False
-        
-        for guest in guests:
-            if guest["ID"] == guest_id:
-                guest["FoodNotes"] = notes
-                updated = True
-                break
-                
-        if updated:
-            guests_db.write_all(guests)
-            
-            # Log this activity
-            log_activity(guest_id, f"Admin {admin['user_id']} updated food notes")
-            
-            return JSONResponse(
-                content={"success": True, "message": "Food notes updated successfully"}
-            )
-        else:
-            return JSONResponse(
-                status_code=404,
-                content={"success": False, "message": "Guest not found"}
-            )
-    except Exception as e:
-        logger.error(f"Error updating food notes: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": f"Error updating food notes: {str(e)}"}
-        )
+        content = f"""
+===========================================
+BDCON 2025 - MEAL PLAN & FOOD COUPONS
+===========================================
 
-@router.get("/report/export/food_list")
-async def export_food_list(
-    admin: Dict = Depends(get_current_admin),
-    day: Optional[str] = None,
-    status: Optional[str] = None,
-    format: str = "csv"
-):
-    """Export food distribution list as CSV"""
+Guest Information:
+- ID: {guest['ID']}
+- Name: {guest.get('Name', 'N/A')}
+- Role: {guest.get('GuestRole', 'N/A')}
+
+Food Coupon Status:
+- Day 1 Coupons: {'Received' if guest.get('FoodCouponsDay1') == 'True' else 'Not Received'}
+- Day 2 Coupons: {'Received' if guest.get('FoodCouponsDay2') == 'True' else 'Not Received'}
+
+Conference Meal Schedule:
+
+DAY 1 - June 14, 2025
+======================
+09:00 AM - Tea/Coffee & Light Snacks
+12:30 PM - Lunch Break
+03:30 PM - Tea/Coffee Break
+07:00 PM - Welcome Dinner
+
+DAY 2 - June 15, 2025
+======================
+09:00 AM - Tea/Coffee & Light Snacks
+12:30 PM - Lunch Break
+03:30 PM - Tea/Coffee Break
+06:30 PM - Farewell Dinner
+
+Dietary Information:
+- Vegetarian and Non-vegetarian options available
+- Special dietary requirements can be accommodated
+- Please inform the organizing committee for any allergies
+
+Venue:
+- Main Conference Hall - ITC Fortune Park
+- All meals will be served in the designated dining areas
+
+Contact for Food-related Queries:
+- Food Coordinator: +91 84800 02958
+- Email: food@bdcon2025.org
+
+Important Notes:
+1. Please present your food coupons at meal times
+2. Food coupons are non-transferable
+3. Outside food is not permitted in conference areas
+4. Meal timings are subject to minor changes
+
+===========================================
+Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+===========================================
+        """
+        return content.strip()
+        
+    except Exception as e:
+        logger.error(f"Error creating meal plan: {str(e)}")
+        return f"Error generating meal plan for guest {guest.get('ID', 'Unknown')}"
+
+def ensure_food_fields():
+    """Ensure food-related fields exist in CSV"""
     try:
         guests = guests_db.read_all()
-        
-        # Apply filters
-        if day == "1" and status == "given":
-            guests = [g for g in guests if g.get("FoodCouponsDay1") == "True"]
-        elif day == "1" and status == "not_given":
-            guests = [g for g in guests if g.get("FoodCouponsDay1") != "True"]
-        elif day == "2" and status == "given":
-            guests = [g for g in guests if g.get("FoodCouponsDay2") == "True"]
-        elif day == "2" and status == "not_given":
-            guests = [g for g in guests if g.get("FoodCouponsDay2") != "True"]
-        elif status == "given":
-            guests = [g for g in guests if g.get("FoodCouponsDay1") == "True" or g.get("FoodCouponsDay2") == "True"]
-        elif status == "not_given":
-            guests = [g for g in guests if g.get("FoodCouponsDay1") != "True" and g.get("FoodCouponsDay2") != "True"]
-        
-        if format.lower() == "csv":
-            # Create CSV in memory
-            output = io.StringIO()
-            writer = csv.writer(output)
+        if not guests:
+            return
             
-            # Write header
-            writer.writerow([
-                "ID", "Name", "Role", "Phone", "Day 1 Status", "Day 1 Date", 
-                "Day 2 Status", "Day 2 Date", "Food Notes"
-            ])
+        # Check if food fields exist
+        first_guest = guests[0]
+        fields_to_add = []
+        
+        if "FoodCouponsDay1" not in first_guest:
+            fields_to_add.append("FoodCouponsDay1")
+        if "FoodCouponsDay2" not in first_guest:
+            fields_to_add.append("FoodCouponsDay2")
             
-            # Write data
+        if fields_to_add:
+            # Add missing fields to all guests
             for guest in guests:
-                writer.writerow([
-                    guest.get("ID", ""),
-                    guest.get("Name", ""),
-                    guest.get("GuestRole", ""),
-                    guest.get("Phone", ""),
-                    "Given" if guest.get("FoodCouponsDay1") == "True" else "Not Given",
-                    guest.get("FoodCouponsDay1Date", ""),
-                    "Given" if guest.get("FoodCouponsDay2") == "True" else "Not Given",
-                    guest.get("FoodCouponsDay2Date", ""),
-                    guest.get("FoodNotes", "")
-                ])
+                for field in fields_to_add:
+                    guest[field] = "False"
             
-            # Return as downloadable CSV
-            output.seek(0)
-            filename = f"food_distribution_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-            return StreamingResponse(
-                iter([output.getvalue()]),
-                media_type="text/csv",
-                headers={"Content-Disposition": f"attachment; filename={filename}"}
-            )
-        
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported export format")
+            # Write back to CSV
+            guests_db.write_all(guests)
+            logger.info(f"Added food fields to CSV: {fields_to_add}")
+            
     except Exception as e:
-        logger.error(f"Error exporting food list: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error exporting food list")
+        logger.error(f"Error ensuring food fields: {str(e)}")
 
-# GIFT MANAGEMENT ROUTES
+# Call this function when the module is loaded
+ensure_food_fields()
+
+
+
+# Add these routes to app/routes/admin.py for Gift Management
 
 @router.post("/give_gift")
 async def give_gift(request: Request, admin: Dict = Depends(get_current_admin), guest_id: str = Form(...)):
-    """Mark gifts as given to guest with date tracking"""
+    """Mark gifts as given to guest"""
     try:
         guests = guests_db.read_all()
         updated = False
@@ -2130,7 +2278,6 @@ async def give_gift(request: Request, admin: Dict = Depends(get_current_admin), 
                     )
                 
                 guest["GiftsGiven"] = "True"
-                guest["GiftGivenDate"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 updated = True
                 break
                 
@@ -2170,12 +2317,10 @@ async def give_gifts_bulk(request: Request, admin: Dict = Depends(get_current_ad
             
         guests = guests_db.read_all()
         updated_count = 0
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         for guest in guests:
             if guest["ID"] in guest_ids:
                 guest["GiftsGiven"] = "True"
-                guest["GiftGivenDate"] = current_time
                 updated_count += 1
                 
         if updated_count > 0:
@@ -2231,466 +2376,6 @@ async def download_gift_list(admin: Dict = Depends(get_current_admin), guest_id:
     except Exception as e:
         logger.error(f"Error downloading gift list: {str(e)}")
         raise HTTPException(status_code=500, detail="Error downloading gift list")
-
-@router.post("/update_gift_notes")
-async def update_gift_notes(request: Request, admin: Dict = Depends(get_current_admin)):
-    """Update gift notes for a guest"""
-    try:
-        data = await request.json()
-        guest_id = data.get('guest_id')
-        notes = data.get('notes', '')
-        
-        guests = guests_db.read_all()
-        updated = False
-        
-        for guest in guests:
-            if guest["ID"] == guest_id:
-                guest["GiftNotes"] = notes
-                updated = True
-                break
-                
-        if updated:
-            guests_db.write_all(guests)
-            
-            # Log this activity
-            log_activity(guest_id, f"Admin {admin['user_id']} updated gift notes")
-            
-            return JSONResponse(
-                content={"success": True, "message": "Gift notes updated successfully"}
-            )
-        else:
-            return JSONResponse(
-                status_code=404,
-                content={"success": False, "message": "Guest not found"}
-            )
-    except Exception as e:
-        logger.error(f"Error updating gift notes: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": f"Error updating gift notes: {str(e)}"}
-        )
-
-@router.get("/report/export/gift_list")
-async def export_gift_list(
-    admin: Dict = Depends(get_current_admin),
-    status: Optional[str] = None,
-    format: str = "csv"
-):
-    """Export gift distribution list as CSV"""
-    try:
-        guests = guests_db.read_all()
-        
-        # Apply filters
-        if status == "given":
-            guests = [g for g in guests if g.get("GiftsGiven") == "True"]
-        elif status == "not_given":
-            guests = [g for g in guests if g.get("GiftsGiven") != "True"]
-        
-        if format.lower() == "csv":
-            # Create CSV in memory
-            output = io.StringIO()
-            writer = csv.writer(output)
-            
-            # Write header
-            writer.writerow([
-                "ID", "Name", "Role", "Phone", "Gift Status", "Distribution Date", "Gift Notes"
-            ])
-            
-            # Write data
-            for guest in guests:
-                writer.writerow([
-                    guest.get("ID", ""),
-                    guest.get("Name", ""),
-                    guest.get("GuestRole", ""),
-                    guest.get("Phone", ""),
-                    "Given" if guest.get("GiftsGiven") == "True" else "Not Given",
-                    guest.get("GiftGivenDate", ""),
-                    guest.get("GiftNotes", "")
-                ])
-            
-            # Return as downloadable CSV
-            output.seek(0)
-            filename = f"gift_distribution_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-            return StreamingResponse(
-                iter([output.getvalue()]),
-                media_type="text/csv",
-                headers={"Content-Disposition": f"attachment; filename={filename}"}
-            )
-        
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported export format")
-    except Exception as e:
-        logger.error(f"Error exporting gift list: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error exporting gift list")
-
-# UTILITY ROUTES
-
-@router.get("/api/guest/{guest_id}")
-async def get_guest_api(guest_id: str, admin: Dict = Depends(get_current_admin)):
-    """Get guest information via API (for AJAX calls from frontend)"""
-    try:
-        guests = guests_db.read_all()
-        guest = next((g for g in guests if g["ID"] == guest_id), None)
-        
-        if not guest:
-            return JSONResponse(
-                status_code=404,
-                content={"success": False, "message": "Guest not found"}
-            )
-        
-        return JSONResponse(
-            content={"success": True, "guest": guest}
-        )
-    except Exception as e:
-        logger.error(f"Error getting guest via API: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": f"Error getting guest information: {str(e)}"}
-        )
-
-@router.post("/update_guest_basic_info")
-async def update_guest_basic_info(request: Request, admin: Dict = Depends(get_current_admin)):
-    """Update guest basic information (for inline editing)"""
-    try:
-        data = await request.json()
-        guest_id = data.get('guest_id')
-        name = data.get('name')
-        email = data.get('email')
-        phone = data.get('phone')
-        
-        guests = guests_db.read_all()
-        updated = False
-        
-        for guest in guests:
-            if guest["ID"] == guest_id:
-                guest["Name"] = name
-                guest["Email"] = email
-                guest["Phone"] = phone
-                updated = True
-                break
-                
-        if updated:
-            guests_db.write_all(guests)
-            
-            # Log this activity
-            log_activity(guest_id, f"Admin {admin['user_id']} updated basic information")
-            
-            return JSONResponse(
-                content={"success": True, "message": "Basic information updated successfully"}
-            )
-        else:
-            return JSONResponse(
-                status_code=404,
-                content={"success": False, "message": "Guest not found"}
-            )
-    except Exception as e:
-        logger.error(f"Error updating guest basic info: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": f"Error updating basic information: {str(e)}"}
-        )
-
-
-@router.get("/messages", response_class=HTMLResponse)
-async def messages_management(request: Request, q: str = ""):
-    trace_id = str(uuid.uuid4())
-    logging.info(f"[{trace_id}] Admin accessed messages_management with search='{q}'")
-    messages_path = config.get('DATABASE', 'MessagesCSV', fallback='./data/messages.csv')
-    guests_path = config.get('DATABASE', 'CSVPath', fallback='./data/guests.csv')
-    messages = []
-    guests_map = {}
-
-    # Read guest info for mapping
-    try:
-        with open(guests_path, newline='', encoding='utf-8') as gfile:
-            for row in csv.DictReader(gfile):
-                guests_map[row['ID']] = row
-    except Exception as e:
-        logging.error(f"[{trace_id}] Failed reading guests: {e}")
-
-    # Read messages and join with guest info
-    try:
-        with open(messages_path, newline='', encoding='utf-8') as mfile:
-            for msg in csv.DictReader(mfile):
-                guest = guests_map.get(msg['guest_id'], {})
-                # Search filter
-                if q and all(
-                    q.lower() not in (str(msg.get(f, "")).lower() + str(guest.get(f, "")).lower())
-                    for f in ['message', 'Name', 'Phone']
-                ):
-                    continue
-                messages.append({
-                    "guest_id": msg['guest_id'],
-                    "name": guest.get('Name', 'Unknown'),
-                    "phone": guest.get('Phone', ''),
-                    "role": guest.get('GuestRole', ''),
-                    "message": msg.get('message', ''),
-                    "timestamp": msg.get('timestamp', '')
-                })
-    except Exception as e:
-        logging.error(f"[{trace_id}] Failed reading messages: {e}")
-
-    logging.info(f"[{trace_id}] Loaded {len(messages)} messages for admin display.")
-    return templates.TemplateResponse(
-        "admin/messages_management.html",
-        {"request": request, "messages": messages, "search_query": q, "trace_id": trace_id}
-    )
-
-# HELPER FUNCTIONS
-
-def create_simple_badge(guest: Dict) -> Image.Image:
-    """Create a professional badge design for BDCON 2025"""
-    try:
-        # Create a badge with BDCON 2025 theme
-        width, height = 1000, 700  # Increased size for better quality
-        
-        # Background with gradient effect
-        badge = Image.new('RGB', (width, height), '#ffffff')
-        draw = ImageDraw.Draw(badge)
-        
-        # Draw blue header section
-        header_height = 150
-        draw.rectangle([(0, 0), (width, header_height)], fill='#1a237e')
-        
-        # Conference branding
-        try:
-            # Main title
-            draw.text((width//2, 30), "BDCON 2025", fill='white', anchor="mm", font_size=36)
-            draw.text((width//2, 70), "14th Annual Conference", fill='white', anchor="mm", font_size=20)
-            draw.text((width//2, 100), "Bengal Diabetes Foundation", fill='white', anchor="mm", font_size=18)
-            draw.text((width//2, 125), "June 14-15, 2025", fill='#ffeb3b', anchor="mm", font_size=16)
-        except:
-            # Fallback without font_size parameter
-            draw.text((50, 30), "BDCON 2025 - 14th Annual Conference", fill='white')
-            draw.text((50, 60), "Bengal Diabetes Foundation", fill='white')
-            draw.text((50, 90), "June 14-15, 2025", fill='#ffeb3b')
-        
-        # Guest information section
-        info_start_y = header_height + 40
-        
-        # Guest ID with background
-        id_bg_height = 50
-        draw.rectangle([(50, info_start_y), (width-50, info_start_y + id_bg_height)], 
-                      fill='#f5f5f5', outline='#1a237e', width=2)
-        draw.text((width//2, info_start_y + 25), f"ID: {guest['ID']}", 
-                 fill='#1a237e', anchor="mm")
-        
-        # Guest name - prominent display
-        name_y = info_start_y + 80
-        name = guest.get('Name', 'N/A')
-        if name and name != 'N/A':
-            # Add "Dr." prefix for medical professionals if not already present
-            if guest.get('GuestRole') in ['Delegates', 'Faculty', 'OrgBatch'] and not name.upper().startswith('DR.'):
-                name = f"Dr. {name}"
-        
-        # Name with background
-        name_bg_height = 60
-        draw.rectangle([(50, name_y), (width-50, name_y + name_bg_height)], 
-                      fill='#e3f2fd', outline='#1976d2', width=2)
-        draw.text((width//2, name_y + 30), name, fill='#1976d2', anchor="mm")
-        
-        # Role badge
-        role = guest.get('GuestRole', 'Guest')
-        role_colors = {
-            'Delegates': '#28a745',
-            'Faculty': '#007bff', 
-            'Sponsors': '#ffc107',
-            'Staff': '#6c757d',
-            'OrgBatch': '#dc3545',
-            'Roots': '#17a2b8',
-            'Event': '#fd7e14'
-        }
-        role_color = role_colors.get(role, '#6c757d')
-        
-        role_y = name_y + 80
-        role_width = 300
-        role_height = 40
-        role_x = (width - role_width) // 2
-        
-        draw.rectangle([(role_x, role_y), (role_x + role_width, role_y + role_height)], 
-                      fill=role_color)
-        draw.text((width//2, role_y + 20), role.upper(), fill='white', anchor="mm")
-        
-        # Additional information
-        extra_info_y = role_y + 60
-        info_items = []
-        
-        if guest.get('Batch'):
-            info_items.append(f"Batch: {guest['Batch']}")
-        if guest.get('CompanyName'):
-            info_items.append(f"Company: {guest['CompanyName']}")
-        if guest.get('PaymentAmount') and float(guest.get('PaymentAmount', 0)) > 0:
-            info_items.append(f"Amount: ₹{guest['PaymentAmount']}")
-        
-        for i, info in enumerate(info_items):
-            draw.text((70, extra_info_y + (i * 25)), info, fill='#424242')
-        
-        # Generate QR code
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=2
-        )
-        qr.add_data(f"GUEST:{guest['ID']}")
-        qr.make()
-        qr_img = qr.make_image(fill_color="#1a237e", back_color="white")
-        
-        # Resize and paste QR code
-        qr_size = 180
-        qr_resized = qr_img.resize((qr_size, qr_size))
-        qr_x = width - qr_size - 50
-        qr_y = info_start_y + 60
-        badge.paste(qr_resized, (qr_x, qr_y))
-        
-        # QR code label
-        draw.text((qr_x + qr_size//2, qr_y + qr_size + 15), "Scan for Check-in", 
-                 fill='#666666', anchor="mm")
-        
-        # Footer information
-        footer_y = height - 100
-        draw.rectangle([(0, footer_y), (width, height)], fill='#f8f9fa')
-        
-        footer_items = [
-            "Venue: ITC Fortune Park, Pushpanjali, Durgapur",
-            "Under the Banner of Bengal Diabetes Foundation",
-            "Bridging the Gaps in Diabetes Management"
-        ]
-        
-        for i, item in enumerate(footer_items):
-            draw.text((width//2, footer_y + 20 + (i * 20)), item, 
-                     fill='#666666', anchor="mm")
-        
-        # Decorative elements
-        # Top border
-        draw.rectangle([(0, header_height), (width, header_height + 5)], fill='#ffeb3b')
-        
-        # Side borders
-        draw.rectangle([(0, 0), (5, height)], fill='#1a237e')
-        draw.rectangle([(width-5, 0), (width, height)], fill='#1a237e')
-        
-        return badge
-        
-    except Exception as e:
-        logger.error(f"Error creating badge: {str(e)}")
-        # Return a simple placeholder image
-        placeholder = Image.new('RGB', (1000, 700), 'lightgray')
-        draw = ImageDraw.Draw(placeholder)
-        draw.text((100, 350), f"Badge for {guest['ID']}", fill='black')
-        draw.text((100, 380), f"Name: {guest.get('Name', 'N/A')}", fill='black')
-        draw.text((100, 410), f"Role: {guest.get('GuestRole', 'Guest')}", fill='black')
-        return placeholder
-
-def create_itinerary_document(guest: Dict) -> str:
-    """Create itinerary document content"""
-    try:
-        content = f"""
-===========================================
-BDCON 2025 - JOURNEY ITINERARY
-===========================================
-
-Guest Information:
-- ID: {guest['ID']}
-- Name: {guest.get('Name', 'N/A')}
-- Role: {guest.get('GuestRole', 'N/A')}
-- Phone: {guest.get('Phone', 'N/A')}
-- Email: {guest.get('Email', 'N/A')}
-
-Conference Details:
-- Event: 14th Annual Conference - BDCON 2025
-- Dates: June 14-15, 2025
-- Venue: ITC Fortune Park, Pushpanjali, Durgapur
-- Organizer: Bengal Diabetes Foundation
-
-Journey Status:
-- Details Updated: {'Yes' if guest.get('JourneyDetailsUpdated') == 'True' else 'No'}
-- Journey Completed: {'Yes' if guest.get('JourneyCompleted') == 'True' else 'No'}
-
-Contact Information:
-- Conference Helpline: +91 84800 02958
-- Email: info@bdcon2025.org
-
-Important Notes:
-1. Please carry this itinerary and your registration confirmation
-2. Report to the registration desk upon arrival
-3. Conference materials will be provided at the venue
-4. For any journey-related queries, contact the organizing committee
-
-===========================================
-Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-===========================================
-        """
-        return content.strip()
-        
-    except Exception as e:
-        logger.error(f"Error creating itinerary: {str(e)}")
-        return f"Error generating itinerary for guest {guest.get('ID', 'Unknown')}"
-
-def create_meal_plan_document(guest: Dict) -> str:
-    """Create meal plan document content"""
-    try:
-        content = f"""
-===========================================
-BDCON 2025 - MEAL PLAN & FOOD COUPONS
-===========================================
-
-Guest Information:
-- ID: {guest['ID']}
-- Name: {guest.get('Name', 'N/A')}
-- Role: {guest.get('GuestRole', 'N/A')}
-- Phone: {guest.get('Phone', 'N/A')}
-
-Food Coupon Status:
-- Day 1 Coupons: {'Received' if guest.get('FoodCouponsDay1') == 'True' else 'Not Received'}
-- Day 2 Coupons: {'Received' if guest.get('FoodCouponsDay2') == 'True' else 'Not Received'}
-
-Conference Meal Schedule:
-
-DAY 1 - June 14, 2025
-======================
-09:00 AM - Welcome Tea/Coffee
-12:30 PM - Lunch Break
-03:30 PM - Afternoon Tea/Coffee
-07:00 PM - Welcome Dinner
-
-DAY 2 - June 15, 2025
-======================
-09:00 AM - Morning Tea/Coffee
-12:30 PM - Lunch Break
-03:30 PM - Afternoon Tea/Coffee
-06:30 PM - Farewell Dinner
-
-Dietary Information:
-- Vegetarian and Non-vegetarian options available
-- Special dietary requirements can be accommodated
-- Please inform the organizing committee for any allergies
-
-Venue:
-- Main Conference Hall - ITC Fortune Park
-- All meals will be served in the designated dining areas
-
-Food Notes:
-{guest.get('FoodNotes', 'No special dietary requirements noted')}
-
-Contact for Food-related Queries:
-- Food Coordinator: +91 84800 02958
-- Email: food@bdcon2025.org
-
-Important Notes:
-1. Please present your food coupons at meal times
-2. Food coupons are non-transferable
-3. Outside food is not permitted in conference areas
-4. Meal timings are subject to minor changes
-
-===========================================
-Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-===========================================
-        """
-        return content.strip()
-        
-    except Exception as e:
-        logger.error(f"Error creating meal plan: {str(e)}")
-        return f"Error generating meal plan for guest {guest.get('ID', 'Unknown')}"
 
 def create_gift_list_document(guest: Dict) -> str:
     """Create gift list document content"""
@@ -2793,23 +2478,19 @@ Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         logger.error(f"Error creating gift list: {str(e)}")
         return f"Error generating gift list for guest {guest.get('ID', 'Unknown')}"
 
-# FIELD INITIALIZATION FUNCTIONS
-
-def ensure_badge_fields():
-    """Ensure badge-related fields exist in CSV"""
+def ensure_gift_fields():
+    """Ensure gift-related fields exist in CSV"""
     try:
         guests = guests_db.read_all()
         if not guests:
             return
             
-        # Check if badge fields exist
+        # Check if gift fields exist
         first_guest = guests[0]
         fields_to_add = []
         
-        if "BadgePrinted" not in first_guest:
-            fields_to_add.append("BadgePrinted")
-        if "BadgeGiven" not in first_guest:
-            fields_to_add.append("BadgeGiven")
+        if "GiftsGiven" not in first_guest:
+            fields_to_add.append("GiftsGiven")
             
         if fields_to_add:
             # Add missing fields to all guests
@@ -2819,11 +2500,155 @@ def ensure_badge_fields():
             
             # Write back to CSV
             guests_db.write_all(guests)
-            logger.info(f"Added badge fields to CSV: {fields_to_add}")
+            logger.info(f"Added gift fields to CSV: {fields_to_add}")
             
     except Exception as e:
-        logger.error(f"Error ensuring badge fields: {str(e)}")
+        logger.error(f"Error ensuring gift fields: {str(e)}")
 
+# Call this function when the module is loaded
+ensure_gift_fields()
+
+
+# Add these routes to your existing app/routes/admin.py file
+# (Just append these to the end of your file, before the final field ensure functions)
+
+@router.post("/update_guest_basic_info")
+async def update_guest_basic_info(request: Request, admin: Dict = Depends(get_current_admin)):
+    """Update guest basic information (for inline editing)"""
+    try:
+        data = await request.json()
+        guest_id = data.get('guest_id')
+        name = data.get('name')
+        email = data.get('email')
+        phone = data.get('phone')
+        
+        guests = guests_db.read_all()
+        updated = False
+        
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                guest["Name"] = name
+                guest["Email"] = email
+                guest["Phone"] = phone
+                updated = True
+                break
+                
+        if updated:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity(guest_id, f"Admin {admin['user_id']} updated basic information")
+            
+            return JSONResponse(
+                content={"success": True, "message": "Basic information updated successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Guest not found"}
+            )
+    except Exception as e:
+        logger.error(f"Error updating guest basic info: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error updating basic information: {str(e)}"}
+        )
+
+@router.post("/update_journey_details")
+async def update_journey_details(request: Request, admin: Dict = Depends(get_current_admin)):
+    """Update complete journey details with all fields"""
+    try:
+        data = await request.json()
+        guest_id = data.get('guest_id')
+        
+        guests = guests_db.read_all()
+        updated = False
+        
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                # Update inward journey details
+                guest["InwardJourneyDate"] = data.get('inward_date', '')
+                guest["InwardJourneyFrom"] = data.get('inward_from', '')
+                guest["InwardJourneyTo"] = data.get('inward_to', '')
+                guest["InwardJourneyDetails"] = data.get('inward_details', '')
+                guest["InwardPickupRequired"] = "True" if data.get('inward_pickup') else "False"
+                guest["InwardJourneyRemarks"] = data.get('inward_remarks', '')
+                
+                # Update outward journey details
+                guest["OutwardJourneyDate"] = data.get('outward_date', '')
+                guest["OutwardJourneyFrom"] = data.get('outward_from', '')
+                guest["OutwardJourneyTo"] = data.get('outward_to', '')
+                guest["OutwardJourneyDetails"] = data.get('outward_details', '')
+                guest["OutwardDropRequired"] = "True" if data.get('outward_drop') else "False"
+                guest["OutwardJourneyRemarks"] = data.get('outward_remarks', '')
+                
+                # Mark journey details as updated
+                guest["JourneyDetailsUpdated"] = "True"
+                guest["LastJourneyUpdate"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                
+                updated = True
+                break
+                
+        if updated:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity(guest_id, f"Admin {admin['user_id']} updated complete journey details")
+            
+            return JSONResponse(
+                content={"success": True, "message": "Journey details updated successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Guest not found"}
+            )
+    except Exception as e:
+        logger.error(f"Error updating journey details: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error updating journey details: {str(e)}"}
+        )
+
+@router.get("/api/journey-details/{guest_id}")
+async def get_journey_details(guest_id: str, admin: Dict = Depends(get_current_admin)):
+    """Get detailed journey information for a specific guest"""
+    try:
+        guests = guests_db.read_all()
+        guest = next((g for g in guests if g["ID"] == guest_id), None)
+        
+        if not guest:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Guest not found"}
+            )
+        
+        journey_details = {
+            "inward_date": guest.get("InwardJourneyDate", ""),
+            "inward_origin": guest.get("InwardJourneyFrom", ""),
+            "inward_destination": guest.get("InwardJourneyTo", ""),
+            "inward_details": guest.get("InwardJourneyDetails", ""),
+            "inward_pickup": guest.get("InwardPickupRequired", "False"),
+            "inward_remarks": guest.get("InwardJourneyRemarks", ""),
+            "outward_date": guest.get("OutwardJourneyDate", ""),
+            "outward_origin": guest.get("OutwardJourneyFrom", ""),
+            "outward_destination": guest.get("OutwardJourneyTo", ""),
+            "outward_details": guest.get("OutwardJourneyDetails", ""),
+            "outward_drop": guest.get("OutwardDropRequired", "False"),
+            "outward_remarks": guest.get("OutwardJourneyRemarks", ""),
+        }
+        
+        return JSONResponse(
+            content={"success": True, "journey": journey_details}
+        )
+    except Exception as e:
+        logger.error(f"Error getting journey details: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error getting journey details: {str(e)}"}
+        )
+
+# Enhanced journey field initialization (replace your existing ensure_journey_fields function)
 def ensure_journey_detail_fields():
     """Ensure all detailed journey fields exist in CSV"""
     try:
@@ -2864,43 +2689,103 @@ def ensure_journey_detail_fields():
     except Exception as e:
         logger.error(f"Error ensuring journey detail fields: {str(e)}")
 
-def ensure_enhanced_food_fields():
-    """Ensure all food-related fields exist in CSV including dates and notes"""
+# Call this function when the module is loaded (add this at the very end of your file)
+ensure_journey_detail_fields()
+
+# Add these routes to your existing app/routes/admin.py file
+
+@router.post("/update_gift_notes")
+async def update_gift_notes(request: Request, admin: Dict = Depends(get_current_admin)):
+    """Update gift notes for a guest"""
+    try:
+        data = await request.json()
+        guest_id = data.get('guest_id')
+        notes = data.get('notes', '')
+        
+        guests = guests_db.read_all()
+        updated = False
+        
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                guest["GiftNotes"] = notes
+                updated = True
+                break
+                
+        if updated:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity(guest_id, f"Admin {admin['user_id']} updated gift notes")
+            
+            return JSONResponse(
+                content={"success": True, "message": "Gift notes updated successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Guest not found"}
+            )
+    except Exception as e:
+        logger.error(f"Error updating gift notes: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error updating gift notes: {str(e)}"}
+        )
+
+@router.get("/report/export/gift_list")
+async def export_gift_list(
+    admin: Dict = Depends(get_current_admin),
+    status: Optional[str] = None,
+    format: str = "csv"
+):
+    """Export gift distribution list as CSV"""
     try:
         guests = guests_db.read_all()
-        if not guests:
-            return
-            
-        # Check if food fields exist
-        first_guest = guests[0]
-        fields_to_add = []
         
-        food_fields = [
-            "FoodCouponsDay1", "FoodCouponsDay2", 
-            "FoodCouponsDay1Date", "FoodCouponsDay2Date", 
-            "FoodNotes"
-        ]
+        # Apply filters
+        if status == "given":
+            guests = [g for g in guests if g.get("GiftsGiven") == "True"]
+        elif status == "not_given":
+            guests = [g for g in guests if g.get("GiftsGiven") != "True"]
         
-        for field in food_fields:
-            if field not in first_guest:
-                fields_to_add.append(field)
+        if format.lower() == "csv":
+            # Create CSV in memory
+            output = io.StringIO()
+            writer = csv.writer(output)
             
-        if fields_to_add:
-            # Add missing fields to all guests
+            # Write header
+            writer.writerow([
+                "ID", "Name", "Role", "Phone", "Gift Status", "Distribution Date", "Gift Notes"
+            ])
+            
+            # Write data
             for guest in guests:
-                for field in fields_to_add:
-                    if field.startswith("FoodCouponsDay") and not field.endswith("Date"):
-                        guest[field] = "False"
-                    else:
-                        guest[field] = ""
+                writer.writerow([
+                    guest.get("ID", ""),
+                    guest.get("Name", ""),
+                    guest.get("GuestRole", ""),
+                    guest.get("Phone", ""),
+                    "Given" if guest.get("GiftsGiven") == "True" else "Not Given",
+                    guest.get("GiftGivenDate", ""),
+                    guest.get("GiftNotes", "")
+                ])
             
-            # Write back to CSV
-            guests_db.write_all(guests)
-            logger.info(f"Added enhanced food fields to CSV: {fields_to_add}")
-            
+            # Return as downloadable CSV
+            output.seek(0)
+            filename = f"gift_distribution_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            return StreamingResponse(
+                iter([output.getvalue()]),
+                media_type="text/csv",
+                headers={"Content-Disposition": f"attachment; filename={filename}"}
+            )
+        
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported export format")
     except Exception as e:
-        logger.error(f"Error ensuring enhanced food fields: {str(e)}")
+        logger.error(f"Error exporting gift list: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error exporting gift list")
 
+# Enhanced gift field initialization (add this to ensure_gift_fields function)
 def ensure_enhanced_gift_fields():
     """Ensure all gift-related fields exist in CSV including notes and dates"""
     try:
@@ -2936,8 +2821,47 @@ def ensure_enhanced_gift_fields():
     except Exception as e:
         logger.error(f"Error ensuring enhanced gift fields: {str(e)}")
 
-# Initialize all fields when the module is loaded
-ensure_badge_fields()
-ensure_journey_detail_fields()
-ensure_enhanced_food_fields()
+# Update the existing give_gift function to include date tracking
+@router.post("/give_gift")
+async def give_gift_enhanced(request: Request, admin: Dict = Depends(get_current_admin), guest_id: str = Form(...)):
+    """Mark gifts as given to guest with date tracking"""
+    try:
+        guests = guests_db.read_all()
+        updated = False
+        
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                if guest.get("GiftsGiven") == "True":
+                    return JSONResponse(
+                        status_code=400,
+                        content={"success": False, "message": "Gifts have already been given to this guest"}
+                    )
+                
+                guest["GiftsGiven"] = "True"
+                guest["GiftGivenDate"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                updated = True
+                break
+                
+        if updated:
+            guests_db.write_all(guests)
+            
+            # Log this activity
+            log_activity(guest_id, f"Admin {admin['user_id']} marked gifts as given")
+            
+            return JSONResponse(
+                content={"success": True, "message": "Gifts marked as given successfully"}
+            )
+        else:
+            return JSONResponse(
+                status_code=404,
+                content={"success": False, "message": "Guest not found"}
+            )
+    except Exception as e:
+        logger.error(f"Error giving gifts: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error giving gifts: {str(e)}"}
+        )
+
+# Call this function when the module is loaded (add this at the end of your admin.py)
 ensure_enhanced_gift_fields()

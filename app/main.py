@@ -14,6 +14,16 @@ from app.services.csv_db import CSVDatabase
 # Replace the current templates initialization in main.py
 from app.templates import templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from app.services.qr_service import QRService
+from fastapi import Path
+from fastapi import APIRouter, Request, Form, HTTPException, Path
+from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
+from fastapi.templating import Jinja2Templates
+import logging
+from datetime import datetime
+import io
+from PIL import Image, ImageDraw, ImageFont
+import qrcode
 
 # Load configuration
 config = Config()
@@ -60,6 +70,9 @@ app = FastAPI(
     description="A comprehensive system for managing conference guests",
     version=config.get('DEFAULT', 'SoftwareVersion')
 )
+
+# Initialize QR service
+qr_service = QRService(config.get('PATHS', 'StaticDir'))
 
 # Add CORS middleware
 app.add_middleware(
@@ -216,3 +229,6 @@ async def admin_dashboard_redirect(request: Request):
     
     # Redirect to login page if not authenticated
     return RedirectResponse(url="/admin/login")
+
+
+

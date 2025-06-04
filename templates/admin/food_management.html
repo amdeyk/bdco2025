@@ -1,16 +1,170 @@
 <!-- templates/admin/food_management.html -->
 {% extends "base.html" %}
 
-{% block title %}Food Coupon Management | Conference Management{% endblock %}
+{% block title %}Food Management | Conference Management{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col-12">
-        <h1 class="h3 mb-2">Food Coupon Management</h1>
-        <p class="text-muted">Manage food coupons for conference attendees</p>
-        <a href="/admin_dashboard" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
-        </a>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-1">Food Management</h1>
+                <p class="text-muted mb-0">Manage food coupons and meal distributions for conference attendees</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/admin/dashboard" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                </a>
+                <button class="btn btn-outline-info" onclick="exportFoodData()">
+                    <i class="fas fa-download me-1"></i> Export Data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-2-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Total Guests</h5>
+                        <h3>{{ guests|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Day 1 Given</h5>
+                        <h3>{{ guests|selectattr("FoodCouponsDay1", "equalto", "True")|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-utensils fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Day 2 Given</h5>
+                        <h3>{{ guests|selectattr("FoodCouponsDay2", "equalto", "True")|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-utensils fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Day 1 Pending</h5>
+                        <h3>{{ guests|selectattr("FoodCouponsDay1", "equalto", "False")|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2-4">
+        <div class="card bg-secondary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Day 2 Pending</h5>
+                        <h3>{{ guests|selectattr("FoodCouponsDay2", "equalto", "False")|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Meal Schedule Information -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Conference Meal Schedule
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-success mb-3">
+                            <i class="fas fa-calendar-day me-2"></i>
+                            Day 1 - June 14, 2025
+                        </h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-coffee text-warning me-2"></i>Welcome Tea/Coffee</span>
+                                <small class="text-muted">09:00 AM</small>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-utensils text-primary me-2"></i>Lunch Break</span>
+                                <small class="text-muted">12:30 PM</small>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-coffee text-warning me-2"></i>Afternoon Tea/Coffee</span>
+                                <small class="text-muted">03:30 PM</small>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-glass-cheers text-success me-2"></i>Welcome Dinner</span>
+                                <small class="text-muted">07:00 PM</small>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-info mb-3">
+                            <i class="fas fa-calendar-day me-2"></i>
+                            Day 2 - June 15, 2025
+                        </h6>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-coffee text-warning me-2"></i>Morning Tea/Coffee</span>
+                                <small class="text-muted">09:00 AM</small>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-utensils text-primary me-2"></i>Lunch Break</span>
+                                <small class="text-muted">12:30 PM</small>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-coffee text-warning me-2"></i>Afternoon Tea/Coffee</span>
+                                <small class="text-muted">03:30 PM</small>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span><i class="fas fa-wine-glass text-danger me-2"></i>Farewell Dinner</span>
+                                <small class="text-muted">06:30 PM</small>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -22,35 +176,37 @@
                 <form method="get" class="row g-3">
                     <div class="col-md-4">
                         <div class="input-group">
-                            <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Search by name, ID or phone...">
+                            <input type="text" class="form-control" name="q" value="{{ search_query or '' }}" placeholder="Search by name, ID or phone...">
                             <button class="btn btn-outline-secondary" type="submit">
                                 <i class="fas fa-search"></i> Search
                             </button>
                         </div>
                     </div>
                     
-                    <div class="col-md-4">
-                        <div class="input-group">
-                            <label class="input-group-text">Day</label>
-                            <select class="form-select" name="day" onchange="this.form.submit()">
-                                <option value="">All Days</option>
-                                <option value="1" {% if day_filter == '1' %}selected{% endif %}>Day 1</option>
-                                <option value="2" {% if day_filter == '2' %}selected{% endif %}>Day 2</option>
-                            </select>
-                        </div>
+                    <div class="col-md-3">
+                        <select class="form-select" name="day" onchange="this.form.submit()">
+                            <option value="">All Days</option>
+                            <option value="1" {% if day_filter == '1' %}selected{% endif %}>Day 1 Only</option>
+                            <option value="2" {% if day_filter == '2' %}selected{% endif %}>Day 2 Only</option>
+                        </select>
                     </div>
                     
-                    <div class="col-md-4">
-                        <div class="input-group">
-                            <label class="input-group-text">Status</label>
-                            <select class="form-select" name="status" onchange="this.form.submit()">
-                                <option value="">All Status</option>
-                                <option value="given" {% if status_filter == 'given' %}selected{% endif %}>Coupons Given</option>
-                                <option value="not_given" {% if status_filter == 'not_given' %}selected{% endif %}>Coupons Not Given</option>
-                            </select>
-                            <a href="/food_management" class="btn btn-outline-secondary">
-                                Clear Filters
+                    <div class="col-md-3">
+                        <select class="form-select" name="status" onchange="this.form.submit()">
+                            <option value="">All Status</option>
+                            <option value="given" {% if status_filter == 'given' %}selected{% endif %}>Coupons Given</option>
+                            <option value="not_given" {% if status_filter == 'not_given' %}selected{% endif %}>Coupons Not Given</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <div class="d-flex gap-2">
+                            <a href="/admin/food_management" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> Clear
                             </a>
+                            <button id="foodQrScannerBtn" class="btn btn-outline-info" type="button">
+                                <i class="fas fa-qrcode me-1"></i> QR Scanner
+                            </button>
                         </div>
                     </div>
                 </form>
@@ -59,18 +215,21 @@
     </div>
 </div>
 
-<!-- Food Coupon Management Table -->
+<!-- Food Management Table -->
 <div class="row">
     <div class="col-12">
         <div class="card shadow-sm border-0">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Food Coupons</h5>
+                <h5 class="mb-0">Food Coupon Distribution</h5>
                 <div class="btn-group">
-                    <button id="giveSelectedDay1Btn" class="btn btn-sm btn-outline-primary" disabled>
-                        <i class="fas fa-utensils me-1"></i> Give Day 1 Coupons
+                    <button id="giveSelectedDay1Btn" class="btn btn-sm btn-outline-success" disabled>
+                        <i class="fas fa-utensils me-1"></i> Give Day 1 to Selected
                     </button>
-                    <button id="giveSelectedDay2Btn" class="btn btn-sm btn-outline-success" disabled>
-                        <i class="fas fa-utensils me-1"></i> Give Day 2 Coupons
+                    <button id="giveSelectedDay2Btn" class="btn btn-sm btn-outline-info" disabled>
+                        <i class="fas fa-utensils me-1"></i> Give Day 2 to Selected
+                    </button>
+                    <button id="downloadSelectedMealPlanBtn" class="btn btn-sm btn-outline-secondary" disabled>
+                        <i class="fas fa-download me-1"></i> Download Meal Plans
                     </button>
                 </div>
             </div>
@@ -87,7 +246,8 @@
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>Role</th>
-                                <th>Food Coupons</th>
+                                <th>Phone</th>
+                                <th>Food Coupons Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -99,38 +259,45 @@
                                         <input class="form-check-input guest-checkbox" type="checkbox" value="{{ guest.ID }}">
                                     </div>
                                 </td>
-                                <td>{{ guest.ID }}</td>
-                                <td>{{ guest.Name }}</td>
+                                <td><strong>{{ guest.ID }}</strong></td>
+                                <td>{{ guest.Name or 'Not provided' }}</td>
                                 <td><span class="badge bg-primary">{{ guest.GuestRole }}</span></td>
+                                <td>{{ guest.Phone or 'Not provided' }}</td>
                                 <td>
-                                    <div>
-                                        <span class="badge {% if guest.FoodCouponsDay1 == 'True' %}bg-success{% else %}bg-secondary{% endif %} me-1">
-                                            {% if guest.FoodCouponsDay1 == 'True' %}Day 1 Given{% else %}Day 1 Not Given{% endif %}
+                                    <div class="d-flex flex-column gap-1">
+                                        <span class="badge {% if guest.FoodCouponsDay1 == 'True' %}bg-success{% else %}bg-secondary{% endif %} food-badge">
+                                            <i class="fas fa-calendar-day me-1"></i>
+                                            Day 1: {% if guest.FoodCouponsDay1 == 'True' %}Given{% else %}Pending{% endif %}
                                         </span>
-                                        <span class="badge {% if guest.FoodCouponsDay2 == 'True' %}bg-success{% else %}bg-secondary{% endif %}">
-                                            {% if guest.FoodCouponsDay2 == 'True' %}Day 2 Given{% else %}Day 2 Not Given{% endif %}
+                                        <span class="badge {% if guest.FoodCouponsDay2 == 'True' %}bg-success{% else %}bg-secondary{% endif %} food-badge">
+                                            <i class="fas fa-calendar-day me-1"></i>
+                                            Day 2: {% if guest.FoodCouponsDay2 == 'True' %}Given{% else %}Pending{% endif %}
                                         </span>
                                     </div>
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <form action="/give_food_coupon" method="post" class="d-inline">
-                                            <input type="hidden" name="guest_id" value="{{ guest.ID }}">
-                                            <input type="hidden" name="day" value="1">
-                                            <button type="submit" class="btn btn-outline-primary btn-sm" {% if guest.FoodCouponsDay1 == 'True' %}disabled{% endif %}>
-                                                <i class="fas fa-utensils"></i> Day 1
-                                            </button>
-                                        </form>
-                                        <form action="/give_food_coupon" method="post" class="d-inline ms-1">
-                                            <input type="hidden" name="guest_id" value="{{ guest.ID }}">
-                                            <input type="hidden" name="day" value="2">
-                                            <button type="submit" class="btn btn-outline-success btn-sm" {% if guest.FoodCouponsDay2 == 'True' %}disabled{% endif %}>
-                                                <i class="fas fa-utensils"></i> Day 2
-                                            </button>
-                                        </form>
-                                        <a href="/single_guest/{{ guest.ID }}" class="btn btn-outline-info btn-sm ms-1">
-                                            <i class="fas fa-eye"></i> View
+                                        <button type="button" class="btn btn-outline-success btn-sm" 
+                                                onclick="giveFoodCoupon('{{ guest.ID }}', '1')"
+                                                {% if guest.FoodCouponsDay1 == 'True' %}disabled{% endif %}>
+                                            <i class="fas fa-utensils"></i> Day 1
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info btn-sm" 
+                                                onclick="giveFoodCoupon('{{ guest.ID }}', '2')"
+                                                {% if guest.FoodCouponsDay2 == 'True' %}disabled{% endif %}>
+                                            <i class="fas fa-utensils"></i> Day 2
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                                onclick="downloadMealPlan('{{ guest.ID }}')">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                        <a href="/admin/single_guest/{{ guest.ID }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i>
                                         </a>
+                                        <button type="button" class="btn btn-outline-warning btn-sm" 
+                                                onclick="showFoodDetails('{{ guest.ID }}')">
+                                            <i class="fas fa-info-circle"></i>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
@@ -138,7 +305,7 @@
                             
                             {% if not guests %}
                             <tr>
-                                <td colspan="6" class="text-center py-4">
+                                <td colspan="7" class="text-center py-4">
                                     <p class="text-muted mb-0">No guests found matching the current filters</p>
                                 </td>
                             </tr>
@@ -150,10 +317,36 @@
             <div class="card-footer bg-white">
                 <div class="d-flex justify-content-between align-items-center">
                     <span>Total: <strong>{{ guests|length }}</strong> guests</span>
-                    <button id="foodQrScannerBtn" class="btn btn-sm btn-outline-secondary">
-                        <i class="fas fa-qrcode me-1"></i> QR Code Scanner
-                    </button>
+                    <div class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Use QR scanner for quick food coupon distribution
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Food Details Modal -->
+<div class="modal fade" id="foodDetailsModal" tabindex="-1" aria-labelledby="foodDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="foodDetailsModalLabel">
+                    <i class="fas fa-utensils me-2"></i>Food & Meal Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="foodDetailsContent">
+                    <!-- Food details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="downloadCurrentMealPlan()">
+                    <i class="fas fa-download me-1"></i> Download Meal Plan
+                </button>
             </div>
         </div>
     </div>
@@ -164,26 +357,42 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="qrScannerModalLabel">Scan Badge QR Code</h5>
+                <h5 class="modal-title" id="qrScannerModalLabel">
+                    <i class="fas fa-qrcode me-2"></i>Scan Badge QR Code
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i> Scan a guest's QR code to quickly give food coupons
+                    <i class="fas fa-info-circle me-2"></i> 
+                    Scan a guest's QR code to quickly distribute food coupons
                 </div>
                 
                 <div id="qrScanner" style="width: 100%; height: 300px;"></div>
                 
                 <div id="scanResult" class="mt-3" style="display: none;">
                     <div class="alert alert-success">
-                        <strong>Guest Found:</strong> <span id="scanGuestName"></span>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Guest Found:</strong> <span id="scanGuestName"></span><br>
+                                <small class="text-muted">ID: <span id="scanGuestId"></span> | Role: <span id="scanGuestRole"></span></small>
+                            </div>
+                            <div>
+                                <div id="scanFoodStatus" class="d-flex flex-column gap-1">
+                                    <!-- Status badges will be populated -->
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div class="d-grid gap-2">
-                        <button id="scanGiveDay1Btn" class="btn btn-primary">
+                        <button id="scanGiveDay1Btn" class="btn btn-success">
                             <i class="fas fa-utensils me-2"></i> Give Day 1 Coupons
                         </button>
-                        <button id="scanGiveDay2Btn" class="btn btn-success">
+                        <button id="scanGiveDay2Btn" class="btn btn-info">
                             <i class="fas fa-utensils me-2"></i> Give Day 2 Coupons
+                        </button>
+                        <button id="scanViewDetailsBtn" class="btn btn-outline-secondary">
+                            <i class="fas fa-eye me-2"></i> View Guest Details
                         </button>
                     </div>
                 </div>
@@ -194,18 +403,50 @@
         </div>
     </div>
 </div>
+
+<style>
+.col-md-2-4 {
+    flex: 0 0 auto;
+    width: 20%;
+}
+
+@media (max-width: 768px) {
+    .col-md-2-4 {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+}
+
+.food-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.bg-gradient {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+</style>
+
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
+<!-- DataTables -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize DataTable
     $('.datatable').DataTable({
         responsive: true,
         pageLength: 25,
+        order: [[1, 'asc']],
         language: {
-            search: "Search guests:"
+            search: "Search guests:",
+            lengthMenu: "Show _MENU_ guests per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ guests"
         }
     });
     
@@ -214,6 +455,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const guestCheckboxes = document.querySelectorAll('.guest-checkbox');
     const giveSelectedDay1Btn = document.getElementById('giveSelectedDay1Btn');
     const giveSelectedDay2Btn = document.getElementById('giveSelectedDay2Btn');
+    const downloadSelectedMealPlanBtn = document.getElementById('downloadSelectedMealPlanBtn');
     
     if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', function() {
@@ -235,8 +477,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update selected buttons state
     function updateSelectedButtonsState() {
         const selectedGuests = document.querySelectorAll('.guest-checkbox:checked');
-        giveSelectedDay1Btn.disabled = selectedGuests.length === 0;
-        giveSelectedDay2Btn.disabled = selectedGuests.length === 0;
+        const hasSelection = selectedGuests.length > 0;
+        giveSelectedDay1Btn.disabled = !hasSelection;
+        giveSelectedDay2Btn.disabled = !hasSelection;
+        downloadSelectedMealPlanBtn.disabled = !hasSelection;
     }
     
     // Handle bulk give day 1 coupons
@@ -245,9 +489,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
                 .map(checkbox => checkbox.value);
                 
-            if (selectedGuestIds.length > 0) {
-                // Send request to give day 1 coupons
-                fetch('/give_food_coupons_bulk', {
+            if (selectedGuestIds.length > 0 && confirm(`Give Day 1 food coupons to ${selectedGuestIds.length} selected guests?`)) {
+                fetch('/admin/give_food_coupons_bulk', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -257,15 +500,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert(data.message || 'Day 1 food coupons given successfully');
-                        location.reload();
+                        showNotification(data.message || 'Day 1 food coupons given successfully', 'success');
+                        setTimeout(() => location.reload(), 1500);
                     } else {
-                        alert(data.message || 'An error occurred');
+                        showNotification(data.message || 'An error occurred', 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An unexpected error occurred');
+                    showNotification('An unexpected error occurred', 'error');
                 });
             }
         });
@@ -277,9 +520,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
                 .map(checkbox => checkbox.value);
                 
-            if (selectedGuestIds.length > 0) {
-                // Send request to give day 2 coupons
-                fetch('/give_food_coupons_bulk', {
+            if (selectedGuestIds.length > 0 && confirm(`Give Day 2 food coupons to ${selectedGuestIds.length} selected guests?`)) {
+                fetch('/admin/give_food_coupons_bulk', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -289,28 +531,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert(data.message || 'Day 2 food coupons given successfully');
-                        location.reload();
+                        showNotification(data.message || 'Day 2 food coupons given successfully', 'success');
+                        setTimeout(() => location.reload(), 1500);
                     } else {
-                        alert(data.message || 'An error occurred');
+                        showNotification(data.message || 'An error occurred', 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('An unexpected error occurred');
+                    showNotification('An unexpected error occurred', 'error');
                 });
             }
         });
     }
     
-    // QR Code Scanner
+    // Handle bulk download meal plans
+    if (downloadSelectedMealPlanBtn) {
+        downloadSelectedMealPlanBtn.addEventListener('click', function() {
+            const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+                
+            if (selectedGuestIds.length > 0) {
+                selectedGuestIds.forEach(guestId => {
+                    downloadMealPlan(guestId);
+                });
+            }
+        });
+    }
+    
+    // QR Code Scanner Setup
     let html5QrCode;
+    let currentGuestId = null;
+    
     const foodQrScannerBtn = document.getElementById('foodQrScannerBtn');
     const qrScannerModal = document.getElementById('qrScannerModal');
     const scanResult = document.getElementById('scanResult');
     const scanGuestName = document.getElementById('scanGuestName');
+    const scanGuestId = document.getElementById('scanGuestId');
+    const scanGuestRole = document.getElementById('scanGuestRole');
+    const scanFoodStatus = document.getElementById('scanFoodStatus');
     const scanGiveDay1Btn = document.getElementById('scanGiveDay1Btn');
     const scanGiveDay2Btn = document.getElementById('scanGiveDay2Btn');
+    const scanViewDetailsBtn = document.getElementById('scanViewDetailsBtn');
     
     // Initialize scanner when button is clicked
     if (foodQrScannerBtn) {
@@ -340,11 +602,11 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         scanResult.style.display = 'none';
+        currentGuestId = null;
     });
     
     // Handle QR scan success
     function onScanSuccess(decodedText, decodedResult) {
-        // Process the scanned text (format expected: GUEST:GUESTID)
         let guestId = decodedText;
         
         if (decodedText.includes(':')) {
@@ -357,57 +619,60 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                scanGuestName.textContent = data.guest.Name;
+                const guest = data.guest;
+                currentGuestId = guestId;
+                
+                scanGuestName.textContent = guest.Name || 'Not provided';
+                scanGuestId.textContent = guest.ID;
+                scanGuestRole.textContent = guest.GuestRole;
+                
+                // Update food status
+                scanFoodStatus.innerHTML = `
+                    <span class="badge ${guest.FoodCouponsDay1 === 'True' ? 'bg-success' : 'bg-secondary'} food-badge">
+                        Day 1: ${guest.FoodCouponsDay1 === 'True' ? 'Given' : 'Pending'}
+                    </span>
+                    <span class="badge ${guest.FoodCouponsDay2 === 'True' ? 'bg-success' : 'bg-secondary'} food-badge">
+                        Day 2: ${guest.FoodCouponsDay2 === 'True' ? 'Given' : 'Pending'}
+                    </span>
+                `;
+                
+                // Update button states
+                scanGiveDay1Btn.disabled = guest.FoodCouponsDay1 === 'True';
+                scanGiveDay2Btn.disabled = guest.FoodCouponsDay2 === 'True';
+                
+                if (guest.FoodCouponsDay1 === 'True') {
+                    scanGiveDay1Btn.innerHTML = '<i class="fas fa-check me-2"></i>Day 1 Already Given';
+                } else {
+                    scanGiveDay1Btn.innerHTML = '<i class="fas fa-utensils me-2"></i>Give Day 1 Coupons';
+                }
+                
+                if (guest.FoodCouponsDay2 === 'True') {
+                    scanGiveDay2Btn.innerHTML = '<i class="fas fa-check me-2"></i>Day 2 Already Given';
+                } else {
+                    scanGiveDay2Btn.innerHTML = '<i class="fas fa-utensils me-2"></i>Give Day 2 Coupons';
+                }
+                
                 scanResult.style.display = 'block';
-                
-                // Set guest ID for buttons
-                scanGiveDay1Btn.dataset.guestId = guestId;
-                scanGiveDay2Btn.dataset.guestId = guestId;
-                
-                // Disable buttons based on current status
-                scanGiveDay1Btn.disabled = data.guest.FoodCouponsDay1 === 'True';
-                scanGiveDay2Btn.disabled = data.guest.FoodCouponsDay2 === 'True';
             } else {
-                alert('Guest not found. Please try again.');
+                showNotification('Guest not found. Please try again.', 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while fetching guest information');
+            showNotification('An error occurred while fetching guest information', 'error');
         });
     }
     
     // Handle QR scan failure
     function onScanFailure(error) {
-        // We can ignore failures as they happen frequently during scanning
         console.log('QR scan error: ', error);
     }
     
     // Handle give day 1 button from scanner
     if (scanGiveDay1Btn) {
         scanGiveDay1Btn.addEventListener('click', function() {
-            const guestId = this.dataset.guestId;
-            if (guestId) {
-                fetch('/give_food_coupon', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `guest_id=${guestId}&day=1`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Day 1 food coupons given successfully');
-                        this.disabled = true;
-                    } else {
-                        alert(data.message || 'An error occurred');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An unexpected error occurred');
-                });
+            if (currentGuestId) {
+                giveFoodCoupon(currentGuestId, '1');
             }
         });
     }
@@ -415,31 +680,252 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle give day 2 button from scanner
     if (scanGiveDay2Btn) {
         scanGiveDay2Btn.addEventListener('click', function() {
-            const guestId = this.dataset.guestId;
-            if (guestId) {
-                fetch('/give_food_coupon', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `guest_id=${guestId}&day=2`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Day 2 food coupons given successfully');
-                        this.disabled = true;
-                    } else {
-                        alert(data.message || 'An error occurred');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An unexpected error occurred');
-                });
+            if (currentGuestId) {
+                giveFoodCoupon(currentGuestId, '2');
+            }
+        });
+    }
+    
+    // Handle view details button from scanner
+    if (scanViewDetailsBtn) {
+        scanViewDetailsBtn.addEventListener('click', function() {
+            if (currentGuestId) {
+                window.open(`/admin/single_guest/${currentGuestId}`, '_blank');
             }
         });
     }
 });
+
+// Individual action functions
+function giveFoodCoupon(guestId, day) {
+    if (confirm(`Give Day ${day} food coupons to this guest?`)) {
+        fetch('/admin/give_food_coupon', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `guest_id=${guestId}&day=${day}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification(`Day ${day} food coupons given successfully`, 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification(data.message || 'An error occurred', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An unexpected error occurred', 'error');
+        });
+    }
+}
+
+function downloadMealPlan(guestId) {
+    window.open(`/admin/download_meal_plan/${guestId}`, '_blank');
+}
+
+function showFoodDetails(guestId) {
+    const modal = new bootstrap.Modal(document.getElementById('foodDetailsModal'));
+    const content = document.getElementById('foodDetailsContent');
+    currentGuestId = guestId;
+    
+    content.innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+            <p class="mt-2">Loading food details...</p>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Fetch guest details
+    fetch(`/api/guest/${guestId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const guest = data.guest;
+                content.innerHTML = createFoodDetailsContent(guest);
+            } else {
+                content.innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Guest not found or error loading details.
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            content.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Error loading food details: ${error.message}
+                </div>
+            `;
+        });
+}
+
+function createFoodDetailsContent(guest) {
+    return `
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-user me-2"></i>Guest Information</h6>
+                <table class="table table-sm">
+                    <tr><td>ID:</td><td><strong>${guest.ID}</strong></td></tr>
+                    <tr><td>Name:</td><td>${guest.Name || 'Not provided'}</td></tr>
+                    <tr><td>Role:</td><td><span class="badge bg-primary">${guest.GuestRole}</span></td></tr>
+                    <tr><td>Phone:</td><td>${guest.Phone || 'Not provided'}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-utensils me-2"></i>Food Coupon Status</h6>
+                <div class="mb-3 d-flex flex-column gap-2">
+                    <span class="badge ${guest.FoodCouponsDay1 === 'True' ? 'bg-success' : 'bg-secondary'} fs-6">
+                        <i class="fas fa-calendar-day me-1"></i>
+                        Day 1: ${guest.FoodCouponsDay1 === 'True' ? 'Coupons Given' : 'Pending'}
+                    </span>
+                    <span class="badge ${guest.FoodCouponsDay2 === 'True' ? 'bg-success' : 'bg-secondary'} fs-6">
+                        <i class="fas fa-calendar-day me-1"></i>
+                        Day 2: ${guest.FoodCouponsDay2 === 'True' ? 'Coupons Given' : 'Pending'}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <hr>
+        
+        <h6><i class="fas fa-calendar-alt me-2"></i>Conference Meal Schedule</h6>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card ${guest.FoodCouponsDay1 === 'True' ? 'border-success' : 'border-secondary'}">
+                    <div class="card-header ${guest.FoodCouponsDay1 === 'True' ? 'bg-success text-white' : 'bg-light'}">
+                        <h6 class="mb-0">
+                            <i class="fas fa-calendar-day me-2"></i>
+                            Day 1 - June 14, 2025
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2"><i class="fas fa-coffee text-warning me-2"></i>09:00 AM - Welcome Tea/Coffee</li>
+                            <li class="mb-2"><i class="fas fa-utensils text-primary me-2"></i>12:30 PM - Lunch Break</li>
+                            <li class="mb-2"><i class="fas fa-coffee text-warning me-2"></i>03:30 PM - Afternoon Tea/Coffee</li>
+                            <li class="mb-0"><i class="fas fa-glass-cheers text-success me-2"></i>07:00 PM - Welcome Dinner</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card ${guest.FoodCouponsDay2 === 'True' ? 'border-success' : 'border-secondary'}">
+                    <div class="card-header ${guest.FoodCouponsDay2 === 'True' ? 'bg-success text-white' : 'bg-light'}">
+                        <h6 class="mb-0">
+                            <i class="fas fa-calendar-day me-2"></i>
+                            Day 2 - June 15, 2025
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2"><i class="fas fa-coffee text-warning me-2"></i>09:00 AM - Morning Tea/Coffee</li>
+                            <li class="mb-2"><i class="fas fa-utensils text-primary me-2"></i>12:30 PM - Lunch Break</li>
+                            <li class="mb-2"><i class="fas fa-coffee text-warning me-2"></i>03:30 PM - Afternoon Tea/Coffee</li>
+                            <li class="mb-0"><i class="fas fa-wine-glass text-danger me-2"></i>06:30 PM - Farewell Dinner</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Important Notes:</strong>
+                <ul class="mb-0 mt-2">
+                    <li>Present food coupons at meal times for service</li>
+                    <li>Vegetarian and non-vegetarian options available</li>
+                    <li>Special dietary requirements can be accommodated</li>
+                    <li>Food coupons are non-transferable</li>
+                </ul>
+            </div>
+        </div>
+    `;
+}
+
+function downloadCurrentMealPlan() {
+    if (currentGuestId) {
+        downloadMealPlan(currentGuestId);
+    }
+}
+
+function exportFoodData() {
+    window.location.href = '/admin/report/export/food_list?format=csv';
+}
+
+// Notification function
+function showNotification(message, type) {
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'} notification`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        max-width: 500px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        border-radius: 8px;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    const iconClass = type === 'success' ? 'check-circle' : 
+                     type === 'error' ? 'exclamation-circle' : 
+                     type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+    
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${iconClass} me-2"></i>
+            <span class="flex-grow-1">${message}</span>
+            <button type="button" class="btn-close ms-2" onclick="this.closest('.notification').remove()"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.style.animation = 'slideOut 0.3s ease-in';
+            setTimeout(() => notification.remove(), 300);
+        }
+    }, 5000);
+}
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}
