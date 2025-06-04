@@ -2,6 +2,9 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+import os
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,8 +19,8 @@ class EmailService:
         self.password = password
         self.sender = sender
     
-    def send_email(self, recipient, subject, html_content, text_content=None):
-        """Send an email with HTML and optional text content"""
+    def send_email(self, recipient, subject, html_content, text_content=None, attachments=None):
+        """Send an email with HTML, optional text content and attachments"""
         try:
             msg = MIMEMultipart('alternative')
             msg['Subject'] = subject
@@ -37,6 +40,19 @@ class EmailService:
             part2 = MIMEText(html_content, 'html')
             msg.attach(part1)
             msg.attach(part2)
+
+            # Attach any files
+            if attachments:
+                for path in attachments:
+                    try:
+                        with open(path, 'rb') as f:
+                            part = MIMEBase('application', 'octet-stream')
+                            part.set_payload(f.read())
+                        encoders.encode_base64(part)
+                        part.add_header('Content-Disposition', f'attachment; filename="{os.path.basename(path)}"')
+                        msg.attach(part)
+                    except Exception as e:
+                        logger.error(f"Error attaching file {path}: {e}")
             
             # Send email
             with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
@@ -51,11 +67,11 @@ class EmailService:
             logger.error(f"Error sending email: {str(e)}")
             return False
     
-    def send_bulk_email(self, recipients, subject, html_content, text_content=None):
+    def send_bulk_email(self, recipients, subject, html_content, text_content=None, attachments=None):
         """Send emails to multiple recipients"""
         results = []
         for recipient in recipients:
-            success = self.send_email(recipient, subject, html_content, text_content)
+            success = self.send_email(recipient, subject, html_content, text_content, attachments)
             results.append((recipient, success))
         
         return results
