@@ -10,7 +10,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
+
+    <link rel="stylesheet" href="/static/css/single_guest.css">
     <style>
         .bg-primary { background-color: #1a237e !important; }
         .text-primary { color: #1a237e !important; }
@@ -26,81 +27,7 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             border-radius: 8px;
             transition: transform 0.2s;
-        // Food Functions
-        function giveFoodCoupon(day) {
-            if (confirm(`Give Day ${day} food coupons to this guest?`)) {
-                fetch('/admin/give_food_coupon', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: `guest_id=${currentGuestId}&day=${day}`
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showNotification(`Day ${day} food coupons given successfully`, 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showNotification(data.message || 'An error occurred', 'error');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('An unexpected error occurred', 'error');
-                });
-            }
-        }
-        
-        function downloadMealPlan() {
-            window.open(`/admin/download_meal_plan/${currentGuestId}`, '_blank');
-        }
-        
-        function toggleFoodNotesEdit() {
-            const displayDiv = document.getElementById('foodNotesDisplay');
-            const editDiv = document.getElementById('foodNotesEdit');
-            
-            if (displayDiv.style.display === 'none') {
-                displayDiv.style.display = 'block';
-                editDiv.style.display = 'none';
-            } else {
-                displayDiv.style.display = 'none';
-                editDiv.style.display = 'block';
-            }
-        }
-        
-        function cancelFoodNotesEdit() {
-            toggleFoodNotesEdit();
-        }
-        
-        function saveFoodNotes() {
-            const notes = document.getElementById('editFoodNotes').value;
-            
-            fetch('/admin/update_food_notes', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    guest_id: currentGuestId,
-                    notes: notes
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('displayFoodNotes').textContent = notes || 'No dietary notes added';
-                    showNotification('Food notes updated successfully', 'success');
-                    toggleFoodNotesEdit();
-                } else {
-                    showNotification(data.message || 'An error occurred', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('An unexpected error occurred', 'error');
-            });
-        }
+    }
         
         
         .info-card:hover {
@@ -1345,6 +1272,81 @@
     <script>
         let currentGuestId = '{{ guest.ID }}';
         let currentGuestRole = '{{ guest.GuestRole }}';
+
+        function giveFoodCoupon(day) {
+            if (confirm(`Give Day ${day} food coupons to this guest?`)) {
+                fetch('/admin/give_food_coupon', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `guest_id=${currentGuestId}&day=${day}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(`Day ${day} food coupons given successfully`, 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showNotification(data.message || 'An error occurred', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('An unexpected error occurred', 'error');
+                });
+            }
+        }
+
+        function downloadMealPlan() {
+            window.open(`/admin/download_meal_plan/${currentGuestId}`, '_blank');
+        }
+
+        function toggleFoodNotesEdit() {
+            const displayDiv = document.getElementById('foodNotesDisplay');
+            const editDiv = document.getElementById('foodNotesEdit');
+
+            if (displayDiv.style.display === 'none') {
+                displayDiv.style.display = 'block';
+                editDiv.style.display = 'none';
+            } else {
+                displayDiv.style.display = 'none';
+                editDiv.style.display = 'block';
+            }
+        }
+
+        function cancelFoodNotesEdit() {
+            toggleFoodNotesEdit();
+        }
+
+        function saveFoodNotes() {
+            const notes = document.getElementById('editFoodNotes').value;
+
+            fetch('/admin/update_food_notes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    guest_id: currentGuestId,
+                    notes: notes
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('displayFoodNotes').textContent = notes || 'No dietary notes added';
+                    showNotification('Food notes updated successfully', 'success');
+                    toggleFoodNotesEdit();
+                } else {
+                    showNotification(data.message || 'An error occurred', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An unexpected error occurred', 'error');
+            });
+        }
         
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
