@@ -10,7 +10,7 @@ from app.services.csv_db import CSVDatabase
 from app.services.auth import auth_service
 from app.config import Config
 from app.templates import templates
-from app.utils.logging_utils import log_activity
+from app.utils.logging_utils import log_activity, log_checkin
 
 from fastapi import Path as FastAPIPath  # Rename FastAPI Path
 from pathlib import Path  # Keep pathlib Path for file operations
@@ -73,6 +73,70 @@ async def check_in_page(request: Request):
     except Exception as e:
         logger.error(f"Error rendering check-in page: {str(e)}")
         raise HTTPException(status_code=500, detail="Error loading check-in page")
+
+@router.post("/check_in_guest", response_class=HTMLResponse)
+async def check_in_guest(request: Request, guest_id: str = Form(...)):
+    """Look up a guest by ID or phone and mark attendance"""
+    try:
+        guest_id = guest_id.strip()
+        guests = guests_db.read_all()
+        guest = next((g for g in guests if g.get("ID") == guest_id or g.get("Phone") == guest_id), None)
+
+        # Prepare recent check-in list
+        recent_checkins = []
+        checkin_log_path = os.path.join(config.get('PATHS', 'LogsDir'), 'checkin.log')
+        if os.path.exists(checkin_log_path):
+            try:
+                with open(checkin_log_path, 'r') as f:
+                    lines = f.readlines()[-10:]
+                    for line in lines:
+                        parts = line.strip().split(',')
+                        if len(parts) >= 4:
+                            recent_checkins.append({
+                                "guest_id": parts[0],
+                                "name": parts[1],
+                                "role": parts[2],
+                                "timestamp": parts[3]
+                            })
+            except Exception as e:
+                logger.error(f"Error reading check-in log: {str(e)}")
+
+        if not guest:
+            return templates.TemplateResponse(
+                "check_in.html",
+                {
+                    "request": request,
+                    "error": "Guest not found",
+                    "recent_checkins": recent_checkins,
+                    "active_page": "check_in"
+                }
+            )
+
+        # Add photo URL if exists
+        photo_path = os.path.join(config.get('PATHS', 'StaticDir'), 'uploads', 'profile_photos', f"{guest['ID']}.jpg")
+        if os.path.exists(photo_path):
+            guest["photo_url"] = f"/static/uploads/profile_photos/{guest['ID']}.jpg"
+
+        # Mark attendance
+        guest["DailyAttendance"] = "True"
+        guest["CheckInTime"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        guests_db.write_all(guests)
+
+        # Log the check-in
+        log_checkin(guest["ID"], guest.get("Name", ""), guest.get("GuestRole", ""))
+
+        return templates.TemplateResponse(
+            "check_in.html",
+            {
+                "request": request,
+                "guest": guest,
+                "recent_checkins": recent_checkins,
+                "active_page": "check_in"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error checking in guest: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error processing check-in")
 
 @router.get("/thank_you", response_class=HTMLResponse)
 async def thank_you(request: Request, name: str, phone: str):
