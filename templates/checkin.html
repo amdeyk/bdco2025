@@ -78,13 +78,6 @@
                                             {% if guest.DailyAttendance == 'True' %}Already Checked-in{% else %}Not Checked-in{% endif %}
                                         </span>
                                         
-                                        <span class="badge {% if guest.KitReceived == 'True' %}bg-success{% else %}bg-light text-dark{% endif %} me-2">
-                                            {% if guest.KitReceived == 'True' %}Kit Received{% else %}Kit Not Received{% endif %}
-                                        </span>
-                                        
-                                        <span class="badge {% if guest.PaymentStatus == 'Paid' %}bg-success{% elif guest.PaymentStatus == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
-                                            {{ guest.PaymentStatus }}
-                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -101,14 +94,6 @@
                                     </form>
                                 </div>
                                 
-                                <div class="col-md-6 mb-3">
-                                    <form id="markKitForm" method="post" action="/mark_kit_received">
-                                        <input type="hidden" name="guest_id" value="{{ guest.ID }}">
-                                        <button type="submit" class="btn btn-warning w-100 {% if guest.KitReceived == 'True' %}disabled{% endif %}">
-                                            <i class="fas fa-box-open me-2"></i> {% if guest.KitReceived == 'True' %}Kit Already Issued{% else %}Issue Welcome Kit{% endif %}
-                                        </button>
-                                    </form>
-                                </div>
                             </div>
                             
                             <div class="row">
@@ -121,11 +106,6 @@
                                     </form>
                                 </div>
                                 
-                                <div class="col-md-6 mb-3">
-                                    <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#paymentModal" {% if guest.PaymentStatus == 'Paid' %}disabled{% endif %}>
-                                        <i class="fas fa-money-bill-wave me-2"></i> {% if guest.PaymentStatus == 'Paid' %}Payment Complete{% else %}Record Payment{% endif %}
-                                    </button>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -182,49 +162,6 @@
     </div>
 </div>
 
-<!-- Payment Modal -->
-<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="paymentModalLabel">Record Payment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="paymentForm" method="post" action="/record_payment">
-                <div class="modal-body">
-                    <input type="hidden" name="guest_id" value="{{ guest.ID if guest else '' }}">
-                    
-                    <div class="mb-3">
-                        <label for="paymentAmount" class="form-label">Amount</label>
-                        <div class="input-group">
-                            <span class="input-group-text">₹</span>
-                            <input type="number" class="form-control" id="paymentAmount" name="amount" value="1000" min="0" step="100" required>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="paymentMethod" class="form-label">Payment Method</label>
-                        <select class="form-select" id="paymentMethod" name="payment_method" required>
-                            <option value="Cash">Cash</option>
-                            <option value="Card">Card</option>
-                            <option value="UPI">UPI</option>
-                            <option value="Bank Transfer">Bank Transfer</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="paymentReference" class="form-label">Reference (Optional)</label>
-                        <input type="text" class="form-control" id="paymentReference" name="reference" placeholder="Transaction ID, receipt number, etc.">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Confirm Payment</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_js %}
