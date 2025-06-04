@@ -3046,7 +3046,7 @@ ensure_enhanced_gift_fields()
 
 # -----------------------------------------
 # Conference settings management
-from app.utils.conference_settings import load_settings, save_settings
+from app.utils.conference_settings import load_settings, save_settings, parse_agenda_csv
 from fastapi import UploadFile, File
 from pathlib import Path
 
@@ -3092,4 +3092,5 @@ async def update_conference_settings(
 
     save_settings(settings)
     templates.env.globals["conference"] = settings
+    templates.env.globals["agenda"] = parse_agenda_csv(settings.get("agenda_csv", ""))
     return RedirectResponse(url=CONFERENCE_SETTINGS_PATH, status_code=303)

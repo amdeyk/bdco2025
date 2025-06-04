@@ -123,6 +123,7 @@
                             <div class="col-12">
                                 <h6 class="fw-bold">Conference Schedule</h6>
                                 <div class="table-responsive">
+                                    {% if agenda %}
                                     <table class="table table-hover">
                                         <thead class="table-light">
                                             <tr>
@@ -133,26 +134,19 @@
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            {% for item in agenda %}
                                             <tr>
-                                                <td>May 20, 2025</td>
-                                                <td>09:00 - 10:30</td>
-                                                <td>Registration & Welcome Kit</td>
-                                                <td>Main Lobby</td>
+                                                <td>{{ item.date }}</td>
+                                                <td>{{ item.time }}</td>
+                                                <td>{{ item.event }}</td>
+                                                <td>{{ item.location }}</td>
                                             </tr>
-                                            <tr>
-                                                <td>May 20, 2025</td>
-                                                <td>11:00 - 12:30</td>
-                                                <td>Inaugural Ceremony</td>
-                                                <td>Auditorium</td>
-                                            </tr>
-                                            <tr>
-                                                <td>May 21, 2025</td>
-                                                <td>09:30 - 11:30</td>
-                                                <td>Faculty Presentations</td>
-                                                <td>Conference Rooms</td>
-                                            </tr>
+                                            {% endfor %}
                                         </tbody>
                                     </table>
+                                    {% else %}
+                                    <p class="text-muted">Agenda will be available soon.</p>
+                                    {% endif %}
                                 </div>
                                 <div class="text-end">
                                     <a href="#" class="btn btn-sm btn-outline-primary">

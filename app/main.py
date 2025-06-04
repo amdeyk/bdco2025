@@ -97,7 +97,10 @@ from datetime import datetime
 # Initialize templates with global variables
 templates = Jinja2Templates(directory=config.get('PATHS', 'TemplatesDir'))
 templates.env.globals["now"] = datetime.now()
-templates.env.globals["conference"] = load_settings()
+settings = load_settings()
+templates.env.globals["conference"] = settings
+from app.utils.conference_settings import parse_agenda_csv
+templates.env.globals["agenda"] = parse_agenda_csv(settings.get("agenda_csv", ""))
 
 # Include routers
 # Include routers

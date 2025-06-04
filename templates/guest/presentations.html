@@ -54,6 +54,40 @@
             </button>
         </div>
         {% endif %}
+</div>
+</div>
+
+<div class="card shadow-sm border-0 mt-4">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Conference Agenda</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            {% if agenda %}
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Event</th>
+                        <th>Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in agenda %}
+                    <tr>
+                        <td>{{ item.date }}</td>
+                        <td>{{ item.time }}</td>
+                        <td>{{ item.event }}</td>
+                        <td>{{ item.location }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted mb-0">Agenda will be available soon.</p>
+            {% endif %}
+        </div>
     </div>
 </div>
 
