@@ -2577,12 +2577,14 @@ async def messages_management(request: Request, q: str = ""):
     guests_path = config.get('DATABASE', 'CSVPath', fallback='./data/guests.csv')
     messages = []
     guests_map = {}
+    guests_list = []
 
     # Read guest info for mapping
     try:
         with open(guests_path, newline='', encoding='utf-8') as gfile:
             for row in csv.DictReader(gfile):
                 guests_map[row['ID']] = row
+        guests_list = sorted(guests_map.values(), key=lambda g: g.get('Name', ''))
     except Exception as e:
         logging.error(f"[{trace_id}] Failed reading guests: {e}")
 
@@ -2615,7 +2617,13 @@ async def messages_management(request: Request, q: str = ""):
     logging.info(f"[{trace_id}] Loaded {len(messages)} messages for admin display.")
     return templates.TemplateResponse(
         "admin/messages_management.html",
-        {"request": request, "messages": messages, "search_query": q, "trace_id": trace_id}
+        {
+            "request": request,
+            "messages": messages,
+            "search_query": q,
+            "trace_id": trace_id,
+            "guests": guests_list,
+        }
     )
 
 @router.post("/respond_message")
@@ -2645,6 +2653,49 @@ async def respond_message(request: Request, admin: Dict = Depends(get_current_ad
     except Exception as e:
         logging.error(f"Error responding to message: {e}")
         raise HTTPException(status_code=500, detail="Error responding to message")
+
+
+@router.post("/send_message")
+async def admin_send_message(
+    request: Request,
+    admin: Dict = Depends(get_current_admin),
+    guest_id: str = Form(...),
+    message: str = Form(...),
+):
+    """Send a new message to a guest"""
+    try:
+        messages_path = config.get('DATABASE', 'MessagesCSV', fallback='./data/messages.csv')
+        fieldnames = [
+            "id",
+            "guest_id",
+            "message",
+            "timestamp",
+            "read",
+            "response",
+            "response_timestamp",
+        ]
+
+        file_exists = os.path.exists(messages_path)
+        with open(messages_path, 'a', newline='', encoding='utf-8') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            if not file_exists:
+                writer.writeheader()
+            now = datetime.now().isoformat()
+            writer.writerow(
+                {
+                    "id": str(uuid.uuid4()),
+                    "guest_id": guest_id,
+                    "message": "",
+                    "timestamp": now,
+                    "read": "True",
+                    "response": message,
+                    "response_timestamp": now,
+                }
+            )
+        return RedirectResponse(url="/admin/messages", status_code=303)
+    except Exception as e:
+        logging.error(f"Error sending message to guest: {e}")
+        raise HTTPException(status_code=500, detail="Error sending message")
 
 # HELPER FUNCTIONS
 

@@ -320,7 +320,9 @@
                                 {% for msg in messages %}
                                 <div class="mb-3 border rounded p-2">
                                     <div class="small text-muted">{{ msg.timestamp }}</div>
+                                    {% if msg.message %}
                                     <p class="mb-1">{{ msg.message }}</p>
+                                    {% endif %}
                                     {% if msg.response %}
                                     <div class="bg-light p-2 mt-2 rounded">
                                         <strong>Admin:</strong> {{ msg.response }}
