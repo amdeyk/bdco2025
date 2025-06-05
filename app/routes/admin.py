@@ -5,6 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from typing import Optional, List, Dict
 import logging
 import os
+import re
 from datetime import datetime
 from collections import defaultdict
 from pathlib import Path
@@ -63,6 +64,8 @@ email_service = EmailService(
 EMAIL_LOG_CSV = os.path.join(os.path.dirname(config.get('DATABASE', 'CSVPath')), 'emails.csv')
 EMAIL_ATTACH_DIR = os.path.join(config.get('PATHS', 'StaticDir'), 'uploads/email_attachments')
 os.makedirs(EMAIL_ATTACH_DIR, exist_ok=True)
+EMAIL_TEMPLATE_DIR = os.path.join('email_templates')
+os.makedirs(EMAIL_TEMPLATE_DIR, exist_ok=True)
 
 # Allowed categories for outgoing emails
 EMAIL_CATEGORIES = [
@@ -335,6 +338,17 @@ async def send_email_to_guests(
             status_code=500,
             content={"success": False, "message": f"Error sending emails: {str(e)}"}
         )
+
+@router.get("/email_template/{category}")
+async def get_email_template(category: str, admin: Dict = Depends(get_current_admin)):
+    """Return the email template content for the given category"""
+    sanitized = re.sub(r"[^a-zA-Z0-9_-]", "_", category.strip().lower())
+    template_path = os.path.join(EMAIL_TEMPLATE_DIR, f"{sanitized}.txt")
+    if os.path.exists(template_path):
+        with open(template_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        return JSONResponse(content={"template": content})
+    return JSONResponse(content={"template": ""})
 
 @router.get("/email_client", response_class=HTMLResponse)
 async def email_client_page(request: Request, admin: Dict = Depends(get_current_admin)):
