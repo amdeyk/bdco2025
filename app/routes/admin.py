@@ -1,41 +1,45 @@
 # app/routes/admin.py
 
-from fastapi import APIRouter, Request, Form, Depends, HTTPException, Response, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from typing import Optional, List, Dict
+from fastapi import (
+    APIRouter,
+    Request,
+    Form,
+    Depends,
+    HTTPException,
+    Response,
+    UploadFile,
+    File,
+    Path as FastAPIPath,
+)
+from fastapi.responses import (
+    HTMLResponse,
+    RedirectResponse,
+    JSONResponse,
+    StreamingResponse,
+)
+from typing import List, Optional, Dict
 import logging
 import os
 import re
+import csv
+import io
+import shutil
+import uuid
+import random
 from datetime import datetime
 from collections import defaultdict
 from pathlib import Path
 import psutil
+from PIL import Image, ImageDraw
+import qrcode
+
 from app.services.csv_db import CSVDatabase
 from app.services.auth import auth_service, get_current_admin
 from app.services.email import EmailService
 from app.config import Config
 from app.templates import templates
 from app.utils.logging_utils import log_activity
-from fastapi.responses import StreamingResponse
-import csv
-import io
 from app.utils.changelog import ChangelogManager
-import random
-from fastapi import Path as FastAPIPath
-from pathlib import Path
-from fastapi.responses import StreamingResponse
-import io
-from PIL import Image, ImageDraw
-import qrcode
-
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
-import csv
-import logging
-import uuid
-import shutil
-from app.config import Config
-from app.templates import templates
 
 # Configure logger
 logger = logging.getLogger(__name__)
