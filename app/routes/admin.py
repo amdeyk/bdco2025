@@ -75,6 +75,35 @@ EMAIL_CATEGORIES = [
     'Certificate', 'Post Conference 1', 'Post Conference 2'
 ]
 
+
+def get_email_client_context(request: Request) -> Dict:
+    """Build context data for the email client page"""
+    guests = guests_db.read_all()
+    roles = sorted(set(g.get("GuestRole", "") for g in guests))
+
+    emails = []
+    if os.path.exists(EMAIL_LOG_CSV):
+        with open(EMAIL_LOG_CSV, newline="", encoding="utf-8") as f:
+            emails = list(csv.DictReader(f))
+
+    stats = {c: 0 for c in EMAIL_CATEGORIES}
+    for e in emails:
+        cat = e.get("category")
+        if cat in stats:
+            stats[cat] += 1
+
+    emails = sorted(emails, key=lambda x: x.get("timestamp", ""), reverse=True)
+
+    return {
+        "request": request,
+        "guests": guests,
+        "roles": roles,
+        "emails": emails,
+        "categories": EMAIL_CATEGORIES,
+        "stats": stats,
+        "active_page": "email_client",
+    }
+
 @router.get("/dashboard", response_class=HTMLResponse)
 async def admin_dashboard(request: Request, admin: Dict = Depends(get_current_admin)):
     """
@@ -230,7 +259,7 @@ async def send_email_to_guests(
     subject: str = Form(...),
     message: str = Form(...),
     recipient_role: Optional[str] = Form(None),
-    recipient_ids: Optional[str] = Form(None),
+    recipient_ids: Optional[List[str]] = Form(None),
     category: str = Form(...),
     attachment: UploadFile = File(None)
 ):
@@ -242,11 +271,11 @@ async def send_email_to_guests(
         subject: Email subject
         message: Email message body (HTML)
         recipient_role: Optional role to filter recipients
-        recipient_ids: Optional comma-separated list of guest IDs
+        recipient_ids: Optional list of guest IDs
         category: Category of the email
         attachment: Optional file attachment
     Returns:
-        JSONResponse: Result of email sending operation
+        TemplateResponse: Rendered email client page with status message
     """
     try:
         # Get recipients based on criteria
@@ -255,11 +284,16 @@ async def send_email_to_guests(
         recipient_ids_list = []
 
         if category not in EMAIL_CATEGORIES:
-            return JSONResponse(status_code=400, content={"success": False, "message": "Invalid category"})
+            context = get_email_client_context(request)
+            context.update({
+                "result_message": "Invalid category selected", 
+                "result_success": False
+            })
+            return templates.TemplateResponse("admin/email_client.html", context, status_code=400)
         
         if recipient_ids:
             # Send to specific guests
-            guest_ids = [id.strip() for id in recipient_ids.split(',')]
+            guest_ids = [id.strip() for id in recipient_ids]
             recipient_ids_list = guest_ids
             recipients = [
                 guest["Email"] for guest in guests
@@ -280,10 +314,12 @@ async def send_email_to_guests(
             recipient_ids_list = [g["ID"] for g in guests if g.get("Email")]
         
         if not recipients:
-            return JSONResponse(
-                status_code=400,
-                content={"success": False, "message": "No valid recipients found"}
-            )
+            context = get_email_client_context(request)
+            context.update({
+                "result_message": "No valid recipients found",
+                "result_success": False
+            })
+            return templates.TemplateResponse("admin/email_client.html", context, status_code=400)
         
         # Save attachment if provided
         attachment_path = None
@@ -323,20 +359,22 @@ async def send_email_to_guests(
                 writer.writeheader()
             writer.writerow(row)
         
-        return JSONResponse(content={
-            "success": True,
-            "message": f"Sent {successes} emails successfully. {failures} failed.",
-            "details": {
-                "total": len(results),
-                "success": successes,
-                "failed": failures
-            }
+        context = get_email_client_context(request)
+        context.update({
+            "result_message": f"Sent {successes} emails successfully. {failures} failed.",
+            "result_success": True
         })
+        return templates.TemplateResponse("admin/email_client.html", context)
     except Exception as e:
         logger.error(f"Error sending emails: {str(e)}", exc_info=True)
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": f"Error sending emails: {str(e)}"}
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "message": "Error sending emails",
+                "error_details": str(e) if config.getboolean('DEFAULT', 'Debug', fallback=False) else None
+            },
+            status_code=500
         )
 
 @router.get("/email_template/{category}")
@@ -353,32 +391,8 @@ async def get_email_template(category: str, admin: Dict = Depends(get_current_ad
 @router.get("/email_client", response_class=HTMLResponse)
 async def email_client_page(request: Request, admin: Dict = Depends(get_current_admin)):
     """Interface for sending emails and viewing history"""
-    guests = guests_db.read_all()
-    roles = sorted(set(g.get("GuestRole", "") for g in guests))
-    emails = []
-    if os.path.exists(EMAIL_LOG_CSV):
-        with open(EMAIL_LOG_CSV, newline="", encoding="utf-8") as f:
-            emails = list(csv.DictReader(f))
-
-    stats = {c: 0 for c in EMAIL_CATEGORIES}
-    for e in emails:
-        cat = e.get("category")
-        if cat in stats:
-            stats[cat] += 1
-    emails = sorted(emails, key=lambda x: x.get("timestamp", ""), reverse=True)
-
-    return templates.TemplateResponse(
-        "admin/email_client.html",
-        {
-            "request": request,
-            "guests": guests,
-            "roles": roles,
-            "emails": emails,
-            "categories": EMAIL_CATEGORIES,
-            "stats": stats,
-            "active_page": "email_client",
-        },
-    )
+    context = get_email_client_context(request)
+    return templates.TemplateResponse("admin/email_client.html", context)
 
 @router.get("/admin_dashboard", response_class=HTMLResponse)
 async def admin_dashboard_page(request: Request, admin: Dict = Depends(get_current_admin)):
