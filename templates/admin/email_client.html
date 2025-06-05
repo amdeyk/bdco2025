@@ -30,7 +30,12 @@
                 <option value="{{ g.ID }}">{{ g.Name }} ({{ g.ID }})</option>
                 {% endfor %}
             </select>
-            <small class="text-muted">Leave empty to use role filter or send to all.</small>
+            <div class="mt-2">
+                <label class="form-label">Manual entry</label>
+                <textarea name="manual_emails" class="form-control" rows="2" placeholder="email1@example.com, ID2"></textarea>
+                <small class="text-muted">Comma or newline separated.</small>
+            </div>
+            <small class="text-muted">Leave list empty to use role filter or manual entry.</small>
         </div>
         <div class="col-md-4">
             <label class="form-label">Role</label>

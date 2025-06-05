@@ -260,11 +260,12 @@ async def send_email_to_guests(
     message: str = Form(...),
     recipient_role: Optional[str] = Form(None),
     recipient_ids: Optional[List[str]] = Form(None),
+    manual_emails: Optional[str] = Form(None),
     category: str = Form(...),
     attachment: UploadFile = File(None)
 ):
     """
-    Send emails to guests based on role or specific IDs
+    Send emails to guests based on role, selected IDs or manually entered emails
     Args:
         request: FastAPI request object
         admin: Current admin user info
@@ -272,6 +273,7 @@ async def send_email_to_guests(
         message: Email message body (HTML)
         recipient_role: Optional role to filter recipients
         recipient_ids: Optional list of guest IDs
+        manual_emails: Optional comma/line separated emails to send directly
         category: Category of the email
         attachment: Optional file attachment
     Returns:
@@ -291,7 +293,13 @@ async def send_email_to_guests(
             })
             return templates.TemplateResponse("admin/email_client.html", context, status_code=400)
         
-        if recipient_ids:
+        if manual_emails:
+            for item in manual_emails.replace('\n', ',').split(','):
+                email = item.strip()
+                if email:
+                    recipients.append(email)
+                    recipient_ids_list.append(email)
+        elif recipient_ids:
             # Send to specific guests
             guest_ids = [id.strip() for id in recipient_ids]
             recipient_ids_list = guest_ids
