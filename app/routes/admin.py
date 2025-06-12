@@ -13,6 +13,7 @@ import psutil
 from app.services.csv_db import CSVDatabase
 from app.services.auth import auth_service, get_current_admin
 from app.services.email import EmailService
+from app.services.journey_sync import create_journey_service
 from app.config import Config
 from app.templates import templates
 from app.utils.logging_utils import log_activity
@@ -1593,6 +1594,28 @@ async def single_guest_view(request: Request, admin: Dict = Depends(get_current_
                 },
                 status_code=404
             )
+
+        # *** UPDATED: Use synchronized journey service ***
+        journey_service = create_journey_service(config)
+        journey_data = journey_service.get_journey_data(guest_id)
+
+        if journey_data:
+            guest.update({
+                "InwardJourneyDate": journey_data.get("inward_date", ""),
+                "InwardJourneyFrom": journey_data.get("inward_origin", ""),
+                "InwardJourneyTo": journey_data.get("inward_destination", ""),
+                "InwardJourneyDetails": journey_data.get("inward_transport_details", ""),
+                "InwardJourneyRemarks": journey_data.get("inward_remarks", ""),
+                "InwardPickupRequired": "True" if journey_data.get("pickup_required") else "False",
+                "OutwardJourneyDate": journey_data.get("outward_date", ""),
+                "OutwardJourneyFrom": journey_data.get("outward_origin", ""),
+                "OutwardJourneyTo": journey_data.get("outward_destination", ""),
+                "OutwardJourneyDetails": journey_data.get("outward_transport_details", ""),
+                "OutwardJourneyRemarks": journey_data.get("outward_remarks", ""),
+                "OutwardDropRequired": "True" if journey_data.get("drop_required") else "False",
+                "LastJourneyUpdate": journey_data.get("updated_at", ""),
+                "JourneyDetailsUpdated": "True" if journey_data.get("updated_at") else "False",
+            })
             
         # Get guest presentations
         presentations_csv = os.path.join(os.path.dirname(config.get('DATABASE', 'CSVPath')), 'presentations.csv')
@@ -1950,52 +1973,29 @@ async def download_itinerary(admin: Dict = Depends(get_current_admin), guest_id:
 
 @router.post("/update_journey_details")
 async def update_journey_details(request: Request, admin: Dict = Depends(get_current_admin)):
-    """Update complete journey details with all fields"""
+    """Update complete journey details with all fields - synchronized version"""
     try:
         data = await request.json()
         guest_id = data.get('guest_id')
-        
-        guests = guests_db.read_all()
-        updated = False
-        
-        for guest in guests:
-            if guest["ID"] == guest_id:
-                # Update inward journey details
-                guest["InwardJourneyDate"] = data.get('inward_date', '')
-                guest["InwardJourneyFrom"] = data.get('inward_from', '')
-                guest["InwardJourneyTo"] = data.get('inward_to', '')
-                guest["InwardJourneyDetails"] = data.get('inward_details', '')
-                guest["InwardPickupRequired"] = "True" if data.get('inward_pickup') else "False"
-                guest["InwardJourneyRemarks"] = data.get('inward_remarks', '')
-                
-                # Update outward journey details
-                guest["OutwardJourneyDate"] = data.get('outward_date', '')
-                guest["OutwardJourneyFrom"] = data.get('outward_from', '')
-                guest["OutwardJourneyTo"] = data.get('outward_to', '')
-                guest["OutwardJourneyDetails"] = data.get('outward_details', '')
-                guest["OutwardDropRequired"] = "True" if data.get('outward_drop') else "False"
-                guest["OutwardJourneyRemarks"] = data.get('outward_remarks', '')
-                
-                # Mark journey details as updated
-                guest["JourneyDetailsUpdated"] = "True"
-                guest["LastJourneyUpdate"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                
-                updated = True
-                break
-                
-        if updated:
-            guests_db.write_all(guests)
-            
-            # Log this activity
+
+        if not guest_id:
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "Guest ID is required"}
+            )
+
+        journey_service = create_journey_service(config)
+        success = journey_service.update_journey_from_admin(guest_id, data)
+
+        if success:
             log_activity(guest_id, f"Admin {admin['user_id']} updated complete journey details")
-            
             return JSONResponse(
                 content={"success": True, "message": "Journey details updated successfully"}
             )
         else:
             return JSONResponse(
-                status_code=404,
-                content={"success": False, "message": "Guest not found"}
+                status_code=500,
+                content={"success": False, "message": "Failed to update journey details"}
             )
     except Exception as e:
         logger.error(f"Error updating journey details: {str(e)}")
@@ -2006,30 +2006,31 @@ async def update_journey_details(request: Request, admin: Dict = Depends(get_cur
 
 @router.get("/api/journey-details/{guest_id}")
 async def get_journey_details(guest_id: str, admin: Dict = Depends(get_current_admin)):
-    """Get detailed journey information for a specific guest"""
+    """Get detailed journey information for a specific guest - synchronized version"""
     try:
-        guests = guests_db.read_all()
-        guest = next((g for g in guests if g["ID"] == guest_id), None)
-        
-        if not guest:
+        journey_service = create_journey_service(config)
+        journey_data = journey_service.get_journey_data(guest_id)
+
+        if not journey_data:
             return JSONResponse(
                 status_code=404,
-                content={"success": False, "message": "Guest not found"}
+                content={"success": False, "message": "No journey data found"}
             )
-        
+
         journey_details = {
-            "inward_date": guest.get("InwardJourneyDate", ""),
-            "inward_origin": guest.get("InwardJourneyFrom", ""),
-            "inward_destination": guest.get("InwardJourneyTo", ""),
-            "inward_details": guest.get("InwardJourneyDetails", ""),
-            "inward_pickup": guest.get("InwardPickupRequired", "False"),
-            "inward_remarks": guest.get("InwardJourneyRemarks", ""),
-            "outward_date": guest.get("OutwardJourneyDate", ""),
-            "outward_origin": guest.get("OutwardJourneyFrom", ""),
-            "outward_destination": guest.get("OutwardJourneyTo", ""),
-            "outward_details": guest.get("OutwardJourneyDetails", ""),
-            "outward_drop": guest.get("OutwardDropRequired", "False"),
-            "outward_remarks": guest.get("OutwardJourneyRemarks", ""),
+            "inward_date": journey_data.get("inward_date", ""),
+            "inward_origin": journey_data.get("inward_origin", ""),
+            "inward_destination": journey_data.get("inward_destination", ""),
+            "inward_details": journey_data.get("inward_transport_details", ""),
+            "inward_pickup": journey_data.get("pickup_required", False),
+            "inward_remarks": journey_data.get("inward_remarks", ""),
+            "outward_date": journey_data.get("outward_date", ""),
+            "outward_origin": journey_data.get("outward_origin", ""),
+            "outward_destination": journey_data.get("outward_destination", ""),
+            "outward_details": journey_data.get("outward_transport_details", ""),
+            "outward_drop": journey_data.get("drop_required", False),
+            "outward_remarks": journey_data.get("outward_remarks", ""),
+            "updated_at": journey_data.get("updated_at", ""),
         }
         
         return JSONResponse(
@@ -2040,6 +2041,29 @@ async def get_journey_details(guest_id: str, admin: Dict = Depends(get_current_a
         return JSONResponse(
             status_code=500,
             content={"success": False, "message": f"Error getting journey details: {str(e)}"}
+        )
+
+@router.post("/sync_journey_data")
+async def sync_journey_data(request: Request, admin: Dict = Depends(get_current_admin)):
+    """Manually trigger journey data synchronization between all systems"""
+    try:
+        journey_service = create_journey_service(config)
+        stats = journey_service.sync_all_data()
+
+        log_activity("System", f"Admin {admin['user_id']} triggered journey data sync")
+
+        return JSONResponse(
+            content={
+                "success": True,
+                "message": "Journey data synchronization completed",
+                "stats": stats,
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error during journey sync: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Sync failed: {str(e)}"}
         )
 
 # ENHANCED FOOD MANAGEMENT ROUTES (Updated from paste content)

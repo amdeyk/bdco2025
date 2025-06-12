@@ -15,6 +15,7 @@ from app.services.csv_db import CSVDatabase
 from app.templates import templates
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from app.services.qr_service import QRService
+from app.services.journey_sync import create_journey_service
 from fastapi import Path
 from fastapi import APIRouter, Request, Form, HTTPException, Path
 from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
@@ -258,6 +259,16 @@ async def startup_event():
             )
     except Exception as e:
         logger.error(f"Error creating initial changelog entry: {str(e)}")
+
+@app.on_event("startup")
+async def initialize_journey_sync():
+    """Initialize journey synchronization service and sync existing data"""
+    try:
+        journey_service = create_journey_service(config)
+        stats = journey_service.sync_all_data()
+        logger.info(f"Journey sync initialized: {stats}")
+    except Exception as e:
+        logger.error(f"Error initializing journey sync: {str(e)}")
 
 @app.on_event("shutdown")
 async def shutdown_event():

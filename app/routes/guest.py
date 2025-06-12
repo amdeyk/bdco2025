@@ -14,6 +14,7 @@ import qrcode
 from PIL import Image, ImageDraw
 
 from app.services.qr_service import QRService
+from app.services.journey_sync import create_journey_service
 
 from app.services.csv_db import CSVDatabase
 from app.services.auth import auth_service
@@ -263,39 +264,33 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
                     if row.get("guest_id") == guest["ID"]:
                         messages.append(row)
         
-        # Get journey details
-        journey_data = None
-        if os.path.exists(JOURNEY_CSV):
-            with open(JOURNEY_CSV, mode='r', newline='', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    if row["guest_id"] == guest["ID"]:
-                        journey_data = row
-                        break
-        
-        # Check for photo
-        photo_path = os.path.join(PROFILE_PHOTOS_DIR, f"{guest['ID']}.jpg")
-        if os.path.exists(photo_path):
-            guest["photo_url"] = f"/static/uploads/profile_photos/{guest['ID']}.jpg"
-        
+        # *** UPDATED: Get journey details using synchronized service ***
+        journey_service = create_journey_service(config)
+        journey_data = journey_service.get_journey_data(guest["ID"])
+
         # Prepare journey data for template
         inward_journey = {}
         outward_journey = {}
-        
+
         if journey_data:
             inward_journey = {
                 "date": journey_data.get("inward_date"),
                 "origin": journey_data.get("inward_origin"),
                 "destination": journey_data.get("inward_destination"),
-                "remarks": journey_data.get("inward_remarks")
+                "remarks": journey_data.get("inward_remarks"),
             }
-            
+
             outward_journey = {
                 "date": journey_data.get("outward_date"),
                 "origin": journey_data.get("outward_origin"),
                 "destination": journey_data.get("outward_destination"),
-                "remarks": journey_data.get("outward_remarks")
+                "remarks": journey_data.get("outward_remarks"),
             }
+        
+        # Check for photo
+        photo_path = os.path.join(PROFILE_PHOTOS_DIR, f"{guest['ID']}.jpg")
+        if os.path.exists(photo_path):
+            guest["photo_url"] = f"/static/uploads/profile_photos/{guest['ID']}.jpg"
         
         return templates.TemplateResponse(
             "guest/profile.html",
@@ -464,57 +459,32 @@ async def update_journey(
     outward_destination: Optional[str] = Form(None),
     outward_remarks: Optional[str] = Form(None)
 ):
-    """Update journey details"""
+    """Update journey details - synchronized version"""
     try:
-        import csv
-        
+        journey_service = create_journey_service(config)
+
         journey_data = {
-            "inward_date": inward_date,
-            "inward_origin": inward_origin,
-            "inward_destination": inward_destination,
-            "inward_remarks": inward_remarks,
-            "outward_date": outward_date,
-            "outward_origin": outward_origin,
-            "outward_destination": outward_destination,
-            "outward_remarks": outward_remarks
+            "inward_date": inward_date or "",
+            "inward_origin": inward_origin or "",
+            "inward_destination": inward_destination or "",
+            "inward_remarks": inward_remarks or "",
+            "outward_date": outward_date or "",
+            "outward_origin": outward_origin or "",
+            "outward_destination": outward_destination or "",
+            "outward_remarks": outward_remarks or "",
         }
-        
-        # Check if journey data exists
-        journeys = []
-        journey_exists = False
-        fieldnames = ["guest_id", "inward_date", "inward_origin", "inward_destination", 
-                     "inward_remarks", "outward_date", "outward_origin", 
-                     "outward_destination", "outward_remarks", "updated_at"]
-        
-        if os.path.exists(JOURNEY_CSV):
-            with open(JOURNEY_CSV, mode='r', newline='', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    if row["guest_id"] == guest["ID"]:
-                        # Update existing journey
-                        row.update(journey_data)
-                        row["updated_at"] = datetime.now().isoformat()
-                        journey_exists = True
-                    journeys.append(row)
-        
-        if not journey_exists:
-            # Create new journey record
-            journey_data["guest_id"] = guest["ID"]
-            journey_data["updated_at"] = datetime.now().isoformat()
-            journeys.append(journey_data)
-        
-        # Ensure file directory exists
-        os.makedirs(os.path.dirname(JOURNEY_CSV), exist_ok=True)
-        
-        # Write to file
-        with open(JOURNEY_CSV, mode='w', newline='', encoding='utf-8') as file:
-            writer = csv.DictWriter(file, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(journeys)
-        
-        return JSONResponse(
-            content={"success": True, "message": "Journey details updated successfully."}
-        )
+
+        success = journey_service.update_journey_from_guest(guest["ID"], journey_data)
+
+        if success:
+            return JSONResponse(
+                content={"success": True, "message": "Journey details updated successfully."}
+            )
+        else:
+            return JSONResponse(
+                status_code=500,
+                content={"success": False, "message": "Failed to update journey details."}
+            )
     except Exception as e:
         logger.error(f"Error updating journey: {str(e)}")
         return JSONResponse(
