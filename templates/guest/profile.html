@@ -57,16 +57,35 @@
             </div>
         </div>
         
-        <!-- QR Code Card -->
+        <!-- QR Code Card - Replace the existing QR code section in guest/profile.html -->
         <div class="card shadow-sm border-0 mt-4">
             <div class="card-header bg-dark text-white">
                 <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i> QR Code</h5>
             </div>
             <div class="card-body text-center">
                 <div class="qr-container p-2 mb-3">
-                    <img src="/static/qr_codes/guest_{{ guest.ID }}.png" alt="QR Code" class="img-fluid" style="max-width: 200px;">
+                    {% if guest.qr_code_url %}
+                        <img src="{{ guest.qr_code_url }}" alt="QR Code for {{ guest.Name }}" class="img-fluid" style="max-width: 200px;">
+                    {% elif guest.qr_code_base64 %}
+                        <img src="{{ guest.qr_code_base64 }}" alt="QR Code for {{ guest.Name }}" class="img-fluid" style="max-width: 200px;">
+                    {% else %}
+                        <div id="qr-placeholder" class="border border-dashed border-secondary rounded d-flex align-items-center justify-content-center" style="width: 200px; height: 200px; margin: 0 auto;">
+                            <div class="text-center">
+                                <i class="fas fa-qrcode fa-3x text-muted mb-2"></i>
+                                <p class="text-muted mb-2">QR Code</p>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="generateQRCode()">
+                                    Generate QR Code
+                                </button>
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
                 <p class="text-muted mb-0">Use this QR code for quick check-in</p>
+                <div class="mt-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="downloadQRCode()">
+                        <i class="fas fa-download me-1"></i> Download QR Code
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -506,8 +525,8 @@ document.addEventListener('DOMContentLoaded', function() {
     handleFormSubmit('editProfileForm', 'Profile updated successfully');
     handleFormSubmit('uploadPhotoForm', 'Photo uploaded successfully');
     handleFormSubmit('uploadPresentationForm', 'Presentation uploaded successfully');
-    handleFormSubmit('journeyForm', 'Journey details updated successfully');
-    handleFormSubmit('messageForm', 'Message sent successfully');
+handleFormSubmit('journeyForm', 'Journey details updated successfully');
+handleFormSubmit('messageForm', 'Message sent successfully');
     
     // Phone number validation
     const phoneInputs = document.querySelectorAll('input[name="phone"]');
@@ -516,6 +535,80 @@ document.addEventListener('DOMContentLoaded', function() {
             this.value = this.value.replace(/\D/g, '').substring(0, 10);
         });
     });
+});
+</script>
+
+<script>
+// QR Code functionality
+function generateQRCode() {
+    const guestId = '{{ guest.ID }}';
+    const placeholder = document.getElementById('qr-placeholder');
+
+    if (placeholder) {
+        placeholder.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
+
+        // Request QR code generation
+        fetch(`/guest/qr-code/${guestId}`)
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                }
+                throw new Error('Failed to generate QR code');
+            })
+            .then(blob => {
+                const imageUrl = URL.createObjectURL(blob);
+                placeholder.innerHTML = `<img src="${imageUrl}" alt="QR Code" class="img-fluid" style="max-width: 200px;">`;
+            })
+            .catch(error => {
+                console.error('Error generating QR code:', error);
+                placeholder.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                        <p class="text-muted mb-2">Failed to generate QR code</p>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="generateQRCode()">
+                            Try Again
+                        </button>
+                    </div>
+                `;
+            });
+    }
+}
+
+function downloadQRCode() {
+    const guestId = '{{ guest.ID }}';
+    const guestName = '{{ guest.Name }}';
+
+    // Create a temporary link and trigger download
+    fetch(`/guest/qr-code/${guestId}`)
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            }
+            throw new Error('Failed to download QR code');
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `QRCode_${guestId}_${guestName.replace(/\s+/g, '_')}.png`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        })
+        .catch(error => {
+            console.error('Error downloading QR code:', error);
+            alert('Failed to download QR code. Please try again.');
+        });
+}
+
+// Auto-generate QR code if not present
+document.addEventListener('DOMContentLoaded', function() {
+    const qrPlaceholder = document.getElementById('qr-placeholder');
+    if (qrPlaceholder) {
+        // Auto-generate QR code after a short delay
+        setTimeout(generateQRCode, 1000);
+    }
 });
 </script>
 {% endblock %}

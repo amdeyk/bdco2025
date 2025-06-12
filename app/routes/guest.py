@@ -1,6 +1,6 @@
 # app/routes/guest.py
 from fastapi import APIRouter, Request, Depends, HTTPException, Form, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from typing import Optional, Dict
 import os
@@ -8,6 +8,12 @@ import logging
 import uuid
 from datetime import datetime
 import shutil
+import io
+import base64
+import qrcode
+from PIL import Image, ImageDraw
+
+from app.services.qr_service import QRService
 
 from app.services.csv_db import CSVDatabase
 from app.services.auth import auth_service
@@ -26,6 +32,8 @@ guests_db = CSVDatabase(
     config.get('DATABASE', 'CSVPath'),
     config.get('DATABASE', 'BackupDir')
 )
+# Initialize QR service
+qr_service = QRService(config.get('PATHS', 'StaticDir'))
 # Use singleton auth_service from app.services.auth
 
 # Define storage paths
@@ -113,6 +121,30 @@ def update_faculty_login(guest_id: str):
             writer.writerows(rows)
     except Exception as e:
         logger.error(f"Error updating faculty login: {str(e)}")
+
+# Add this helper function for QR code generation
+def generate_qr_base64(data: str) -> str:
+    """Generate QR code as base64 string"""
+    try:
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(data)
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+
+        return f"data:image/png;base64,{img_str}"
+    except Exception as e:
+        logger.error(f"Error generating QR code: {str(e)}")
+        return ""
 
 # Routes
 @router.get("/login", response_class=HTMLResponse)
@@ -202,6 +234,13 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
     try:
         # Check if guest has faculty access
         guest["is_faculty"] = is_faculty(guest["ID"])
+
+        # Generate QR code if it doesn't exist
+        qr_code_path = qr_service.generate_guest_badge_qr(guest["ID"])
+        if qr_code_path:
+            guest["qr_code_url"] = f"/static/{qr_code_path}"
+        else:
+            guest["qr_code_base64"] = generate_qr_base64(f"GUEST:{guest['ID']}")
         
         # Get presentations
         import csv
@@ -274,6 +313,38 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
     except Exception as e:
         logger.error(f"Error loading profile page: {str(e)}")
         raise HTTPException(status_code=500, detail="Error loading profile")
+
+# Add route to generate QR code on demand
+@router.get("/qr-code/{guest_id}")
+async def get_qr_code(guest_id: str, guest: Dict = Depends(get_current_guest)):
+    """Generate QR code for guest"""
+    try:
+        # Verify guest can only access their own QR code
+        if guest["ID"] != guest_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(f"GUEST:{guest_id}")
+        qr.make(fit=True)
+
+        img = qr.make_image(fill_color="black", back_color="white")
+        img_buffer = io.BytesIO()
+        img.save(img_buffer, format='PNG')
+        img_buffer.seek(0)
+
+        return StreamingResponse(
+            io.BytesIO(img_buffer.getvalue()),
+            media_type="image/png",
+            headers={"Cache-Control": "max-age=3600"}
+        )
+    except Exception as e:
+        logger.error(f"Error generating QR code: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error generating QR code")
 
 @router.get("/presentations", response_class=HTMLResponse)
 async def presentations_page(request: Request, guest: Dict = Depends(get_current_guest)):
@@ -651,6 +722,12 @@ async def register_guest(
         guests = guests_db.read_all()
         guests.append(guest)
         guests_db.write_all(guests)
+
+        # Generate QR code for the new guest
+        try:
+            qr_service.generate_guest_badge_qr(guest_id)
+        except Exception as qr_error:
+            logger.warning(f"Failed to generate QR code for guest {guest_id}: {str(qr_error)}")
         
         return JSONResponse(
             content={

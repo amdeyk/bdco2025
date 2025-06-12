@@ -71,8 +71,37 @@ app = FastAPI(
     version=config.get('DEFAULT', 'SoftwareVersion')
 )
 
-# Initialize QR service
+# Initialize QR service and generate QR codes for existing guests
 qr_service = QRService(config.get('PATHS', 'StaticDir'))
+
+# Generate QR codes for existing guests if they don't have them
+@app.on_event("startup")
+async def generate_missing_qr_codes():
+    """Generate QR codes for existing guests that don't have them"""
+    try:
+        from app.services.csv_db import CSVDatabase
+
+        guests_db = CSVDatabase(
+            config.get('DATABASE', 'CSVPath'),
+            config.get('DATABASE', 'BackupDir')
+        )
+
+        guests = guests_db.read_all()
+        generated_count = 0
+
+        for guest in guests:
+            guest_id = guest.get('ID')
+            if guest_id and not qr_service.qr_exists(guest_id):
+                try:
+                    qr_service.generate_guest_badge_qr(guest_id)
+                    generated_count += 1
+                except Exception as e:
+                    logger.error(f"Failed to generate QR code for guest {guest_id}: {str(e)}")
+
+        if generated_count > 0:
+            logger.info(f"Generated QR codes for {generated_count} guests")
+    except Exception as e:
+        logger.error(f"Error generating missing QR codes: {str(e)}")
 
 # Add CORS middleware
 app.add_middleware(
@@ -131,6 +160,32 @@ async def root(request: Request):
                 "message": "Error loading page"
             }
         )
+
+# Add route to serve QR codes directly
+@app.get("/qr-code/{guest_id}")
+async def serve_qr_code(guest_id: str):
+    """Serve QR code image for a guest"""
+    try:
+        qr_path = qr_service.generate_guest_badge_qr(guest_id)
+
+        if not qr_path:
+            raise HTTPException(status_code=404, detail="QR code not found")
+
+        full_path = os.path.join(config.get('PATHS', 'StaticDir'), qr_path)
+
+        if not os.path.exists(full_path):
+            raise HTTPException(status_code=404, detail="QR code file not found")
+
+        from fastapi.responses import FileResponse
+        return FileResponse(
+            full_path,
+            media_type="image/png",
+            headers={"Cache-Control": "max-age=3600"}
+        )
+    except Exception as e:
+        logger.error(f"Error serving QR code: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error generating QR code")
+
 
 # Error handling
 @app.exception_handler(HTTPException)
