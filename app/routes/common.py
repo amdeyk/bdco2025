@@ -917,7 +917,7 @@ async def generate_badge_common(guest_id: str = FastAPIPath(...)):
 def create_simple_badge_common(guest: dict) -> Image.Image:
     """Create a simple badge design"""
     try:
-        # Create a badge with BDCON 2025 theme
+        # Create a badge with MAGNACODE 2025 theme
         width, height = 800, 600
         badge = Image.new('RGB', (width, height), '#1a237e')  # Dark blue background
         draw = ImageDraw.Draw(badge)
@@ -936,12 +936,12 @@ def create_simple_badge_common(guest: dict) -> Image.Image:
         try:
             # Try to use a default font
             title_y = content_margin + 30
-            draw.text((width//2, title_y), "BDCON 2025", fill='white', anchor="mm")
+            draw.text((width//2, title_y), "MAGNACODE 2025", fill='white', anchor="mm")
             draw.text((width//2, title_y + 30), "BENGAL DIABETES CONFERENCE", fill='white', anchor="mm")
             draw.text((width//2, title_y + 55), "June 14-15, 2025", fill='white', anchor="mm")
         except:
             # Fallback if font issues
-            draw.text((50, content_margin + 40), "BDCON 2025 - BENGAL DIABETES CONFERENCE", fill='white')
+            draw.text((50, content_margin + 40), "MAGNACODE 2025 - BENGAL DIABETES CONFERENCE", fill='white')
         
         # Guest information section
         info_start_y = content_margin + header_height + 40

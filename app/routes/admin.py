@@ -2700,9 +2700,9 @@ async def admin_send_message(
 # HELPER FUNCTIONS
 
 def create_simple_badge(guest: Dict) -> Image.Image:
-    """Create a professional badge design for BDCON 2025"""
+    """Create a professional badge design for MAGNACODE 2025"""
     try:
-        # Create a badge with BDCON 2025 theme
+        # Create a badge with MAGNACODE 2025 theme
         width, height = 1000, 700  # Increased size for better quality
         
         # Background with gradient effect
@@ -2716,13 +2716,13 @@ def create_simple_badge(guest: Dict) -> Image.Image:
         # Conference branding
         try:
             # Main title
-            draw.text((width//2, 30), "BDCON 2025", fill='white', anchor="mm", font_size=36)
+            draw.text((width//2, 30), "MAGNACODE 2025", fill='white', anchor="mm", font_size=36)
             draw.text((width//2, 70), "14th Annual Conference", fill='white', anchor="mm", font_size=20)
             draw.text((width//2, 100), "Bengal Diabetes Foundation", fill='white', anchor="mm", font_size=18)
             draw.text((width//2, 125), "June 14-15, 2025", fill='#ffeb3b', anchor="mm", font_size=16)
         except:
             # Fallback without font_size parameter
-            draw.text((50, 30), "BDCON 2025 - 14th Annual Conference", fill='white')
+            draw.text((50, 30), "MAGNACODE 2025 - 14th Annual Conference", fill='white')
             draw.text((50, 60), "Bengal Diabetes Foundation", fill='white')
             draw.text((50, 90), "June 14-15, 2025", fill='#ffeb3b')
         
@@ -2847,7 +2847,7 @@ def create_itinerary_document(guest: Dict) -> str:
     try:
         content = f"""
 ===========================================
-BDCON 2025 - JOURNEY ITINERARY
+MAGNACODE 2025 - JOURNEY ITINERARY
 ===========================================
 
 Guest Information:
@@ -2858,7 +2858,7 @@ Guest Information:
 - Email: {guest.get('Email', 'N/A')}
 
 Conference Details:
-- Event: 14th Annual Conference - BDCON 2025
+- Event: 14th Annual Conference - MAGNACODE 2025
 - Dates: June 14-15, 2025
 - Venue: ITC Fortune Park, Pushpanjali, Durgapur
 - Organizer: Bengal Diabetes Foundation
@@ -2869,7 +2869,7 @@ Journey Status:
 
 Contact Information:
 - Conference Helpline: +91 84800 02958
-- Email: info@bdcon2025.org
+- Email: info@MAGNACODE2025.org
 
 Important Notes:
 1. Please carry this itinerary and your registration confirmation
@@ -2892,7 +2892,7 @@ def create_meal_plan_document(guest: Dict) -> str:
     try:
         content = f"""
 ===========================================
-BDCON 2025 - MEAL PLAN & FOOD COUPONS
+MAGNACODE 2025 - MEAL PLAN & FOOD COUPONS
 ===========================================
 
 Guest Information:
@@ -2935,7 +2935,7 @@ Food Notes:
 
 Contact for Food-related Queries:
 - Food Coordinator: +91 84800 02958
-- Email: food@bdcon2025.org
+- Email: food@MAGNACODE2025.org
 
 Important Notes:
 1. Please present your food coupons at meal times
@@ -2962,7 +2962,7 @@ def create_gift_list_document(guest: Dict) -> str:
         role_specific_gifts = {
             'Delegates': [
                 'Conference Kit with Stationery',
-                'BDCON 2025 T-Shirt',
+                'MAGNACODE 2025 T-Shirt',
                 'Conference Proceedings Book',
                 'Certificate of Participation',
                 'Conference Bag',
@@ -2970,7 +2970,7 @@ def create_gift_list_document(guest: Dict) -> str:
             ],
             'Faculty': [
                 'Faculty Kit with Premium Items',
-                'BDCON 2025 T-Shirt',
+                'MAGNACODE 2025 T-Shirt',
                 'Conference Proceedings Book',
                 'Certificate of Appreciation',
                 'Premium Conference Bag',
@@ -2978,7 +2978,7 @@ def create_gift_list_document(guest: Dict) -> str:
             ],
             'Sponsors': [
                 'Sponsor Recognition Kit',
-                'BDCON 2025 T-Shirt',
+                'MAGNACODE 2025 T-Shirt',
                 'Conference Proceedings Book',
                 'Sponsor Certificate',
                 'Premium Gift Set',
@@ -2986,7 +2986,7 @@ def create_gift_list_document(guest: Dict) -> str:
             ],
             'OrgBatch': [
                 'Organizing Committee Special Kit',
-                'BDCON 2025 T-Shirt',
+                'MAGNACODE 2025 T-Shirt',
                 'Conference Proceedings Book',
                 'Organizing Committee Certificate',
                 'Special Recognition Award',
@@ -2994,7 +2994,7 @@ def create_gift_list_document(guest: Dict) -> str:
             ],
             'Staff': [
                 'Staff Appreciation Kit',
-                'BDCON 2025 T-Shirt',
+                'MAGNACODE 2025 T-Shirt',
                 'Certificate of Service',
                 'Staff Badge',
                 'Conference Bag'
@@ -3003,13 +3003,13 @@ def create_gift_list_document(guest: Dict) -> str:
         
         gifts = role_specific_gifts.get(role, [
             'Conference Kit',
-            'BDCON 2025 T-Shirt',
+            'MAGNACODE 2025 T-Shirt',
             'Certificate of Participation'
         ])
         
         content = f"""
 ===========================================
-BDCON 2025 - CONFERENCE GIFT LIST
+MAGNACODE 2025 - CONFERENCE GIFT LIST
 ===========================================
 
 Guest Information:
@@ -3039,7 +3039,7 @@ Collection Details:
 - Contact: Registration Team (+91 84800 02958)
 
 Conference Details:
-- Event: 14th Annual Conference - BDCON 2025
+- Event: 14th Annual Conference - MAGNACODE 2025
 - Dates: June 14-15, 2025
 - Theme: Bridging the Gaps in Diabetes Management
 - Organizer: Bengal Diabetes Foundation
