@@ -2,359 +2,450 @@
 
 {% block title %}Guest Profile | Conference Management{% endblock %}
 
-{% block content %}
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card shadow-sm border-0">
-            <div class="card-header bg-primary text-white py-3">
-                <h5 class="mb-0"><i class="fas fa-user me-2"></i> Guest Information</h5>
-            </div>
-            <div class="card-body">
-                <div class="text-center mb-4">
-                    {% if guest.photo_url %}
-                    <img src="{{ guest.photo_url }}" alt="{{ guest.Name }}" class="rounded-circle img-thumbnail" style="width: 150px; height: 150px; object-fit: cover;">
-                    {% else %}
-                    <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;">
-                        <i class="fas fa-user-circle text-secondary" style="font-size: 100px;"></i>
-                    </div>
-                    {% endif %}
-                    <h5 class="mt-3 mb-0">{{ guest.Name }}</h5>
-                    <span class="badge bg-info mt-2">{{ guest.GuestRole }}</span>
-                </div>
-                
-                <hr>
-                
-                <div class="mb-3">
-                    <label class="fw-bold mb-1"><i class="fas fa-id-card me-2"></i> Guest ID:</label>
-                    <p class="mb-0">{{ guest.ID }}</p>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="fw-bold mb-1"><i class="fas fa-phone me-2"></i> Phone:</label>
-                    <p class="mb-0">{{ guest.Phone }}</p>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="fw-bold mb-1"><i class="fas fa-envelope me-2"></i> Email:</label>
-                    <p class="mb-0">{{ guest.Email or 'Not provided' }}</p>
-                </div>
-                
-                <div class="mb-3">
-                    <label class="fw-bold mb-1"><i class="fas fa-calendar-alt me-2"></i> Registration Date:</label>
-                    <p class="mb-0">{{ guest.RegistrationDate }}</p>
-                </div>
-                
-                <hr>
-                
-                <div class="d-grid">
-                    <button type="button" class="btn btn-outline-primary mb-2" data-bs-toggle="modal" data-bs-target="#editProfileModal">
-                        <i class="fas fa-edit me-2"></i> Edit Profile
-                    </button>
-                    <button type="button" class="btn btn-outline-info" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">
-                        <i class="fas fa-camera me-2"></i> Update Photo
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- QR Code Card - Replace the existing QR code section in guest/profile.html -->
-        <div class="card shadow-sm border-0 mt-4">
-            <div class="card-header bg-dark text-white">
-                <h5 class="mb-0"><i class="fas fa-qrcode me-2"></i> QR Code</h5>
-            </div>
-            <div class="card-body text-center">
-                <div class="qr-container p-2 mb-3">
-                    {% if guest.qr_code_url %}
-                        <img src="{{ guest.qr_code_url }}" alt="QR Code for {{ guest.Name }}" class="img-fluid" style="max-width: 200px;">
-                    {% elif guest.qr_code_base64 %}
-                        <img src="{{ guest.qr_code_base64 }}" alt="QR Code for {{ guest.Name }}" class="img-fluid" style="max-width: 200px;">
-                    {% else %}
-                        <div id="qr-placeholder" class="border border-dashed border-secondary rounded d-flex align-items-center justify-content-center" style="width: 200px; height: 200px; margin: 0 auto;">
-                            <div class="text-center">
-                                <i class="fas fa-qrcode fa-3x text-muted mb-2"></i>
-                                <p class="text-muted mb-2">QR Code</p>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="generateQRCode()">
-                                    Generate QR Code
-                                </button>
-                            </div>
-                        </div>
-                    {% endif %}
-                </div>
-                <p class="text-muted mb-0">Use this QR code for quick check-in</p>
-                <div class="mt-2">
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="downloadQRCode()">
-                        <i class="fas fa-download me-1"></i> Download QR Code
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+{% block extra_css %}
+<style>
+    .profile-card {
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
     
-    <div class="col-md-8">
-        <!-- Tab Navigation -->
-        <ul class="nav nav-tabs" id="guestTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="true">
-                    <i class="fas fa-info-circle me-2"></i> Information
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="presentations-tab" data-bs-toggle="tab" data-bs-target="#presentations" type="button" role="tab" aria-controls="presentations" aria-selected="false">
-                    <i class="fas fa-file-powerpoint me-2"></i> Presentations
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="journey-tab" data-bs-toggle="tab" data-bs-target="#journey" type="button" role="tab" aria-controls="journey" aria-selected="false">
-                    <i class="fas fa-plane me-2"></i> Journey Details
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab" aria-controls="messages" aria-selected="false">
-                    <i class="fas fa-envelope me-2"></i> Messages
-                </button>
-            </li>
-        </ul>
+    .qr-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .info-item {
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .tab-content {
+        min-height: 400px;
+    }
+    
+    .journey-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 10px;
+        }
         
-        <!-- Tab Content -->
-        <div class="tab-content mt-4" id="guestTabContent">
-            <!-- Information Tab -->
-            <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0">Conference Information</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="fw-bold mb-1">Payment Status:</label>
-                                    <div>
-                                        <span class="badge {% if guest.PaymentStatus == 'Paid' %}bg-success{% elif guest.PaymentStatus == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
-                                            {{ guest.PaymentStatus }}
-                                        </span>
-                                    </div>
-                            </div>
-                        </div>
-                        
-                        <hr>
-                        
-                        <div class="row">
-                            <div class="col-12">
-                                <h6 class="fw-bold">Conference Schedule</h6>
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>Date</th>
-                                                <th>Time</th>
-                                                <th>Event</th>
-                                                <th>Location</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>May 20, 2025</td>
-                                                <td>09:00 - 10:30</td>
-                                                <td>Registration & Welcome Kit</td>
-                                                <td>Main Lobby</td>
-                                            </tr>
-                                            <tr>
-                                                <td>May 20, 2025</td>
-                                                <td>11:00 - 12:30</td>
-                                                <td>Inaugural Ceremony</td>
-                                                <td>Auditorium</td>
-                                            </tr>
-                                            <tr>
-                                                <td>May 21, 2025</td>
-                                                <td>09:30 - 11:30</td>
-                                                <td>Faculty Presentations</td>
-                                                <td>Conference Rooms</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="text-end">
-                                    <a href="#" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-download me-1"></i> Full Schedule
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+        .profile-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .qr-container img {
+            max-width: 150px !important;
+        }
+        
+        .journey-section {
+            padding: 15px;
+        }
+        
+        .tab-content {
+            min-height: auto;
+        }
+    }
+    
+    .badge-status {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+    
+    .profile-photo {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border: 4px solid #fff;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .qr-code-section {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <!-- Mobile-friendly header -->
+    <div class="row g-3">
+        <!-- Left Column - Profile Info -->
+        <div class="col-lg-4 col-md-5">
+            <!-- Profile Card -->
+            <div class="card profile-card border-0 mb-3">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Profile</h5>
                 </div>
-            </div>
-                                
-            <!-- Presentations Tab -->
-            <div class="tab-pane fade" id="presentations" role="tabpanel" aria-labelledby="presentations-tab">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Your Presentations</h5>
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPresentationModal">
-                            <i class="fas fa-upload me-1"></i> Upload New
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        {% if presentations %}
-                        <div class="row">
-                            {% for presentation in presentations %}
-                            <div class="col-md-6 mb-3">
-                                <div class="card h-100 border-0 shadow-sm">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between">
-                                            <h6 class="card-title">{{ presentation.title }}</h6>
-                                            <span class="badge {% if presentation.file_type == 'pdf' %}bg-danger{% elif presentation.file_type == 'ppt' %}bg-warning{% elif presentation.file_type == 'video' %}bg-primary{% else %}bg-success{% endif %}">
-                                                {{ presentation.file_type|upper }}
-                                            </span>
-                                        </div>
-                                        <p class="card-text small text-muted">
-                                            {{ presentation.description|truncate(100) }}
-                                        </p>
-                                        <p class="card-text small">
-                                            <i class="fas fa-calendar-alt me-1"></i> {{ presentation.upload_date }}
-                                        </p>
-                                    </div>
-                                    <div class="card-footer bg-white">
-                                        <a href="{{ presentation.file_url }}" class="btn btn-sm btn-outline-primary" target="_blank">
-                                            <i class="fas fa-download me-1"></i> Download
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
+                <div class="card-body p-3">
+                    <!-- Profile Photo -->
+                    <div class="text-center mb-3">
+                        {% if guest.photo_url %}
+                        <img src="{{ guest.photo_url }}" alt="{{ guest.Name }}" class="rounded-circle profile-photo">
                         {% else %}
-                        <div class="text-center py-5">
-                            <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
-                            <h5>No Presentations Yet</h5>
-                            <p class="text-muted">Upload your presentations for the conference here.</p>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadPresentationModal">
-                                <i class="fas fa-upload me-2"></i> Upload Your First Presentation
-                            </button>
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto profile-photo">
+                            <i class="fas fa-user-circle text-secondary" style="font-size: 60px;"></i>
                         </div>
                         {% endif %}
+                        <h6 class="mt-2 mb-1">{{ guest.Name }}</h6>
+                        <span class="badge bg-info badge-status">{{ guest.GuestRole }}</span>
+                    </div>
+                    
+                    <!-- Basic Info -->
+                    <div class="info-item">
+                        <small class="text-muted d-block">Guest ID</small>
+                        <strong>{{ guest.ID }}</strong>
+                    </div>
+                    <div class="info-item">
+                        <small class="text-muted d-block">Phone</small>
+                        <strong>{{ guest.Phone }}</strong>
+                    </div>
+                    <div class="info-item">
+                        <small class="text-muted d-block">Email</small>
+                        <strong>{{ guest.Email or 'Not provided' }}</strong>
+                    </div>
+                    <div class="info-item">
+                        <small class="text-muted d-block">Registration</small>
+                        <strong>{{ guest.RegistrationDate }}</strong>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            <i class="fas fa-edit me-1"></i> Edit Profile
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">
+                            <i class="fas fa-camera me-1"></i> Update Photo
+                        </button>
                     </div>
                 </div>
             </div>
             
-            <!-- Journey Details Tab -->
-            <div class="tab-pane fade" id="journey" role="tabpanel" aria-labelledby="journey-tab">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0">Travel Information</h5>
+            <!-- QR Code Card -->
+            <div class="card profile-card border-0">
+                <div class="card-header qr-code-section text-white text-center py-3">
+                    <h6 class="mb-0"><i class="fas fa-qrcode me-2"></i>QR Code</h6>
+                </div>
+                <div class="card-body text-center p-3">
+                    <div class="qr-container mb-2">
+                        {% if guest.qr_code_url %}
+                            <img src="{{ guest.qr_code_url }}" alt="QR Code" class="img-fluid rounded" style="max-width: 120px;">
+                        {% elif guest.qr_code_base64 %}
+                            <img src="{{ guest.qr_code_base64 }}" alt="QR Code" class="img-fluid rounded" style="max-width: 120px;">
+                        {% else %}
+                            <div id="qr-placeholder" class="border border-dashed border-secondary rounded d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px;">
+                                <div class="text-center">
+                                    <i class="fas fa-qrcode fa-2x text-muted mb-1"></i>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="generateQRCode()">
+                                        Generate
+                                    </button>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
-                    <div class="card-body">
-                        <form id="journeyForm" method="post" action="/guest/update-journey">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <h6 class="mb-3 border-bottom pb-2">Inward Journey</h6>
-                                    
-                                    <div class="mb-3">
-                                        <label for="inward_date" class="form-label">Arrival Date</label>
-                                        <input type="date" class="form-control" id="inward_date" name="inward_date" 
-                                               value="{{ inward_journey.date or '' }}">
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="inward_origin" class="form-label">Origin</label>
-                                        <input type="text" class="form-control" id="inward_origin" name="inward_origin" 
-                                               placeholder="City/Airport/Station" value="{{ inward_journey.origin or '' }}">
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="inward_destination" class="form-label">Destination</label>
-                                        <input type="text" class="form-control" id="inward_destination" name="inward_destination" 
-                                               placeholder="Conference Venue City" value="{{ inward_journey.destination or 'Calcutta' }}">
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="inward_remarks" class="form-label">Travel Details</label>
-                                        <textarea class="form-control" id="inward_remarks" name="inward_remarks" rows="3" 
-                                                  placeholder="Flight/Train Number, arrival time, etc.">{{ inward_journey.remarks or '' }}</textarea>
+                    <small class="text-muted d-block mb-2">Quick Check-in</small>
+                    <button type="button" class="btn btn-sm btn-outline-dark" onclick="downloadQRCode()">
+                        <i class="fas fa-download me-1"></i> Download
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column - Tabs Content -->
+        <div class="col-lg-8 col-md-7">
+            <!-- Compact Tab Navigation -->
+            <ul class="nav nav-pills nav-fill mb-3" id="guestTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="info-tab" data-bs-toggle="pill" data-bs-target="#info" type="button" role="tab">
+                        <i class="fas fa-info-circle d-md-none"></i>
+                        <span class="d-none d-md-inline">Info</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="presentations-tab" data-bs-toggle="pill" data-bs-target="#presentations" type="button" role="tab">
+                        <i class="fas fa-file-powerpoint d-md-none"></i>
+                        <span class="d-none d-md-inline">Presentations</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="journey-tab" data-bs-toggle="pill" data-bs-target="#journey" type="button" role="tab">
+                        <i class="fas fa-plane d-md-none"></i>
+                        <span class="d-none d-md-inline">Journey</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="messages-tab" data-bs-toggle="pill" data-bs-target="#messages" type="button" role="tab">
+                        <i class="fas fa-envelope d-md-none"></i>
+                        <span class="d-none d-md-inline">Messages</span>
+                    </button>
+                </li>
+            </ul>
+            
+            <!-- Tab Content -->
+            <div class="tab-content" id="guestTabContent">
+                <!-- Information Tab -->
+                <div class="tab-pane fade show active" id="info" role="tabpanel">
+                    <div class="card profile-card border-0">
+                        <div class="card-body p-3">
+                            <!-- Status Cards Row -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-6 col-md-3">
+                                    <div class="text-center p-2 border rounded">
+                                        <small class="text-muted d-block">Payment</small>
+                                        <span class="badge {% if guest.PaymentStatus == 'Paid' %}bg-success{% else %}bg-warning{% endif %} badge-status">
+                                            {{ guest.PaymentStatus or 'Pending' }}
+                                        </span>
                                     </div>
                                 </div>
-                                
-                                <div class="col-md-6">
-                                    <h6 class="mb-3 border-bottom pb-2">Outward Journey</h6>
-                                    
-                                    <div class="mb-3">
-                                        <label for="outward_date" class="form-label">Departure Date</label>
-                                        <input type="date" class="form-control" id="outward_date" name="outward_date" 
-                                               value="{{ outward_journey.date or '' }}">
+                                <div class="col-6 col-md-3">
+                                    <div class="text-center p-2 border rounded">
+                                        <small class="text-muted d-block">Attendance</small>
+                                        <span class="badge {% if guest.DailyAttendance == 'True' %}bg-success{% else %}bg-secondary{% endif %} badge-status">
+                                            {% if guest.DailyAttendance == 'True' %}Present{% else %}Absent{% endif %}
+                                        </span>
                                     </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="outward_origin" class="form-label">Origin</label>
-                                        <input type="text" class="form-control" id="outward_origin" name="outward_origin" 
-                                               placeholder="Conference Venue City" value="{{ outward_journey.origin or 'Calcutta' }}">
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="text-center p-2 border rounded">
+                                        <small class="text-muted d-block">Kit</small>
+                                        <span class="badge {% if guest.KitReceived == 'True' %}bg-success{% else %}bg-warning{% endif %} badge-status">
+                                            {% if guest.KitReceived == 'True' %}Received{% else %}Pending{% endif %}
+                                        </span>
                                     </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="outward_destination" class="form-label">Destination</label>
-                                        <input type="text" class="form-control" id="outward_destination" name="outward_destination" 
-                                               placeholder="City/Airport/Station" value="{{ outward_journey.destination or '' }}">
-                                    </div>
-                                    
-                                    <div class="mb-3">
-                                        <label for="outward_remarks" class="form-label">Travel Details</label>
-                                        <textarea class="form-control" id="outward_remarks" name="outward_remarks" rows="3" 
-                                                  placeholder="Flight/Train Number, departure time, etc.">{{ outward_journey.remarks or '' }}</textarea>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="text-center p-2 border rounded">
+                                        <small class="text-muted d-block">Badge</small>
+                                        <span class="badge {% if guest.BadgePrinted == 'True' %}bg-success{% else %}bg-warning{% endif %} badge-status">
+                                            {% if guest.BadgePrinted == 'True' %}Ready{% else %}Pending{% endif %}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div class="text-end mt-3">
-                                <button type="submit" class="btn btn-primary" id="saveJourneyBtn">
-                                    <i class="fas fa-save me-2"></i> Save Journey Details
+                            <!-- Compact Schedule -->
+                            <h6 class="border-bottom pb-2 mb-3">Conference Schedule</h6>
+                            <div class="row g-2">
+                                <div class="col-12">
+                                    <div class="border rounded p-2 mb-2">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <small class="text-primary fw-bold">May 20, 2025</small>
+                                                <div class="small">11:00 - 12:30 | Inaugural Ceremony</div>
+                                            </div>
+                                            <div class="col-4 text-end">
+                                                <small class="text-muted">Auditorium</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="border rounded p-2">
+                                        <div class="row align-items-center">
+                                            <div class="col-8">
+                                                <small class="text-primary fw-bold">May 21, 2025</small>
+                                                <div class="small">09:30 - 11:30 | Faculty Presentations</div>
+                                            </div>
+                                            <div class="col-4 text-end">
+                                                <small class="text-muted">Conf. Rooms</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mt-3">
+                                <button class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-download me-1"></i> Full Schedule
                                 </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Messages Tab -->
-            <div class="tab-pane fade" id="messages" role="tabpanel" aria-labelledby="messages-tab">
-                <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0">Messages</h5>
-                    </div>
-                    <div class="card-body">
-                        <form id="messageForm" method="post" action="/guest/send-message">
-                            <div class="mb-3">
-                                <label for="message" class="form-label">Send a Message to Organizers</label>
-                                <textarea class="form-control" id="message" name="message" rows="4" placeholder="Type your message here..."></textarea>
-                            </div>
-                            <div class="text-end">
-                                <button type="submit" class="btn btn-primary" id="sendMessageBtn">
-                                    <i class="fas fa-paper-plane me-2"></i> Send Message
-                                </button>
-                            </div>
-                        </form>
-                        
-                        <hr>
-                        
-                        <h6 class="mb-3">Message History</h6>
-                        <div id="messageHistory">
-                            {% if messages %}
-                                {% for msg in messages %}
-                                <div class="mb-3 border rounded p-2">
-                                    <div class="small text-muted">{{ msg.timestamp }}</div>
-                                    {% if msg.message %}
-                                    <p class="mb-1">{{ msg.message }}</p>
-                                    {% endif %}
-                                    {% if msg.response %}
-                                    <div class="bg-light p-2 mt-2 rounded">
-                                        <strong>Admin:</strong> {{ msg.response }}
-                                        <div class="small text-muted">{{ msg.response_timestamp }}</div>
+                
+                <!-- Presentations Tab -->
+                <div class="tab-pane fade" id="presentations" role="tabpanel">
+                    <div class="card profile-card border-0">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
+                            <h6 class="mb-0">Presentations</h6>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPresentationModal">
+                                <i class="fas fa-upload me-1"></i> Upload
+                            </button>
+                        </div>
+                        <div class="card-body p-3">
+                            {% if presentations %}
+                            <div class="row g-2">
+                                {% for presentation in presentations %}
+                                <div class="col-12 col-md-6">
+                                    <div class="card h-100 border">
+                                        <div class="card-body p-2">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title mb-0 small">{{ presentation.title }}</h6>
+                                                <span class="badge {% if presentation.file_type == 'pdf' %}bg-danger{% elif presentation.file_type == 'ppt' %}bg-warning{% else %}bg-primary{% endif %} badge-status">
+                                                    {{ presentation.file_type|upper }}
+                                                </span>
+                                            </div>
+                                            <p class="card-text small text-muted mb-2">
+                                                {{ presentation.description|truncate(80) }}
+                                            </p>
+                                            <small class="text-muted d-block mb-2">
+                                                <i class="fas fa-calendar-alt me-1"></i> {{ presentation.upload_date }}
+                                            </small>
+                                            <a href="{{ presentation.file_url }}" class="btn btn-sm btn-outline-primary w-100" target="_blank">
+                                                <i class="fas fa-download me-1"></i> Download
+                                            </a>
+                                        </div>
                                     </div>
-                                    {% endif %}
                                 </div>
                                 {% endfor %}
+                            </div>
                             {% else %}
                             <div class="text-center py-4">
-                                <p class="text-muted">No messages yet</p>
+                                <i class="fas fa-file-upload fa-2x text-muted mb-2"></i>
+                                <h6>No Presentations</h6>
+                                <p class="text-muted small">Upload presentations here</p>
+                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPresentationModal">
+                                    Upload First Presentation
+                                </button>
                             </div>
                             {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Journey Details Tab -->
+                <div class="tab-pane fade" id="journey" role="tabpanel">
+                    <div class="card profile-card border-0">
+                        <div class="card-body p-3">
+                            <form id="journeyForm" method="post" action="/guest/update-journey">
+                                <div class="row g-3">
+                                    <!-- Inward Journey -->
+                                    <div class="col-12 col-lg-6">
+                                        <div class="journey-section">
+                                            <h6 class="text-primary mb-3">
+                                                <i class="fas fa-plane-arrival me-1"></i> Arrival
+                                            </h6>
+                                            
+                                            <div class="mb-2">
+                                                <label class="form-label small">Date</label>
+                                                <input type="date" class="form-control form-control-sm" name="inward_date" 
+                                                       value="{{ inward_journey.date or '' }}">
+                                            </div>
+                                            
+                                            <div class="mb-2">
+                                                <label class="form-label small">From</label>
+                                                <input type="text" class="form-control form-control-sm" name="inward_origin" 
+                                                       placeholder="City/Airport" value="{{ inward_journey.origin or '' }}">
+                                            </div>
+                                            
+                                            <div class="mb-2">
+                                                <label class="form-label small">To</label>
+                                                <input type="text" class="form-control form-control-sm" name="inward_destination" 
+                                                       placeholder="Conference City" value="{{ inward_journey.destination or 'Calcutta' }}">
+                                            </div>
+                                            
+                                            <div class="mb-0">
+                                                <label class="form-label small">Details</label>
+                                                <textarea class="form-control form-control-sm" name="inward_remarks" rows="2" 
+                                                          placeholder="Flight/Train details">{{ inward_journey.remarks or '' }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Outward Journey -->
+                                    <div class="col-12 col-lg-6">
+                                        <div class="journey-section">
+                                            <h6 class="text-success mb-3">
+                                                <i class="fas fa-plane-departure me-1"></i> Departure
+                                            </h6>
+                                            
+                                            <div class="mb-2">
+                                                <label class="form-label small">Date</label>
+                                                <input type="date" class="form-control form-control-sm" name="outward_date" 
+                                                       value="{{ outward_journey.date or '' }}">
+                                            </div>
+                                            
+                                            <div class="mb-2">
+                                                <label class="form-label small">From</label>
+                                                <input type="text" class="form-control form-control-sm" name="outward_origin" 
+                                                       placeholder="Conference City" value="{{ outward_journey.origin or 'Calcutta' }}">
+                                            </div>
+                                            
+                                            <div class="mb-2">
+                                                <label class="form-label small">To</label>
+                                                <input type="text" class="form-control form-control-sm" name="outward_destination" 
+                                                       placeholder="City/Airport" value="{{ outward_journey.destination or '' }}">
+                                            </div>
+                                            
+                                            <div class="mb-0">
+                                                <label class="form-label small">Details</label>
+                                                <textarea class="form-control form-control-sm" name="outward_remarks" rows="2" 
+                                                          placeholder="Flight/Train details">{{ outward_journey.remarks or '' }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mt-3">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i> Save Journey Details
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Messages Tab -->
+                <div class="tab-pane fade" id="messages" role="tabpanel">
+                    <div class="card profile-card border-0">
+                        <div class="card-body p-3">
+                            <form id="messageForm" method="post" action="/guest/send-message">
+                                <div class="mb-3">
+                                    <label class="form-label small">Message to Organizers</label>
+                                    <textarea class="form-control" name="message" rows="3" placeholder="Type your message..."></textarea>
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-paper-plane me-1"></i> Send
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <hr>
+                            
+                            <h6 class="mb-2">Message History</h6>
+                            <div class="message-history" style="max-height: 300px; overflow-y: auto;">
+                                {% if messages %}
+                                    {% for msg in messages %}
+                                    <div class="border rounded p-2 mb-2">
+                                        <small class="text-muted">{{ msg.timestamp }}</small>
+                                        {% if msg.message %}
+                                        <p class="mb-1 small">{{ msg.message }}</p>
+                                        {% endif %}
+                                        {% if msg.response %}
+                                        <div class="bg-light p-2 mt-1 rounded">
+                                            <strong class="small">Admin:</strong> <span class="small">{{ msg.response }}</span>
+                                            <div class="small text-muted">{{ msg.response_timestamp }}</div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                <div class="text-center py-3">
+                                    <i class="fas fa-comments fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted small">No messages yet</p>
+                                </div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -363,29 +454,29 @@
     </div>
 </div>
 
+<!-- Modals remain the same but with smaller sizes for mobile -->
 <!-- Edit Profile Modal -->
-<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header py-2">
+                <h6 class="modal-title">Edit Profile</h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
             </div>
             <form id="editProfileForm" method="post" action="/guest/update-profile">
-                <div class="modal-body">
+                <div class="modal-body p-3">
                     <div class="mb-3">
-                        <label for="email" class="form-label">Email Address</label>
-                        <input type="email" class="form-control" id="email" name="email" value="{{ guest.Email or '' }}">
+                        <label class="form-label small">Email</label>
+                        <input type="email" class="form-control form-control-sm" name="email" value="{{ guest.Email or '' }}">
                     </div>
                     <div class="mb-3">
-                        <label for="phone" class="form-label">Phone Number</label>
-                        <input type="text" class="form-control" id="phone" name="phone" value="{{ guest.Phone }}">
-                        <div class="form-text">10-digit phone number without spaces or hyphens</div>
+                        <label class="form-label small">Phone</label>
+                        <input type="text" class="form-control form-control-sm" name="phone" value="{{ guest.Phone }}">
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
                 </div>
             </form>
         </div>
@@ -393,27 +484,26 @@
 </div>
 
 <!-- Upload Photo Modal -->
-<div class="modal fade" id="uploadPhotoModal" tabindex="-1" aria-labelledby="uploadPhotoModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="uploadPhotoModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="uploadPhotoModalLabel">Upload Profile Photo</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header py-2">
+                <h6 class="modal-title">Upload Photo</h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
             </div>
             <form id="uploadPhotoForm" method="post" action="/guest/upload-photo" enctype="multipart/form-data">
-                <div class="modal-body">
+                <div class="modal-body p-3">
                     <div class="mb-3">
-                        <label for="photo" class="form-label">Select Photo</label>
-                        <input type="file" class="form-control" id="photo" name="photo" accept="image/jpeg,image/png,image/gif">
-                        <div class="form-text">Maximum file size: 2MB. Supported formats: JPG, PNG, GIF</div>
+                        <label class="form-label small">Select Photo</label>
+                        <input type="file" class="form-control form-control-sm" name="photo" accept="image/*">
                     </div>
-                    <div id="photoPreview" class="text-center mb-3" style="display:none;">
-                        <img src="" alt="Preview" class="img-thumbnail" style="max-height: 200px;">
+                    <div id="photoPreview" class="text-center" style="display:none;">
+                        <img src="" alt="Preview" class="img-thumbnail" style="max-height: 150px;">
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Upload Photo</button>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Upload</button>
                 </div>
             </form>
         </div>
@@ -421,33 +511,32 @@
 </div>
 
 <!-- Upload Presentation Modal -->
-<div class="modal fade" id="uploadPresentationModal" tabindex="-1" aria-labelledby="uploadPresentationModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<div class="modal fade" id="uploadPresentationModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="uploadPresentationModalLabel">Upload Presentation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header py-2">
+                <h6 class="modal-title">Upload Presentation</h6>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="modal"></button>
             </div>
             <form id="uploadPresentationForm" method="post" action="/guest/upload-presentation" enctype="multipart/form-data">
-                <div class="modal-body">
+                <div class="modal-body p-3">
                     <div class="mb-3">
-                        <label for="title" class="form-label">Presentation Title</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
+                        <label class="form-label small">Title</label>
+                        <input type="text" class="form-control form-control-sm" name="title" required>
                     </div>
                     <div class="mb-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        <label class="form-label small">Description</label>
+                        <textarea class="form-control form-control-sm" name="description" rows="2"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="file" class="form-label">Presentation File</label>
-                        <input type="file" class="form-control" id="file" name="file" required
+                        <label class="form-label small">File</label>
+                        <input type="file" class="form-control form-control-sm" name="file" required
                                accept=".pdf,.ppt,.pptx,.doc,.docx,.mp4,.avi,.webm">
-                        <div class="form-text">Supported formats: PDF, PowerPoint, Word, and Video files</div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Upload Presentation</button>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Upload</button>
                 </div>
             </form>
         </div>
@@ -457,97 +546,14 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Photo preview functionality
-    const photoInput = document.getElementById('photo');
-    const photoPreview = document.getElementById('photoPreview');
-    const previewImage = photoPreview.querySelector('img');
-    
-    if (photoInput) {
-        photoInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    previewImage.src = e.target.result;
-                    photoPreview.style.display = 'block';
-                }
-                
-                reader.readAsDataURL(this.files[0]);
-            } else {
-                photoPreview.style.display = 'none';
-            }
-        });
-    }
-    
-    // Form submission handling with Ajax
-    function handleFormSubmit(formId, successMessage) {
-        const form = document.getElementById(formId);
-        
-        if (form) {
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = new FormData(this);
-                
-                fetch(this.action, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Close modal if it's in a modal
-                        if (this.closest('.modal')) {
-                            const modalElement = this.closest('.modal');
-                            const modal = bootstrap.Modal.getInstance(modalElement);
-                            modal.hide();
-                        }
-                        
-                        // Show success message
-                        alert(successMessage || data.message);
-                        
-                        // Reload page to show updated data
-                        location.reload();
-                    } else {
-                        alert(data.message || 'An error occurred');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An unexpected error occurred');
-                });
-            });
-        }
-    }
-    
-    // Initialize form handlers
-    handleFormSubmit('editProfileForm', 'Profile updated successfully');
-    handleFormSubmit('uploadPhotoForm', 'Photo uploaded successfully');
-    handleFormSubmit('uploadPresentationForm', 'Presentation uploaded successfully');
-handleFormSubmit('journeyForm', 'Journey details updated successfully');
-handleFormSubmit('messageForm', 'Message sent successfully');
-    
-    // Phone number validation
-    const phoneInputs = document.querySelectorAll('input[name="phone"]');
-    phoneInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            this.value = this.value.replace(/\D/g, '').substring(0, 10);
-        });
-    });
-});
-</script>
-
-<script>
 // QR Code functionality
 function generateQRCode() {
     const guestId = '{{ guest.ID }}';
     const placeholder = document.getElementById('qr-placeholder');
-
+    
     if (placeholder) {
-        placeholder.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>';
-
-        // Request QR code generation
+        placeholder.innerHTML = '<div class="spinner-border spinner-border-sm text-primary" role="status"></div>';
+        
         fetch(`/guest/qr-code/${guestId}`)
             .then(response => {
                 if (response.ok) {
@@ -557,16 +563,15 @@ function generateQRCode() {
             })
             .then(blob => {
                 const imageUrl = URL.createObjectURL(blob);
-                placeholder.innerHTML = `<img src="${imageUrl}" alt="QR Code" class="img-fluid" style="max-width: 200px;">`;
+                placeholder.innerHTML = `<img src="${imageUrl}" alt="QR Code" class="img-fluid rounded" style="max-width: 120px;">`;
             })
             .catch(error => {
-                console.error('Error generating QR code:', error);
+                console.error('Error:', error);
                 placeholder.innerHTML = `
                     <div class="text-center">
-                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
-                        <p class="text-muted mb-2">Failed to generate QR code</p>
+                        <i class="fas fa-exclamation-triangle text-warning mb-1"></i>
                         <button type="button" class="btn btn-sm btn-outline-secondary" onclick="generateQRCode()">
-                            Try Again
+                            Retry
                         </button>
                     </div>
                 `;
@@ -577,8 +582,7 @@ function generateQRCode() {
 function downloadQRCode() {
     const guestId = '{{ guest.ID }}';
     const guestName = '{{ guest.Name }}';
-
-    // Create a temporary link and trigger download
+    
     fetch(`/guest/qr-code/${guestId}`)
         .then(response => {
             if (response.ok) {
@@ -597,64 +601,159 @@ function downloadQRCode() {
             document.body.removeChild(a);
         })
         .catch(error => {
-            console.error('Error downloading QR code:', error);
-            alert('Failed to download QR code. Please try again.');
+            console.error('Error:', error);
+            alert('Failed to download QR code');
         });
 }
 
-// Auto-generate QR code if not present
 document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate QR code if placeholder exists
     const qrPlaceholder = document.getElementById('qr-placeholder');
     if (qrPlaceholder) {
-        // Auto-generate QR code after a short delay
-        setTimeout(generateQRCode, 1000);
+        setTimeout(generateQRCode, 500);
     }
+    
+    // Photo preview
+    const photoInput = document.querySelector('input[name="photo"]');
+    const photoPreview = document.getElementById('photoPreview');
+    const previewImage = photoPreview?.querySelector('img');
+    
+    if (photoInput && previewImage) {
+        photoInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    photoPreview.style.display = 'block';
+                }
+                reader.readAsDataURL(this.files[0]);
+            } else {
+                photoPreview.style.display = 'none';
+            }
+        });
+    }
+    
+    // Form submission handlers
+    function handleFormSubmit(formId, successMessage) {
+        const form = document.getElementById(formId);
+        
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                
+                // Show loading
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+                submitBtn.disabled = true;
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal if it's in a modal
+                        const modalElement = this.closest('.modal');
+                        if (modalElement) {
+                            const modal = bootstrap.Modal.getInstance(modalElement);
+                            modal.hide();
+                        }
+                        
+                        // Show success toast
+                        showToast(successMessage || data.message, 'success');
+                        
+                        // Reload page after short delay
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        showToast(data.message || 'An error occurred', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showToast('An unexpected error occurred', 'error');
+                })
+                .finally(() => {
+                    // Restore button
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
+            });
+        }
+    }
+    
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        // Create toast container if it doesn't exist
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Create toast
+        const toastId = 'toast-' + Date.now();
+        const bgClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-info';
+        
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        
+        // Show toast
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+        toast.show();
+        
+        // Remove toast element after it's hidden
+        toastElement.addEventListener('hidden.bs.toast', function() {
+            this.remove();
+        });
+    }
+    
+    // Initialize form handlers
+    handleFormSubmit('editProfileForm', 'Profile updated successfully');
+    handleFormSubmit('uploadPhotoForm', 'Photo uploaded successfully');
+    handleFormSubmit('uploadPresentationForm', 'Presentation uploaded successfully');
+    handleFormSubmit('journeyForm', 'Journey details updated successfully');
+    handleFormSubmit('messageForm', 'Message sent successfully');
+    
+    // Phone number validation
+    const phoneInputs = document.querySelectorAll('input[name="phone"]');
+    phoneInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').substring(0, 10);
+        });
+    });
+    
+    // Smooth tab transitions
+    const tabButtons = document.querySelectorAll('[data-bs-toggle="pill"]');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Add loading animation to tab content
+            const targetTab = document.querySelector(this.getAttribute('data-bs-target'));
+            if (targetTab) {
+                targetTab.style.opacity = '0.5';
+                setTimeout(() => {
+                    targetTab.style.opacity = '1';
+                }, 150);
+            }
+        });
+    });
 });
 </script>
 {% endblock %}
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label class="fw-bold mb-1">Daily Attendance:</label>
-                                    <div>
-                                        <span class="badge {% if guest.DailyAttendance == 'True' %}bg-success{% else %}bg-secondary{% endif %}">
-                                            {% if guest.DailyAttendance == 'True' %}Present Today{% else %}Not Checked In{% endif %}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label class="fw-bold mb-1">Faculty Status:</label>
-                                    <div>
-                                        <span class="badge {% if guest.is_faculty %}bg-info{% else %}bg-light text-dark{% endif %}">
-                                            {% if guest.is_faculty %}Faculty Member{% else %}{{ guest.GuestRole }}{% endif %}
-                                        </span>
-                                    </div>
-                                </div>3">
-                                    <label class="fw-bold mb-1">Registration Status:</label>
-                                    <div>
-                                        <span class="badge bg-success">Active</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label class="fw-bold mb-1">Kit Status:</label>
-                                    <div>
-                                        <span class="badge {% if guest.KitReceived == 'True' %}bg-success{% else %}bg-warning{% endif %}">
-                                            {% if guest.KitReceived == 'True' %}Received{% else %}Not Received{% endif %}
-                                        </span>
-                                    </div>
-                                </div>
-                                
-                                <div class="mb-3">
-                                    <label class="fw-bold mb-1">Badge Status:</label>
-                                    <div>
-                                        <span class="badge {% if guest.BadgePrinted == 'True' %}bg-success{% else %}bg-warning{% endif %}">
-                                            {% if guest.BadgePrinted == 'True' %}Printed{% else %}Not Printed{% endif %}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <div class="mb-

@@ -1,0 +1,266 @@
+/* static/css/mobile-profile.css */
+
+/* Mobile-first responsive design */
+@media (max-width: 576px) {
+    /* Container adjustments */
+    .container-fluid {
+        padding: 5px !important;
+    }
+    
+    /* Profile card adjustments */
+    .profile-card {
+        margin-bottom: 10px !important;
+        border-radius: 10px !important;
+    }
+    
+    .card-body {
+        padding: 15px !important;
+    }
+    
+    .card-header {
+        padding: 10px 15px !important;
+    }
+    
+    /* Profile photo size */
+    .profile-photo {
+        width: 80px !important;
+        height: 80px !important;
+    }
+    
+    /* QR code adjustments */
+    .qr-container img {
+        max-width: 100px !important;
+    }
+    
+    #qr-placeholder {
+        width: 100px !important;
+        height: 100px !important;
+    }
+    
+    /* Tab navigation */
+    .nav-pills .nav-link {
+        padding: 8px 12px !important;
+        font-size: 12px !important;
+    }
+    
+    .nav-pills .nav-link i {
+        font-size: 16px !important;
+    }
+    
+    /* Status cards in mobile */
+    .status-card-mobile {
+        padding: 8px !important;
+        margin-bottom: 8px !important;
+    }
+    
+    /* Journey sections */
+    .journey-section {
+        padding: 12px !important;
+        margin-bottom: 10px !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Form controls */
+    .form-control-sm {
+        font-size: 12px !important;
+        padding: 6px 8px !important;
+    }
+    
+    /* Modal adjustments */
+    .modal-dialog {
+        margin: 10px !important;
+    }
+    
+    .modal-content {
+        border-radius: 10px !important;
+    }
+    
+    /* Button sizes */
+    .btn-sm {
+        padding: 4px 8px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Badge adjustments */
+    .badge-status {
+        font-size: 10px !important;
+        padding: 2px 6px !important;
+    }
+    
+    /* Presentation cards */
+    .presentation-card-mobile {
+        margin-bottom: 10px !important;
+    }
+    
+    .presentation-card-mobile .card-body {
+        padding: 10px !important;
+    }
+    
+    /* Message history */
+    .message-history {
+        max-height: 200px !important;
+    }
+    
+    /* Info items spacing */
+    .info-item {
+        padding: 6px 0 !important;
+    }
+    
+    /* Schedule items */
+    .schedule-item-mobile {
+        padding: 8px !important;
+        margin-bottom: 8px !important;
+        border-radius: 6px !important;
+    }
+}
+
+/* Tablet adjustments */
+@media (min-width: 577px) and (max-width: 768px) {
+    .container-fluid {
+        padding: 15px !important;
+    }
+    
+    .profile-photo {
+        width: 100px !important;
+        height: 100px !important;
+    }
+    
+    .qr-container img {
+        max-width: 110px !important;
+    }
+    
+    .nav-pills .nav-link {
+        padding: 10px 15px !important;
+        font-size: 13px !important;
+    }
+    
+    .journey-section {
+        padding: 16px !important;
+    }
+}
+
+/* Desktop enhancements */
+@media (min-width: 769px) {
+    .profile-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .profile-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .nav-pills .nav-link {
+        border-radius: 25px !important;
+        transition: all 0.3s ease;
+    }
+    
+    .nav-pills .nav-link:hover {
+        transform: translateY(-1px);
+    }
+    
+    .btn {
+        transition: all 0.2s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-1px);
+    }
+}
+
+/* Custom animations */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in-right {
+    animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* Loading states */
+.loading-overlay {
+    position: relative;
+}
+
+.loading-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+/* Custom scrollbar for message history */
+.message-history::-webkit-scrollbar {
+    width: 6px;
+}
+
+.message-history::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.message-history::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.message-history::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Improved focus states for accessibility */
+.form-control:focus,
+.btn:focus,
+.nav-link:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25) !important;
+    outline: none !important;
+}
+
+/* Touch-friendly button sizes */
+@media (max-width: 768px) {
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .nav-link {
+        min-height: 44px;
+    }
+}
+
+/* Print styles */
+@media print {
+    .btn,
+    .modal,
+    .nav-pills,
+    #qr-placeholder {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+    }
+    
+    .container-fluid {
+        width: 100% !important;
+        max-width: none !important;
+    }
+}
