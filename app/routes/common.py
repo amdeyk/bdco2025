@@ -881,36 +881,31 @@ async def single_guest_view_common(request: Request, guest_id: str = FastAPIPath
 
 @router.get("/generate_badge/{guest_id}")
 async def generate_badge_common(guest_id: str = FastAPIPath(...)):
-    """Generate and download badge for a guest - global access"""
-    try:
-        guests = guests_db.read_all()
-        guest = next((g for g in guests if g["ID"] == guest_id), None)
-        
-        if not guest:
-            raise HTTPException(status_code=404, detail="Guest not found")
+    """Generate badge via common route"""
+    guests = guests_db.read_all()
+    guest = next((g for g in guests if g["ID"] == guest_id), None)
 
-        # Create a simple badge design
-        badge_image = create_simple_badge_common(guest)
-        
-        # Convert to bytes
-        img_byte_array = io.BytesIO()
-        badge_image.save(img_byte_array, format='PNG')
-        img_byte_array.seek(0)
-        
-        # Log this activity
-        log_activity(guest_id, "Badge generated")
-        
-        return StreamingResponse(
-            img_byte_array,
-            media_type="image/png",
-            headers={
-                "Content-Disposition": f'attachment; filename="{guest_id}_badge.png"'
-            }
-        )
+    if not guest:
+        raise HTTPException(status_code=404, detail="Guest not found")
 
-    except Exception as e:
-        logger.error(f"Error generating badge: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error generating badge")
+    if not validate_guest_data(guest):
+        raise HTTPException(status_code=400, detail="Invalid guest data")
+
+    badge_image = create_magnacode_badge(guest)
+
+    img_byte_array = io.BytesIO()
+    badge_image.save(img_byte_array, format='PNG', dpi=(300, 300))
+    img_byte_array.seek(0)
+
+    log_activity(guest_id, "Badge generated via common route")
+
+    return StreamingResponse(
+        img_byte_array,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'attachment; filename="MAGNACODE2025_{guest_id}_badge.png"'
+        }
+    )
 
 
 
@@ -1029,3 +1024,155 @@ def create_simple_badge_common(guest: dict) -> Image.Image:
         draw.text((50, 330), f"Name: {guest.get('Name', 'N/A')}", fill='black')
         draw.text((50, 360), f"Role: {guest.get('GuestRole', 'Guest')}", fill='black')
         return placeholder
+def create_magnacode_badge(guest: dict) -> Image.Image:
+    """Create MAGNACODE 2025 corporate badge - NO FALLBACKS"""
+    dpi = 300
+    width_px = int(90 * dpi / 25.4)
+    height_px = int(140 * dpi / 25.4)
+    badge = Image.new('RGB', (width_px, height_px), '#ffffff')
+    draw = ImageDraw.Draw(badge)
+
+    navy_blue = '#1e3a8a'
+    bright_orange = '#f97316'
+    sky_blue = '#e0f2fe'
+    pearl_gray = '#f8fafc'
+    charcoal = '#334155'
+    gold = '#fbbf24'
+
+    header_height = 413
+    for y in range(header_height):
+        intensity = 1 - (y / header_height * 0.25)
+        blue_val = int(30 + (108 * intensity))
+        draw.line([(0, y), (width_px, y)], fill=f'#{blue_val:02x}3a8a')
+
+    draw.text((width_px//2, 60), "MAGNACODE 2025", fill='white', anchor="mm", font_size=54)
+    draw.text((width_px//2, 120), "Healthcare and Education Foundation", fill='white', anchor="mm", font_size=28)
+    draw.text((width_px//2, 170), "21st & 22nd September 2025", fill=gold, anchor="mm", font_size=24)
+    draw.text((width_px//2, 210), "Bangalore", fill='white', anchor="mm", font_size=22)
+
+    content_start_y = 460
+    margin = 55
+
+    qr_size = 240
+    qr_padding = 30
+    qr_container_size = qr_size + (qr_padding * 2)
+    qr_x = margin
+    qr_y = content_start_y + 100
+
+    shadow_offset = 6
+    draw.rectangle([(qr_x + shadow_offset, qr_y + shadow_offset), (qr_x + qr_container_size + shadow_offset, qr_y + qr_container_size + shadow_offset)], fill='#00000025')
+    draw.rectangle([(qr_x, qr_y), (qr_x + qr_container_size, qr_y + qr_container_size)], fill='white', outline=navy_blue, width=5)
+    draw.rectangle([(qr_x + 10, qr_y + 10), (qr_x + qr_container_size - 10, qr_y + qr_container_size - 10)], fill='none', outline=bright_orange, width=2)
+
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=12, border=1)
+    qr.add_data(f"MAGNACODE2025:{guest['ID']}")
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color=navy_blue, back_color="white")
+    qr_resized = qr_img.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
+    badge.paste(qr_resized, (qr_x + qr_padding, qr_y + qr_padding))
+
+    draw.text((qr_x + qr_container_size//2, qr_y + qr_container_size + 25), "Scan for Check-in", fill=charcoal, anchor="mm", font_size=18)
+
+    info_x = qr_x + qr_container_size + 50
+    info_width = width_px - info_x - margin
+    info_y = content_start_y + 50
+
+    id_height = 60
+    draw.rectangle([(info_x, info_y), (width_px - margin, info_y + id_height)], fill=bright_orange)
+    draw.rectangle([(info_x + 3, info_y + 3), (width_px - margin - 3, info_y + id_height - 3)], fill='none', outline='#ffffff40', width=1)
+    draw.text((info_x + info_width//2, info_y + id_height//2), f"ID: {guest['ID']}", fill='white', anchor="mm", font_size=24)
+
+    name_y = info_y + id_height + 25
+    guest_name = guest.get('Name', '')
+    if guest_name:
+        role = guest.get('GuestRole', '')
+        if role in ['Delegates', 'Faculty']:
+            if not any(prefix in guest_name.upper() for prefix in ['DR.', 'PROF.', 'MR.', 'MS.', 'MRS.']):
+                guest_name = f"Dr. {guest_name}"
+
+    name_height = 95
+    draw.rectangle([(info_x, name_y), (width_px - margin, name_y + name_height)], fill=sky_blue, outline=navy_blue, width=4)
+
+    if len(guest_name) > 20:
+        words = guest_name.split(' ')
+        if len(words) > 1:
+            mid = len(words) // 2
+            line1 = ' '.join(words[:mid])
+            line2 = ' '.join(words[mid:])
+            draw.text((info_x + info_width//2, name_y + 30), line1, fill=navy_blue, anchor="mm", font_size=22)
+            draw.text((info_x + info_width//2, name_y + 65), line2, fill=navy_blue, anchor="mm", font_size=22)
+        else:
+            draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm", font_size=20)
+    else:
+        draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm", font_size=24)
+
+    role = guest.get('GuestRole', 'Event')
+    role_colors = {
+        'Delegates': '#059669',
+        'Faculty': '#dc2626',
+        'Sponsor': '#d97706',
+        'Event': '#7c3aed'
+    }
+    if role not in role_colors:
+        role = 'Event'
+    role_color = role_colors[role]
+    role_y = name_y + name_height + 20
+    role_height = 50
+    draw.rectangle([(info_x, role_y), (width_px - margin, role_y + role_height)], fill=role_color)
+    draw.rectangle([(info_x, role_y), (width_px - margin, role_y + 15)], fill='#ffffff30')
+    draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='white', anchor="mm", font_size=22)
+
+    contact_y = role_y + role_height + 30
+    phone = guest.get('Phone', '')
+    if phone:
+        if len(phone) == 10 and phone.isdigit():
+            formatted_phone = f"{phone[:3]}-{phone[3:6]}-{phone[6:]}"
+        else:
+            formatted_phone = phone
+        draw.text((info_x + 15, contact_y), f"📱 {formatted_phone}", fill=charcoal, font_size=16)
+        contact_y += 40
+    org = guest.get('Organization', '')
+    if org:
+        if len(org) > 25:
+            org = org[:22] + "..."
+        draw.text((info_x + 15, contact_y), f"🏢 {org}", fill=charcoal, font_size=16)
+
+    footer_y = height_px - 140
+    draw.rectangle([(0, footer_y), (width_px, height_px)], fill=pearl_gray)
+    draw.rectangle([(0, footer_y), (width_px, footer_y + 4)], fill=bright_orange)
+
+    footer_lines = [
+        "🏨 Venue: The Chancery Pavilion, Bangalore",
+        "⚕️ Healthcare Excellence • 📚 Education Innovation",
+        "🌐 www.magnacode.org • 📧 info@magnacode.org"
+    ]
+    for i, line in enumerate(footer_lines):
+        draw.text((width_px//2, footer_y + 25 + (i * 35)), line, fill=charcoal, anchor="mm", font_size=16)
+
+    corner_size = 30
+    draw.polygon([(width_px - corner_size - 15, 15), (width_px - 15, 15), (width_px - 15, corner_size + 15)], fill=bright_orange)
+    draw.polygon([(15, height_px - corner_size - 15), (corner_size + 15, height_px - corner_size - 15), (15, height_px - 15)], fill=bright_orange)
+    draw.rectangle([(0, 0), (10, height_px)], fill=bright_orange)
+    draw.rectangle([(width_px - 10, 0), (width_px, height_px)], fill=bright_orange)
+    draw.rectangle([(0, 0), (width_px - 1, height_px - 1)], fill='none', outline=navy_blue, width=5)
+    draw.rectangle([(5, 5), (width_px - 6, height_px - 6)], fill='none', outline=bright_orange, width=1)
+
+    logo_diameter = 70
+    logo_x = width_px - 90
+    logo_y = 90
+    logo_radius = logo_diameter // 2
+    draw.ellipse([(logo_x - logo_radius, logo_y - logo_radius), (logo_x + logo_radius, logo_y + logo_radius)], fill='white', outline=bright_orange, width=3)
+    draw.text((logo_x, logo_y), "MC", fill=navy_blue, anchor="mm", font_size=20)
+    return badge
+
+
+def validate_guest_data(guest: dict) -> bool:
+    """Validate guest data - NO FALLBACKS"""
+    required_fields = ['ID', 'Name', 'GuestRole']
+    for field in required_fields:
+        if not guest.get(field):
+            return False
+    valid_roles = ['Delegates', 'Faculty', 'Sponsor', 'Event']
+    if guest['GuestRole'] not in valid_roles:
+        return False
+    return True
