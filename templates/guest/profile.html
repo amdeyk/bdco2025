@@ -328,6 +328,11 @@
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab">
+                        <i class="fas fa-money-bill-wave me-1"></i><span class="d-none d-md-inline">Payments</span><span class="d-md-none">Pay</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
                     <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab">
                         <i class="fas fa-envelope me-1"></i><span class="d-none d-md-inline">Messages</span><span class="d-md-none">Msgs</span>
                     </button>
@@ -586,7 +591,40 @@
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- Payments Tab -->
+                <div class="tab-pane fade" id="payments" role="tabpanel" aria-labelledby="payments-tab">
+                    <div class="card compact-card border-0">
+                        <div class="card-header bg-white">
+                            <h6 class="mb-0">Payments</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                    <tr>
+                                        <th>Amount</th>
+                                        <th>Method</th>
+                                        <th>Status</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {% for p in payments %}
+                                    <tr>
+                                        <td>{{ p.amount }}</td>
+                                        <td>{{ p.payment_method }}</td>
+                                        <td>{{ p.payment_status }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr><td colspan="3" class="text-center">No payments found.</td></tr>
+                                    {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Messages Tab -->
                 <div class="tab-pane fade" id="messages" role="tabpanel" aria-labelledby="messages-tab">
                     <div class="card compact-card border-0">
