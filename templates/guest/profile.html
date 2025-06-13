@@ -601,7 +601,8 @@
                         <div class="card-body">
                             <p>
                                 Required: ₹{{ payment_status.amount_required }} | Paid: ₹{{ payment_status.amount_paid }}
-                                {% include 'components/payment_status.html' with status=payment_status.status %}
+                                {% set status = payment_status.status %}
+                                {% include 'components/payment_status.html' %}
                             </p>
                             <div class="table-responsive mb-3">
                                 <table class="table table-bordered">
