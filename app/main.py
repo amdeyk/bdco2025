@@ -10,6 +10,7 @@ import time
 
 from app.config import Config
 from app.routes import admin, guest, common
+from app.routes import payment
 from app.services.csv_db import CSVDatabase
 # Replace the current templates initialization in main.py
 from app.templates import templates
@@ -133,6 +134,7 @@ templates.env.globals["now"] = datetime.now()
 app.include_router(common.router)
 app.include_router(guest.router)
 app.include_router(admin.router)
+app.include_router(payment.router)
 # if os.path.exists(os.path.join(app.config.get('PATHS', 'TemplatesDir'), "faculty")):
 #     from app.routes import faculty
 #     app.include_router(faculty.router)

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Payment Management{% endblock %}
+{% block content %}
+<h1 class="h4 mb-4">Payment Management</h1>
+<div class="mb-3">
+    <strong>Total Payments:</strong> {{ stats.total_payments }} |
+    <strong>Total Amount:</strong> ₹{{ stats.total_amount }}
+</div>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Guest ID</th>
+            <th>Amount</th>
+            <th>Method</th>
+            <th>Status</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in payments %}
+        <tr>
+            <td>{{ p.guest_id }}</td>
+            <td>{{ p.amount }}</td>
+            <td>{{ p.payment_method }}</td>
+            <td>{{ p.payment_status }}</td>
+            <td>{{ p.payment_date }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

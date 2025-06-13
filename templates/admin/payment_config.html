@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Payment Configuration{% endblock %}
+{% block content %}
+<h1 class="h4 mb-4">Payment Configuration</h1>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Role</th>
+            <th>Required</th>
+            <th>Amount</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for cfg in configs %}
+        <tr>
+            <td>{{ cfg.role }}</td>
+            <td>{{ cfg.payment_required }}</td>
+            <td>{{ cfg.amount }}</td>
+            <td>{{ cfg.description }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

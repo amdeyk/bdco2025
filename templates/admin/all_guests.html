@@ -129,6 +129,7 @@
                                         <th>Email</th>
                                         <th>Attendance</th>
                                         <th>Badge Status</th>
+                                        <th>Payment</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -156,6 +157,9 @@
                                                     {% if guest.BadgeGiven == 'True' %}Given{% else %}Not Given{% endif %}
                                                 </span>
                                             </div>
+                                        </td>
+                                        <td>
+                                            {% include 'components/payment_status.html' with status=guest.PaymentStatus|lower %}
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm">

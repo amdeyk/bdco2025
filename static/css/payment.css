@@ -1,0 +1,11 @@
+/* static/css/payment.css */
+.payment-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.85rem;
+    color: #fff;
+}
+.payment-badge.status-paid { background-color: #198754; }
+.payment-badge.status-pending { background-color: #ffc107; color: #000; }
+.payment-badge.status-partial { background-color: #0dcaf0; color: #000; }
+.payment-badge.status-not_required { background-color: #6c757d; }
