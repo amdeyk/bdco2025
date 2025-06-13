@@ -55,7 +55,8 @@ required_directories = [
     os.path.join(config.get('PATHS', 'StaticDir'), "uploads"),
     os.path.join(config.get('PATHS', 'StaticDir'), "uploads/presentations"),
     os.path.join(config.get('PATHS', 'StaticDir'), "uploads/profile_photos"),
-    os.path.join(config.get('PATHS', 'StaticDir'), "qr_codes")
+    os.path.join(config.get('PATHS', 'StaticDir'), "qr_codes"),
+    os.path.join(config.get('PATHS', 'StaticDir'), "schedule")
 ]
 
 for directory in required_directories:
