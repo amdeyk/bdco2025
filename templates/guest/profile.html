@@ -599,7 +599,11 @@
                             <h6 class="mb-0">Payments</h6>
                         </div>
                         <div class="card-body">
-                            <div class="table-responsive">
+                            <p>
+                                Required: ₹{{ payment_status.amount_required }} | Paid: ₹{{ payment_status.amount_paid }}
+                                {% include 'components/payment_status.html' with status=payment_status.status %}
+                            </p>
+                            <div class="table-responsive mb-3">
                                 <table class="table table-bordered">
                                     <thead class="table-light">
                                     <tr>
@@ -621,6 +625,26 @@
                                     </tbody>
                                 </table>
                             </div>
+                            <form method="post" action="/payment/record-guest" enctype="multipart/form-data" class="row g-2">
+                                <div class="col-md-4">
+                                    <input type="number" step="0.01" name="amount" class="form-control form-control-sm" placeholder="Amount" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="payment_method" class="form-select form-select-sm">
+                                        <option value="cash">Cash</option>
+                                        <option value="card">Card</option>
+                                        <option value="upi">UPI</option>
+                                        <option value="bank_transfer">Bank Transfer</option>
+                                        <option value="online">Online</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="file" name="payment_proof" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-md-2 text-end">
+                                    <button type="submit" class="btn btn-sm btn-primary">Submit</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>

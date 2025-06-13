@@ -2,24 +2,57 @@
 {% block title %}Payment Configuration{% endblock %}
 {% block content %}
 <h1 class="h4 mb-4">Payment Configuration</h1>
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Role</th>
-            <th>Required</th>
-            <th>Amount</th>
-            <th>Description</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for cfg in configs %}
-        <tr>
-            <td>{{ cfg.role }}</td>
-            <td>{{ cfg.payment_required }}</td>
-            <td>{{ cfg.amount }}</td>
-            <td>{{ cfg.description }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="table-responsive mb-4">
+    <table class="table table-bordered">
+        <thead class="table-light">
+            <tr>
+                <th>Role</th>
+                <th>Required</th>
+                <th>Amount</th>
+                <th>Description</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cfg in configs %}
+            <tr>
+                <form method="post" action="/payment/config/update" class="row g-2 align-items-center">
+                    <input type="hidden" name="role" value="{{ cfg.role }}">
+                    <td class="col-md-2">{{ cfg.role }}</td>
+                    <td class="col-md-2 text-center">
+                        <input type="checkbox" name="payment_required" value="True" {% if cfg.payment_required %}checked{% endif %}>
+                    </td>
+                    <td class="col-md-2">
+                        <input type="number" step="0.01" name="amount" value="{{ cfg.amount }}" class="form-control form-control-sm">
+                    </td>
+                    <td class="col-md-4">
+                        <input type="text" name="description" value="{{ cfg.description }}" class="form-control form-control-sm">
+                    </td>
+                    <td class="col-md-2 text-center">
+                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                    </td>
+                </form>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<h5>Add New Role</h5>
+<form method="post" action="/payment/config/update" class="row g-2">
+    <div class="col-md-2">
+        <input type="text" class="form-control form-control-sm" name="role" placeholder="Role" required>
+    </div>
+    <div class="col-md-2 text-center">
+        <input type="checkbox" name="payment_required" value="True">
+    </div>
+    <div class="col-md-2">
+        <input type="number" step="0.01" name="amount" class="form-control form-control-sm" value="0">
+    </div>
+    <div class="col-md-4">
+        <input type="text" name="description" class="form-control form-control-sm">
+    </div>
+    <div class="col-md-2 text-center">
+        <button type="submit" class="btn btn-sm btn-success">Add</button>
+    </div>
+</form>
 {% endblock %}
