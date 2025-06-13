@@ -2083,113 +2083,78 @@ async def sync_journey_data(request: Request, admin: Dict = Depends(get_current_
 
 @router.post("/give_food_coupon")
 async def give_food_coupon(request: Request, admin: Dict = Depends(get_current_admin), guest_id: str = Form(...), day: str = Form(...)):
-    """Give food coupons to guest for a specific day"""
+    """Give food coupons to guest for a specific day with proper validation"""
     try:
+        ensure_all_guest_fields()
+
+        if day not in ["1", "2"]:
+            return JSONResponse(status_code=400, content={"success": False, "message": "Invalid day specified"})
+
         guests = guests_db.read_all()
         updated = False
-        
+
         for guest in guests:
             if guest["ID"] == guest_id:
-                if day == "1":
-                    if guest.get("FoodCouponsDay1") == "True":
-                        return JSONResponse(
-                            status_code=400,
-                            content={"success": False, "message": "Food coupons for Day 1 already given"}
-                        )
-                    guest["FoodCouponsDay1"] = "True"
-                    guest["FoodCouponsDay1Date"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                elif day == "2":
-                    if guest.get("FoodCouponsDay2") == "True":
-                        return JSONResponse(
-                            status_code=400,
-                            content={"success": False, "message": "Food coupons for Day 2 already given"}
-                        )
-                    guest["FoodCouponsDay2"] = "True"
-                    guest["FoodCouponsDay2Date"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                else:
-                    return JSONResponse(
-                        status_code=400,
-                        content={"success": False, "message": "Invalid day specified"}
-                    )
-                
+                field_name = f"FoodCouponsDay{day}"
+                date_field = f"FoodCouponsDay{day}Date"
+
+                if guest.get(field_name, "False") == "True":
+                    return JSONResponse(status_code=400, content={"success": False, "message": f"Food coupons for Day {day} already given"})
+
+                guest[field_name] = "True"
+                guest[date_field] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 updated = True
                 break
-                
+
         if updated:
             guests_db.write_all(guests)
-            
-            # Log this activity
             log_activity(guest_id, f"Admin {admin['user_id']} gave Day {day} food coupons")
-            
-            return JSONResponse(
-                content={"success": True, "message": f"Food coupons for Day {day} marked as given successfully"}
-            )
+            return JSONResponse(content={"success": True, "message": f"Food coupons for Day {day} marked as given successfully"})
         else:
-            return JSONResponse(
-                status_code=404,
-                content={"success": False, "message": "Guest not found"}
-            )
+            return JSONResponse(status_code=404, content={"success": False, "message": "Guest not found"})
+
     except Exception as e:
         logger.error(f"Error giving food coupons: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": f"Error giving food coupons: {str(e)}"}
-        )
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Error giving food coupons: {str(e)}"})
 
 @router.post("/give_food_coupons_bulk")
 async def give_food_coupons_bulk(request: Request, admin: Dict = Depends(get_current_admin)):
-    """Give food coupons to multiple guests"""
+    """Give food coupons to multiple guests with proper validation"""
     try:
+        ensure_all_guest_fields()
+
         data = await request.json()
         guest_ids = data.get('guest_ids', [])
         day = data.get('day')
-        
+
         if not guest_ids:
-            return JSONResponse(
-                status_code=400,
-                content={"success": False, "message": "No guest IDs provided"}
-            )
-            
+            return JSONResponse(status_code=400, content={"success": False, "message": "No guest IDs provided"})
+
         if day not in ["1", "2"]:
-            return JSONResponse(
-                status_code=400,
-                content={"success": False, "message": "Invalid day specified"}
-            )
-            
+            return JSONResponse(status_code=400, content={"success": False, "message": "Invalid day specified"})
+
         guests = guests_db.read_all()
         updated_count = 0
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
+        field_name = f"FoodCouponsDay{day}"
+        date_field = f"FoodCouponsDay{day}Date"
+
         for guest in guests:
-            if guest["ID"] in guest_ids:
-                if day == "1":
-                    guest["FoodCouponsDay1"] = "True"
-                    guest["FoodCouponsDay1Date"] = current_time
-                else:
-                    guest["FoodCouponsDay2"] = "True"
-                    guest["FoodCouponsDay2Date"] = current_time
+            if guest["ID"] in guest_ids and guest.get(field_name, "False") != "True":
+                guest[field_name] = "True"
+                guest[date_field] = current_time
                 updated_count += 1
-                
+
         if updated_count > 0:
             guests_db.write_all(guests)
-            
-            # Log this activity
             log_activity("Bulk", f"Admin {admin['user_id']} gave Day {day} food coupons to {updated_count} guests")
-            
-            return JSONResponse(
-                content={"success": True, "message": f"Day {day} food coupons given to {updated_count} guests successfully"}
-            )
+            return JSONResponse(content={"success": True, "message": f"Day {day} food coupons given to {updated_count} guests successfully"})
         else:
-            return JSONResponse(
-                status_code=404,
-                content={"success": False, "message": "No matching guests found"}
-            )
+            return JSONResponse(status_code=400, content={"success": False, "message": "No eligible guests found or coupons already given"})
+
     except Exception as e:
         logger.error(f"Error giving food coupons in bulk: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": f"Error giving food coupons: {str(e)}"}
-        )
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Error giving food coupons: {str(e)}"})
 
 @router.get("/download_meal_plan/{guest_id}")
 async def download_meal_plan(admin: Dict = Depends(get_current_admin), guest_id: str = FastAPIPath(...)):
@@ -2331,88 +2296,69 @@ async def export_food_list(
 
 @router.post("/give_gift")
 async def give_gift(request: Request, admin: Dict = Depends(get_current_admin), guest_id: str = Form(...)):
-    """Mark gifts as given to guest with date tracking"""
+    """Mark gifts as given to guest with proper validation"""
     try:
+        ensure_all_guest_fields()
+
         guests = guests_db.read_all()
         updated = False
-        
+
         for guest in guests:
             if guest["ID"] == guest_id:
-                if guest.get("GiftsGiven") == "True":
+                if guest.get("GiftsGiven", "False") == "True":
                     return JSONResponse(
                         status_code=400,
                         content={"success": False, "message": "Gifts have already been given to this guest"}
                     )
-                
+
                 guest["GiftsGiven"] = "True"
                 guest["GiftGivenDate"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 updated = True
                 break
-                
+
         if updated:
             guests_db.write_all(guests)
-            
-            # Log this activity
             log_activity(guest_id, f"Admin {admin['user_id']} marked gifts as given")
-            
-            return JSONResponse(
-                content={"success": True, "message": "Gifts marked as given successfully"}
-            )
+            return JSONResponse(content={"success": True, "message": "Gifts marked as given successfully"})
         else:
-            return JSONResponse(
-                status_code=404,
-                content={"success": False, "message": "Guest not found"}
-            )
+            return JSONResponse(status_code=404, content={"success": False, "message": "Guest not found"})
+
     except Exception as e:
         logger.error(f"Error giving gifts: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": f"Error giving gifts: {str(e)}"}
-        )
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Error giving gifts: {str(e)}"})
 
 @router.post("/give_gifts_bulk")
 async def give_gifts_bulk(request: Request, admin: Dict = Depends(get_current_admin)):
-    """Give gifts to multiple guests"""
+    """Give gifts to multiple guests with proper validation"""
     try:
+        ensure_all_guest_fields()
+
         data = await request.json()
         guest_ids = data.get('guest_ids', [])
-        
+
         if not guest_ids:
-            return JSONResponse(
-                status_code=400,
-                content={"success": False, "message": "No guest IDs provided"}
-            )
-            
+            return JSONResponse(status_code=400, content={"success": False, "message": "No guest IDs provided"})
+
         guests = guests_db.read_all()
         updated_count = 0
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
+
         for guest in guests:
-            if guest["ID"] in guest_ids:
+            if guest["ID"] in guest_ids and guest.get("GiftsGiven", "False") != "True":
                 guest["GiftsGiven"] = "True"
                 guest["GiftGivenDate"] = current_time
                 updated_count += 1
-                
+
         if updated_count > 0:
             guests_db.write_all(guests)
-            
-            # Log this activity
             log_activity("Bulk", f"Admin {admin['user_id']} gave gifts to {updated_count} guests")
-            
-            return JSONResponse(
-                content={"success": True, "message": f"Gifts given to {updated_count} guests successfully"}
-            )
+            return JSONResponse(content={"success": True, "message": f"Gifts given to {updated_count} guests successfully"})
         else:
-            return JSONResponse(
-                status_code=404,
-                content={"success": False, "message": "No matching guests found"}
-            )
+            return JSONResponse(status_code=400, content={"success": False, "message": "No eligible guests found or gifts already given"})
+
     except Exception as e:
         logger.error(f"Error giving gifts in bulk: {str(e)}")
-        return JSONResponse(
-            status_code=500,
-            content={"success": False, "message": f"Error giving gifts: {str(e)}"}
-        )
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Error giving gifts: {str(e)}"})
 
 @router.get("/download_gift_list/{guest_id}")
 async def download_gift_list(admin: Dict = Depends(get_current_admin), guest_id: str = FastAPIPath(...)):
@@ -2562,6 +2508,33 @@ async def get_guest_api(guest_id: str, admin: Dict = Depends(get_current_admin))
             status_code=500,
             content={"success": False, "message": f"Error getting guest information: {str(e)}"}
         )
+
+@router.get("/api/guest-status/{guest_id}")
+async def get_guest_status(guest_id: str, admin: Dict = Depends(get_current_admin)):
+    """Get real-time status of a guest for UI updates"""
+    try:
+        ensure_all_guest_fields()
+
+        guests = guests_db.read_all()
+        guest = next((g for g in guests if g["ID"] == guest_id), None)
+
+        if not guest:
+            return JSONResponse(status_code=404, content={"success": False, "message": "Guest not found"})
+
+        status = {
+            "gifts_given": guest.get("GiftsGiven", "False") == "True",
+            "food_day1_given": guest.get("FoodCouponsDay1", "False") == "True",
+            "food_day2_given": guest.get("FoodCouponsDay2", "False") == "True",
+            "gift_date": guest.get("GiftGivenDate"),
+            "food_day1_date": guest.get("FoodCouponsDay1Date"),
+            "food_day2_date": guest.get("FoodCouponsDay2Date")
+        }
+
+        return JSONResponse(content={"success": True, "status": status})
+
+    except Exception as e:
+        logger.error(f"Error getting guest status: {str(e)}")
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Error getting status: {str(e)}"})
 
 @router.post("/update_guest_basic_info")
 async def update_guest_basic_info(request: Request, admin: Dict = Depends(get_current_admin)):
@@ -3586,8 +3559,41 @@ def ensure_enhanced_gift_fields():
     except Exception as e:
         logger.error(f"Error ensuring enhanced gift fields: {str(e)}")
 
+def ensure_all_guest_fields():
+    """Ensure all required guest fields exist in the CSV"""
+    try:
+        guests = guests_db.read_all()
+        if not guests:
+            return
+
+        required_fields = {
+            "GiftsGiven": "False",
+            "FoodCouponsDay1": "False",
+            "FoodCouponsDay2": "False",
+            "GiftGivenDate": "",
+            "FoodCouponsDay1Date": "",
+            "FoodCouponsDay2Date": "",
+            "GiftNotes": "",
+            "FoodNotes": "",
+        }
+
+        first_guest = guests[0]
+        missing_fields = [f for f in required_fields if f not in first_guest]
+
+        if missing_fields:
+            for guest in guests:
+                for field in missing_fields:
+                    guest[field] = required_fields[field]
+
+            guests_db.write_all(guests)
+            logger.info(f"Added missing fields to CSV: {missing_fields}")
+
+    except Exception as e:
+        logger.error(f"Error ensuring guest fields: {str(e)}")
+
 # Initialize all fields when the module is loaded
 ensure_badge_fields()
 ensure_journey_detail_fields()
 ensure_enhanced_food_fields()
 ensure_enhanced_gift_fields()
+ensure_all_guest_fields()
