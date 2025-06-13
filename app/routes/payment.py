@@ -1,15 +1,18 @@
 from fastapi import APIRouter, Request, Depends, HTTPException, Form, UploadFile, File
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
-from typing import Optional
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, StreamingResponse
+from typing import Optional, Dict
 import os
 import uuid
 import shutil
 import logging
+import csv
+import io
 
 from app.services.payment_config import PaymentConfigService
 from app.services.payment_processor import PaymentProcessor
 from app.services.receipt_generator import ReceiptGenerator
-from app.services.auth import get_current_admin
+from app.services.auth import get_current_admin, auth_service
+from app.services.csv_db import CSVDatabase
 from app.config import Config
 from app.templates import templates
 
@@ -24,6 +27,26 @@ receipt_generator = ReceiptGenerator()
 
 PAYMENT_PROOFS_DIR = os.path.join(config.get('PATHS', 'StaticDir'), 'uploads', 'payment_proofs')
 os.makedirs(PAYMENT_PROOFS_DIR, exist_ok=True)
+
+# Helper to authenticate guest users
+def _get_current_guest(request: Request) -> Dict:
+    session_id = request.cookies.get("session_id")
+    if not session_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    session = auth_service.validate_session(session_id)
+    if not session or session["role"] != "guest":
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    guests_db = CSVDatabase(
+        config.get('DATABASE', 'CSVPath'),
+        config.get('DATABASE', 'BackupDir')
+    )
+    guests = guests_db.read_all()
+    guest = next((g for g in guests if g.get('ID') == session['user_id']), None)
+    if not guest:
+        raise HTTPException(status_code=401, detail="Guest not found")
+    return guest
 
 @router.get('/config', response_class=HTMLResponse)
 async def payment_config_page(request: Request, admin=Depends(get_current_admin)):
@@ -125,6 +148,45 @@ async def record_payment(
         logger.error(f"Error recording payment: {str(e)}")
         return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
 
+
+@router.post('/record-guest')
+async def record_payment_guest(
+    request: Request,
+    amount: float = Form(...),
+    payment_method: str = Form(...),
+    transaction_reference: str = Form(''),
+    notes: str = Form(''),
+    payment_proof: Optional[UploadFile] = File(None)
+):
+    """Record a payment submitted by a guest"""
+    guest = _get_current_guest(request)
+    try:
+        proof_path = ''
+        if payment_proof and payment_proof.filename:
+            ext = os.path.splitext(payment_proof.filename)[1]
+            filename = f"{guest['ID']}_{uuid.uuid4()}{ext}"
+            dest = os.path.join(PAYMENT_PROOFS_DIR, filename)
+            with open(dest, 'wb') as buffer:
+                shutil.copyfileobj(payment_proof.file, buffer)
+            proof_path = f"uploads/payment_proofs/{filename}"
+
+        payment = payment_processor.record_payment(
+            guest_id=guest['ID'],
+            amount=amount,
+            payment_method=payment_method,
+            payment_status='pending',
+            recorded_by='guest',
+            transaction_reference=transaction_reference,
+            notes=notes,
+            payment_proof_path=proof_path
+        )
+        if payment:
+            return JSONResponse({"success": True, "payment_id": payment.payment_id})
+        return JSONResponse(status_code=500, content={"success": False, "message": "Failed to record"})
+    except Exception as e:
+        logger.error(f"Error recording guest payment: {str(e)}")
+        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
+
 @router.get('/status/{guest_id}')
 async def get_payment_status(guest_id: str, guest_role: str):
     try:
@@ -145,3 +207,45 @@ async def download_receipt(payment_id: str, admin=Depends(get_current_admin)):
     except Exception as e:
         logger.error(f"Error generating receipt: {str(e)}")
         raise HTTPException(status_code=500, detail="Receipt generation failed")
+
+
+@router.get('/guest/status')
+async def guest_payment_status(request: Request):
+    """Get payment status for the logged in guest"""
+    guest = _get_current_guest(request)
+    try:
+        status = payment_processor.get_payment_status_for_guest(guest['ID'], guest.get('GuestRole', ''))
+        return JSONResponse({"success": True, "status": status})
+    except Exception as e:
+        logger.error(f"Error getting guest payment status: {str(e)}")
+        return JSONResponse(status_code=500, content={"success": False, "message": str(e)})
+
+
+@router.get('/export')
+async def export_payments(admin=Depends(get_current_admin)):
+    """Export all payment records as CSV"""
+    try:
+        payments = payment_processor.get_all_payments()
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['Payment ID', 'Guest ID', 'Amount', 'Method', 'Status', 'Date', 'Recorded By', 'Receipt'])
+        for p in payments:
+            writer.writerow([
+                p.payment_id,
+                p.guest_id,
+                p.amount,
+                p.payment_method,
+                p.payment_status,
+                p.payment_date,
+                p.recorded_by,
+                p.receipt_number
+            ])
+        output.seek(0)
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=payments.csv'}
+        )
+    except Exception as e:
+        logger.error(f"Error exporting payments: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error exporting payments")

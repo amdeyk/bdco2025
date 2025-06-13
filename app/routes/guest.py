@@ -15,6 +15,8 @@ from PIL import Image, ImageDraw
 
 from app.services.qr_service import QRService
 from app.services.journey_sync import create_journey_service
+from app.services.payment_processor import PaymentProcessor
+from app.services.payment_config import PaymentConfigService
 
 from app.services.csv_db import CSVDatabase
 from app.services.auth import auth_service
@@ -35,6 +37,9 @@ guests_db = CSVDatabase(
 )
 # Initialize QR service
 qr_service = QRService(config.get('PATHS', 'StaticDir'))
+# Payment services
+payment_processor = PaymentProcessor()
+payment_config_service = PaymentConfigService()
 # Use singleton auth_service from app.services.auth
 
 # Define storage paths
@@ -263,6 +268,10 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
                 for row in reader:
                     if row.get("guest_id") == guest["ID"]:
                         messages.append(row)
+
+        # Payment status
+        payment_status = payment_processor.get_payment_status_for_guest(guest["ID"], guest.get("GuestRole", ""))
+        payments = payment_status.get("payments", [])
         
         # *** UPDATED: Get journey details using synchronized service ***
         journey_service = create_journey_service(config)
@@ -291,7 +300,7 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
         photo_path = os.path.join(PROFILE_PHOTOS_DIR, f"{guest['ID']}.jpg")
         if os.path.exists(photo_path):
             guest["photo_url"] = f"/static/uploads/profile_photos/{guest['ID']}.jpg"
-        
+
         return templates.TemplateResponse(
             "guest/profile.html",
             {
@@ -299,6 +308,8 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
                 "guest": guest,
                 "presentations": presentations,
                 "messages": messages,
+                "payments": payments,
+                "payment_status": payment_status,
                 "inward_journey": inward_journey,
                 "outward_journey": outward_journey,
                 "user_role": "faculty" if guest["is_faculty"] else "guest",

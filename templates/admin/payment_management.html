@@ -5,7 +5,32 @@
 <div class="mb-3">
     <strong>Total Payments:</strong> {{ stats.total_payments }} |
     <strong>Total Amount:</strong> ₹{{ stats.total_amount }}
+    <a href="/payment/export" class="btn btn-sm btn-outline-secondary ms-3">Export CSV</a>
 </div>
+<h5 class="mb-3">Record Payment</h5>
+<form method="post" action="/payment/record" enctype="multipart/form-data" class="row g-2 mb-4">
+    <div class="col-md-2">
+        <input type="text" name="guest_id" class="form-control form-control-sm" placeholder="Guest ID" required>
+    </div>
+    <div class="col-md-2">
+        <input type="number" step="0.01" name="amount" class="form-control form-control-sm" placeholder="Amount" required>
+    </div>
+    <div class="col-md-2">
+        <select name="payment_method" class="form-select form-select-sm">
+            <option value="cash">Cash</option>
+            <option value="card">Card</option>
+            <option value="upi">UPI</option>
+            <option value="bank_transfer">Bank Transfer</option>
+            <option value="online">Online</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <input type="file" name="payment_proof" class="form-control form-control-sm">
+    </div>
+    <div class="col-md-3 text-end">
+        <button type="submit" class="btn btn-sm btn-primary">Record</button>
+    </div>
+</form>
 <table class="table table-striped">
     <thead>
         <tr>
