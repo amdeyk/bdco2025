@@ -159,7 +159,8 @@
                                             </div>
                                         </td>
                                         <td>
-                                            {% include 'components/payment_status.html' with status=guest.PaymentStatus|lower %}
+                                            {% set status = guest.PaymentStatus|lower %}
+                                            {% include 'components/payment_status.html' %}
                                         </td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
