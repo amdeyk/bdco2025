@@ -51,15 +51,6 @@ class Config:
             'SessionTimeout': '30'
         }
         
-        self.config['EMAIL'] = {
-            'Enabled': 'False',
-            'SMTPServer': 'smtp.example.com',
-            'SMTPPort': '587',
-            'Username': 'admin@example.com',
-            'Password': 'change_this_password',
-            'SenderEmail': 'conference@example.com',
-            'SenderName': 'Conference Management'
-        }
     
     def _create_default_config(self):
         """Create default configuration file"""
