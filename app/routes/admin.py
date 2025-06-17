@@ -1223,19 +1223,25 @@ async def print_badge(request: Request, admin: Dict = Depends(get_current_admin)
     try:
         guests = guests_db.read_all()
         updated = False
-        
+
         for guest in guests:
             if guest["ID"] == guest_id:
+                if guest.get("BadgePrinted") == "True":
+                    return JSONResponse(
+                        status_code=400,
+                        content={"success": False, "message": "Badge already printed"}
+                    )
                 guest["BadgePrinted"] = "True"
+                guest["BadgePrintedDate"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 updated = True
                 break
-                
+
         if updated:
             guests_db.write_all(guests)
-            
+
             # Log this activity
             log_activity(guest_id, f"Admin {admin['user_id']} marked badge as printed")
-            
+
             return JSONResponse(
                 content={"success": True, "message": "Badge marked as printed successfully"}
             )
@@ -1343,7 +1349,7 @@ async def give_badge(request: Request, admin: Dict = Depends(get_current_admin),
     try:
         guests = guests_db.read_all()
         updated = False
-        
+
         for guest in guests:
             if guest["ID"] == guest_id:
                 # Only allow giving badge if it has been printed
@@ -1352,24 +1358,25 @@ async def give_badge(request: Request, admin: Dict = Depends(get_current_admin),
                         status_code=400,
                         content={"success": False, "message": "Badge must be printed first"}
                     )
-                
+
                 # Check if badge is already given
                 if guest.get("BadgeGiven") == "True":
                     return JSONResponse(
                         status_code=400,
                         content={"success": False, "message": "Badge has already been given"}
                     )
-                
+
                 guest["BadgeGiven"] = "True"
+                guest["BadgeGivenDate"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                 updated = True
                 break
-                
+
         if updated:
             guests_db.write_all(guests)
-            
+
             # Log this activity
             log_activity(guest_id, f"Admin {admin['user_id']} marked badge as given")
-            
+
             return JSONResponse(
                 content={"success": True, "message": "Badge marked as given successfully"}
             )
@@ -1533,11 +1540,13 @@ async def print_badges_bulk(request: Request, admin: Dict = Depends(get_current_
             
         guests = guests_db.read_all()
         updated_count = 0
-        
+
         for guest in guests:
             if guest["ID"] in guest_ids:
-                guest["BadgePrinted"] = "True"
-                updated_count += 1
+                if guest.get("BadgePrinted") != "True":
+                    guest["BadgePrinted"] = "True"
+                    guest["BadgePrintedDate"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    updated_count += 1
                 
         if updated_count > 0:
             guests_db.write_all(guests)
@@ -1575,11 +1584,13 @@ async def give_badges_bulk(request: Request, admin: Dict = Depends(get_current_a
             
         guests = guests_db.read_all()
         updated_count = 0
-        
+
         for guest in guests:
             if guest["ID"] in guest_ids and guest.get("BadgePrinted") == "True":
-                guest["BadgeGiven"] = "True"
-                updated_count += 1
+                if guest.get("BadgeGiven") != "True":
+                    guest["BadgeGiven"] = "True"
+                    guest["BadgeGivenDate"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    updated_count += 1
                 
         if updated_count > 0:
             guests_db.write_all(guests)

@@ -207,6 +207,35 @@
 <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Intercept Mark Printed forms
+    document.querySelectorAll('form[action="/admin/print_badge"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const guestId = this.querySelector('input[name="guest_id"]').value;
+            const guestName = this.closest('tr').querySelector('td:nth-child(3)').textContent;
+
+            showConfirmationModal(
+                'Mark Badge as Printed',
+                `Mark badge as printed for ${guestName}?`,
+                () => markBadgeAsPrinted(guestId)
+            );
+        });
+    });
+
+    // Intercept Mark Given forms
+    document.querySelectorAll('form[action="/admin/give_badge"]').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const guestId = this.querySelector('input[name="guest_id"]').value;
+            const guestName = this.closest('tr').querySelector('td:nth-child(3)').textContent;
+
+            showConfirmationModal(
+                'Mark Badge as Given',
+                `Mark badge as given to ${guestName}?`,
+                () => markBadgeAsGiven(guestId)
+            );
+        });
+    });
     // Initialize DataTable
     $('.datatable').DataTable({
         responsive: true,
@@ -449,5 +478,143 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function markBadgeAsPrinted(guestId) {
+    showLoadingState(true);
+    fetch('/admin/print_badge', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `guest_id=${guestId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        showLoadingState(false);
+        if (data.success) {
+            showSuccessPopup('Badge marked as printed successfully');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorPopup(data.message || 'Failed to mark badge as printed');
+        }
+    })
+    .catch(error => {
+        showLoadingState(false);
+        console.error('Error:', error);
+        showErrorPopup('An unexpected error occurred');
+    });
+}
+
+function markBadgeAsGiven(guestId) {
+    showLoadingState(true);
+    fetch('/admin/give_badge', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `guest_id=${guestId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        showLoadingState(false);
+        if (data.success) {
+            showSuccessPopup('Badge marked as given successfully');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showErrorPopup(data.message || 'Failed to mark badge as given');
+        }
+    })
+    .catch(error => {
+        showLoadingState(false);
+        console.error('Error:', error);
+        showErrorPopup('An unexpected error occurred');
+    });
+}
+
+function showConfirmationModal(title, message, onConfirm) {
+    const modalHtml = `
+        <div class="modal fade" id="confirmationModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">${title}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>${message}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="confirmAction">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const existingModal = document.getElementById('confirmationModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+    document.getElementById('confirmAction').addEventListener('click', function() {
+        modal.hide();
+        onConfirm();
+    });
+    modal.show();
+}
+
+function showSuccessPopup(message) {
+    showToast(message, 'success');
+}
+
+function showErrorPopup(message) {
+    showToast(message, 'error');
+}
+
+function showToast(message, type) {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    `;
+
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    const toastElement = toastContainer.lastElementChild;
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+    toastElement.addEventListener('hidden.bs.toast', function() {
+        this.remove();
+    });
+}
+
+function showLoadingState(show) {
+    const buttons = document.querySelectorAll('button, input[type="submit"]');
+    buttons.forEach(btn => {
+        btn.disabled = show;
+        if (show) {
+            btn.classList.add('loading');
+        } else {
+            btn.classList.remove('loading');
+        }
+    });
+}
 </script>
 {% endblock %}
