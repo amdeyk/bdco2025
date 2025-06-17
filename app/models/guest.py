@@ -32,8 +32,15 @@ class Guest:
         self.is_active = True
         self.kit_received = "False"
         self.badge_printed = "False"
+        self.badge_given = "False"
+        self.badge_printed_date = ""
+        self.badge_given_date = ""
+        self.kit_received_date = ""
+        self.check_in_time = ""
         self.payment_status = "Pending"
         self.payment_amount = "0"
+        self.payment_date = ""
+        self.payment_method = ""
         self.organization = ""
         self.notes = ""
         # New fields
@@ -42,6 +49,11 @@ class Guest:
         self.food_coupons_day1 = "False"
         self.food_coupons_day2 = "False"
         self.gifts_given = "False"
+        self.gift_given_date = ""
+        self.food_coupons_day1_date = ""
+        self.food_coupons_day2_date = ""
+        self.gift_notes = ""
+        self.food_notes = ""
         
     @classmethod
     def from_dict(cls, data: Dict) -> 'Guest':
@@ -77,15 +89,26 @@ class Guest:
             "KitReceived": self.kit_received,
             "BadgePrinted": self.badge_printed,
             "BadgeGiven": self.badge_given,
+            "BadgePrintedDate": self.badge_printed_date,
+            "BadgeGivenDate": self.badge_given_date,
+            "KitReceivedDate": self.kit_received_date,
+            "CheckInTime": self.check_in_time,
             "PaymentStatus": self.payment_status,
             "PaymentAmount": self.payment_amount,
+            "PaymentDate": self.payment_date,
+            "PaymentMethod": self.payment_method,
             "Organization": self.organization,
             "Notes": self.notes,
             "JourneyDetailsUpdated": self.journey_details_updated,
             "JourneyCompleted": self.journey_completed,
             "FoodCouponsDay1": self.food_coupons_day1,
             "FoodCouponsDay2": self.food_coupons_day2,
-            "GiftsGiven": self.gifts_given
+            "FoodCouponsDay1Date": self.food_coupons_day1_date,
+            "FoodCouponsDay2Date": self.food_coupons_day2_date,
+            "GiftsGiven": self.gifts_given,
+            "GiftGivenDate": self.gift_given_date,
+            "GiftNotes": self.gift_notes,
+            "FoodNotes": self.food_notes
         }
         
     def validate(self) -> List[str]:

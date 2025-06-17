@@ -2314,12 +2314,70 @@ async def get_guest_api(guest_id: str, admin: Dict = Depends(get_current_admin))
             content={"success": False, "message": f"Error getting guest information: {str(e)}"}
         )
 
-@router.get("/api/guest-status/{guest_id}")
-async def get_guest_status(guest_id: str, admin: Dict = Depends(get_current_admin)):
-    """Get real-time status of a guest for UI updates"""
+@router.post("/update_kit_status")
+async def update_kit_status(request: Request, admin: Dict = Depends(get_current_admin), guest_id: str = Form(...)):
+    """Toggle kit received status"""
     try:
-        ensure_all_guest_fields()
+        guests = guests_db.read_all()
+        updated = False
 
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                current_status = guest.get("KitReceived", "False")
+                new_status = "False" if current_status == "True" else "True"
+                guest["KitReceived"] = new_status
+                if new_status == "True":
+                    guest["KitReceivedDate"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                else:
+                    guest["KitReceivedDate"] = ""
+                updated = True
+                break
+
+        if updated:
+            guests_db.write_all(guests)
+            log_activity(guest_id, f"Admin {admin['user_id']} updated kit status")
+            return JSONResponse(content={"success": True, "message": "Kit status updated successfully"})
+        else:
+            return JSONResponse(status_code=404, content={"success": False, "message": "Guest not found"})
+    except Exception as e:
+        logger.error(f"Error updating kit status: {str(e)}")
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Error: {str(e)}"})
+
+
+@router.post("/toggle_attendance")
+async def toggle_attendance(request: Request, admin: Dict = Depends(get_current_admin), guest_id: str = Form(...)):
+    """Toggle attendance status"""
+    try:
+        guests = guests_db.read_all()
+        updated = False
+
+        for guest in guests:
+            if guest["ID"] == guest_id:
+                current_status = guest.get("DailyAttendance", "False")
+                new_status = "False" if current_status == "True" else "True"
+                guest["DailyAttendance"] = new_status
+                if new_status == "True":
+                    guest["CheckInTime"] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                else:
+                    guest["CheckInTime"] = ""
+                updated = True
+                break
+
+        if updated:
+            guests_db.write_all(guests)
+            log_activity(guest_id, f"Admin {admin['user_id']} toggled attendance")
+            return JSONResponse(content={"success": True, "message": "Attendance updated successfully"})
+        else:
+            return JSONResponse(status_code=404, content={"success": False, "message": "Guest not found"})
+    except Exception as e:
+        logger.error(f"Error toggling attendance: {str(e)}")
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Error: {str(e)}"})
+
+
+@router.get("/api/guest-status/{guest_id}")
+async def get_real_time_status(guest_id: str, admin: Dict = Depends(get_current_admin)):
+    """Get real-time status for a guest"""
+    try:
         guests = guests_db.read_all()
         guest = next((g for g in guests if g["ID"] == guest_id), None)
 
@@ -2327,19 +2385,32 @@ async def get_guest_status(guest_id: str, admin: Dict = Depends(get_current_admi
             return JSONResponse(status_code=404, content={"success": False, "message": "Guest not found"})
 
         status = {
+            "attendance": guest.get("DailyAttendance", "False") == "True",
+            "badge_printed": guest.get("BadgePrinted", "False") == "True",
+            "badge_given": guest.get("BadgeGiven", "False") == "True",
+            "kit_received": guest.get("KitReceived", "False") == "True",
             "gifts_given": guest.get("GiftsGiven", "False") == "True",
-            "food_day1_given": guest.get("FoodCouponsDay1", "False") == "True",
-            "food_day2_given": guest.get("FoodCouponsDay2", "False") == "True",
-            "gift_date": guest.get("GiftGivenDate"),
-            "food_day1_date": guest.get("FoodCouponsDay1Date"),
-            "food_day2_date": guest.get("FoodCouponsDay2Date")
+            "food_day1": guest.get("FoodCouponsDay1", "False") == "True",
+            "food_day2": guest.get("FoodCouponsDay2", "False") == "True",
+            "payment_status": guest.get("PaymentStatus", "Pending"),
+            "payment_amount": guest.get("PaymentAmount", "0"),
+            "journey_updated": guest.get("JourneyDetailsUpdated", "False") == "True",
+            "journey_completed": guest.get("JourneyCompleted", "False") == "True",
+
+            # Timestamps
+            "checkin_time": guest.get("CheckInTime", ""),
+            "badge_printed_date": guest.get("BadgePrintedDate", ""),
+            "badge_given_date": guest.get("BadgeGivenDate", ""),
+            "kit_received_date": guest.get("KitReceivedDate", ""),
+            "gift_given_date": guest.get("GiftGivenDate", ""),
+            "food_day1_date": guest.get("FoodCouponsDay1Date", ""),
+            "food_day2_date": guest.get("FoodCouponsDay2Date", "")
         }
 
         return JSONResponse(content={"success": True, "status": status})
-
     except Exception as e:
-        logger.error(f"Error getting guest status: {str(e)}")
-        return JSONResponse(status_code=500, content={"success": False, "message": f"Error getting status: {str(e)}"})
+        logger.error(f"Error getting status: {str(e)}")
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Error: {str(e)}"})
 
 @router.post("/update_guest_basic_info")
 async def update_guest_basic_info(request: Request, admin: Dict = Depends(get_current_admin)):
@@ -3372,12 +3443,31 @@ def ensure_all_guest_fields():
             return
 
         required_fields = {
+            # Existing boolean status fields
             "GiftsGiven": "False",
             "FoodCouponsDay1": "False",
             "FoodCouponsDay2": "False",
+            "BadgePrinted": "False",
+            "BadgeGiven": "False",
+            "KitReceived": "False",
+            "DailyAttendance": "False",
+
+            # Date tracking fields
             "GiftGivenDate": "",
             "FoodCouponsDay1Date": "",
             "FoodCouponsDay2Date": "",
+            "BadgePrintedDate": "",
+            "BadgeGivenDate": "",
+            "KitReceivedDate": "",
+            "CheckInTime": "",
+
+            # Payment related fields
+            "PaymentStatus": "Pending",
+            "PaymentAmount": "0",
+            "PaymentDate": "",
+            "PaymentMethod": "",
+
+            # Notes fields
             "GiftNotes": "",
             "FoodNotes": "",
         }

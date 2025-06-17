@@ -1022,11 +1022,11 @@
                     <!-- Status Tab -->
                     <div class="tab-pane fade" id="status" role="tabpanel" aria-labelledby="status-tab">
                         <h5 class="mb-4">Guest Status Overview</h5>
-                        
+
                         <!-- Core Status Items -->
                         <div class="row g-3 mb-4">
                             <div class="col-md-3">
-                                <div class="status-card {% if guest.DailyAttendance == 'True' %}active{% else %}inactive{% endif %}">
+                                <div class="status-card {% if guest.DailyAttendance == 'True' %}active{% else %}inactive{% endif %}" data-status="attendance">
                                     <div class="mb-2">
                                         <i class="fas fa-calendar-check fa-2x {% if guest.DailyAttendance == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
                                     </div>
@@ -1034,11 +1034,14 @@
                                     <span class="status-badge {% if guest.DailyAttendance == 'True' %}true{% else %}false{% endif %}">
                                         {% if guest.DailyAttendance == 'True' %}Present{% else %}Absent{% endif %}
                                     </span>
+                                    {% if guest.CheckInTime %}
+                                    <small class="d-block text-muted mt-1">{{ guest.CheckInTime }}</small>
+                                    {% endif %}
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-3">
-                                <div class="status-card {% if guest.BadgePrinted == 'True' %}active{% else %}inactive{% endif %}">
+                                <div class="status-card {% if guest.BadgePrinted == 'True' %}active{% else %}inactive{% endif %}" data-status="badge_printed">
                                     <div class="mb-2">
                                         <i class="fas fa-id-badge fa-2x {% if guest.BadgePrinted == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
                                     </div>
@@ -1046,11 +1049,14 @@
                                     <span class="status-badge {% if guest.BadgePrinted == 'True' %}true{% else %}false{% endif %}">
                                         {% if guest.BadgePrinted == 'True' %}Printed{% else %}Not Printed{% endif %}
                                     </span>
+                                    {% if guest.BadgePrintedDate %}
+                                    <small class="d-block text-muted mt-1">{{ guest.BadgePrintedDate }}</small>
+                                    {% endif %}
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-3">
-                                <div class="status-card {% if guest.BadgeGiven == 'True' %}active{% else %}inactive{% endif %}">
+                                <div class="status-card {% if guest.BadgeGiven == 'True' %}active{% else %}inactive{% endif %}" data-status="badge_given">
                                     <div class="mb-2">
                                         <i class="fas fa-hand-holding fa-2x {% if guest.BadgeGiven == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
                                     </div>
@@ -1058,77 +1064,156 @@
                                     <span class="status-badge {% if guest.BadgeGiven == 'True' %}true{% else %}false{% endif %}">
                                         {% if guest.BadgeGiven == 'True' %}Given{% else %}Not Given{% endif %}
                                     </span>
+                                    {% if guest.BadgeGivenDate %}
+                                    <small class="d-block text-muted mt-1">{{ guest.BadgeGivenDate }}</small>
+                                    {% endif %}
                                 </div>
                             </div>
-                            
-                            {% if guest.GuestRole in ['OrgBatch', 'Delegates'] %}
+
                             <div class="col-md-3">
-                                <div class="status-card {% if guest.Kit == 'True' %}active{% else %}inactive{% endif %}">
+                                <div class="status-card {% if guest.KitReceived == 'True' %}active{% else %}inactive{% endif %}" data-status="kit_received">
                                     <div class="mb-2">
-                                        <i class="fas fa-box fa-2x {% if guest.Kit == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
+                                        <i class="fas fa-box fa-2x {% if guest.KitReceived == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
                                     </div>
-                                    <div class="fw-bold">Kit</div>
-                                    <span class="status-badge {% if guest.Kit == 'True' %}true{% else %}false{% endif %}">
-                                        {% if guest.Kit == 'True' %}Received{% else %}Not Received{% endif %}
+                                    <div class="fw-bold">Kit Status</div>
+                                    <span class="status-badge {% if guest.KitReceived == 'True' %}true{% else %}false{% endif %}">
+                                        {% if guest.KitReceived == 'True' %}Received{% else %}Not Received{% endif %}
                                     </span>
+                                    {% if guest.KitReceivedDate %}
+                                    <small class="d-block text-muted mt-1">{{ guest.KitReceivedDate }}</small>
+                                    {% endif %}
                                 </div>
                             </div>
-                            {% endif %}
                         </div>
-                        
-                        {% if guest.GuestRole == 'Delegates' %}
+
                         <!-- Payment Status -->
-                        <div class="row mb-4">
-                            <div class="col-md-4">
-                                <div class="status-card {% if guest.PaymentReceived == 'True' %}active{% else %}inactive{% endif %}">
-                                    <div class="mb-2">
-                                        <i class="fas fa-money-bill-wave fa-2x {% if guest.PaymentReceived == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
-                                    </div>
-                                    <div class="fw-bold">Payment</div>
-                                    <span class="status-badge {% if guest.PaymentReceived == 'True' %}true{% else %}false{% endif %}">
-                                        {% if guest.PaymentReceived == 'True' %}Received{% else %}Pending{% endif %}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        {% endif %}
-                        
-                        <!-- Meal Status -->
-                        <h6 class="mb-3">Meal Status</h6>
+                        <h6 class="mb-3">Payment Information</h6>
                         <div class="row g-3 mb-4">
                             <div class="col-md-4">
-                                <div class="status-card {% if guest.LunchDay1 == 'True' %}active{% else %}inactive{% endif %}">
+                                <div class="status-card {% if guest.PaymentStatus == 'Paid' %}active{% else %}inactive{% endif %}">
                                     <div class="mb-2">
-                                        <i class="fas fa-utensils fa-2x {% if guest.LunchDay1 == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
+                                        <i class="fas fa-money-bill-wave fa-2x {% if guest.PaymentStatus == 'Paid' %}text-success{% else %}text-muted{% endif %}"></i>
                                     </div>
-                                    <div class="fw-bold">Lunch Day 1</div>
-                                    <span class="status-badge {% if guest.LunchDay1 == 'True' %}true{% else %}false{% endif %}">
-                                        {% if guest.LunchDay1 == 'True' %}Taken{% else %}Not Taken{% endif %}
+                                    <div class="fw-bold">Payment Status</div>
+                                    <span class="status-badge {% if guest.PaymentStatus == 'Paid' %}true{% else %}false{% endif %}">
+                                        {{ guest.PaymentStatus or 'Pending' }}
                                     </span>
+                                    {% if guest.PaymentAmount and guest.PaymentAmount != '0' %}
+                                    <small class="d-block text-muted mt-1">₹{{ guest.PaymentAmount }}</small>
+                                    {% endif %}
                                 </div>
                             </div>
-                            
+
                             <div class="col-md-4">
-                                <div class="status-card {% if guest.LunchDay2 == 'True' %}active{% else %}inactive{% endif %}">
+                                <div class="status-card {% if guest.PaymentMethod %}active{% else %}inactive{% endif %}">
                                     <div class="mb-2">
-                                        <i class="fas fa-utensils fa-2x {% if guest.LunchDay2 == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
+                                        <i class="fas fa-credit-card fa-2x {% if guest.PaymentMethod %}text-info{% else %}text-muted{% endif %}"></i>
                                     </div>
-                                    <div class="fw-bold">Lunch Day 2</div>
-                                    <span class="status-badge {% if guest.LunchDay2 == 'True' %}true{% else %}false{% endif %}">
-                                        {% if guest.LunchDay2 == 'True' %}Taken{% else %}Not Taken{% endif %}
-                                    </span>
+                                    <div class="fw-bold">Payment Method</div>
+                                    <span class="badge bg-info">{{ guest.PaymentMethod or 'Not specified' }}</span>
+                                    {% if guest.PaymentDate %}
+                                    <small class="d-block text-muted mt-1">{{ guest.PaymentDate }}</small>
+                                    {% endif %}
                                 </div>
                             </div>
-                            
-                            <div class="col-md-4">
-                                <div class="status-card {% if guest.LunchDay3 == 'True' %}active{% else %}inactive{% endif %}">
+                        </div>
+
+                        <!-- Food Status -->
+                        <h6 class="mb-3">Food & Meals</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="status-card {% if guest.FoodCouponsDay1 == 'True' %}active{% else %}inactive{% endif %}" data-status="food_day1">
                                     <div class="mb-2">
-                                        <i class="fas fa-utensils fa-2x {% if guest.LunchDay3 == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
+                                        <i class="fas fa-utensils fa-2x {% if guest.FoodCouponsDay1 == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
                                     </div>
-                                    <div class="fw-bold">Lunch Day 3</div>
-                                    <span class="status-badge {% if guest.LunchDay3 == 'True' %}true{% else %}false{% endif %}">
-                                        {% if guest.LunchDay3 == 'True' %}Taken{% else %}Not Taken{% endif %}
+                                    <div class="fw-bold">Day 1 Food Coupons</div>
+                                    <span class="status-badge {% if guest.FoodCouponsDay1 == 'True' %}true{% else %}false{% endif %}">
+                                        {% if guest.FoodCouponsDay1 == 'True' %}Given{% else %}Not Given{% endif %}
                                     </span>
+                                    {% if guest.FoodCouponsDay1Date %}
+                                    <small class="d-block text-muted mt-1">{{ guest.FoodCouponsDay1Date }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="status-card {% if guest.FoodCouponsDay2 == 'True' %}active{% else %}inactive{% endif %}" data-status="food_day2">
+                                    <div class="mb-2">
+                                        <i class="fas fa-utensils fa-2x {% if guest.FoodCouponsDay2 == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
+                                    </div>
+                                    <div class="fw-bold">Day 2 Food Coupons</div>
+                                    <span class="status-badge {% if guest.FoodCouponsDay2 == 'True' %}true{% else %}false{% endif %}">
+                                        {% if guest.FoodCouponsDay2 == 'True' %}Given{% else %}Not Given{% endif %}
+                                    </span>
+                                    {% if guest.FoodCouponsDay2Date %}
+                                    <small class="d-block text-muted mt-1">{{ guest.FoodCouponsDay2Date }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gift Status -->
+                        <h6 class="mb-3">Gifts & Conference Items</h6>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <div class="status-card {% if guest.GiftsGiven == 'True' %}active{% else %}inactive{% endif %}" data-status="gifts_given">
+                                    <div class="mb-2">
+                                        <i class="fas fa-gift fa-2x {% if guest.GiftsGiven == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
+                                    </div>
+                                    <div class="fw-bold">Conference Gifts</div>
+                                    <span class="status-badge {% if guest.GiftsGiven == 'True' %}true{% else %}false{% endif %}">
+                                        {% if guest.GiftsGiven == 'True' %}Given{% else %}Not Given{% endif %}
+                                    </span>
+                                    {% if guest.GiftGivenDate %}
+                                    <small class="d-block text-muted mt-1">{{ guest.GiftGivenDate }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Journey Status -->
+                            <div class="col-md-6">
+                                <div class="status-card {% if guest.JourneyDetailsUpdated == 'True' %}active{% else %}inactive{% endif %}">
+                                    <div class="mb-2">
+                                        <i class="fas fa-plane fa-2x {% if guest.JourneyDetailsUpdated == 'True' %}text-success{% else %}text-muted{% endif %}"></i>
+                                    </div>
+                                    <div class="fw-bold">Journey Details</div>
+                                    <span class="status-badge {% if guest.JourneyDetailsUpdated == 'True' %}true{% else %}false{% endif %}">
+                                        {% if guest.JourneyDetailsUpdated == 'True' %}Updated{% else %}Pending{% endif %}
+                                    </span>
+                                    {% if guest.JourneyCompleted == 'True' %}
+                                    <small class="d-block text-success mt-1">
+                                        <i class="fas fa-check-circle me-1"></i>Journey Completed
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions for Status Updates -->
+                        <div class="mt-4">
+                            <h6 class="mb-3">Quick Status Updates</h6>
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <button class="btn btn-outline-primary btn-sm w-100" onclick="toggleAttendance()">
+                                        <i class="fas fa-calendar-check me-1"></i>
+                                        {% if guest.DailyAttendance == 'True' %}Mark Absent{% else %}Mark Present{% endif %}
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-outline-info btn-sm w-100" onclick="toggleKitStatus()">
+                                        <i class="fas fa-box me-1"></i>
+                                        {% if guest.KitReceived == 'True' %}Mark Kit Not Received{% else %}Mark Kit Received{% endif %}
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-outline-success btn-sm w-100" onclick="updatePaymentStatus()">
+                                        <i class="fas fa-money-bill-wave me-1"></i>Update Payment
+                                    </button>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="refreshStatus()">
+                                        <i class="fas fa-sync-alt me-1"></i>Refresh Status
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -1181,8 +1266,8 @@
                                 Attendance
                             </h6>
                             
-                            <button class="btn btn-outline-warning btn-sm w-100" 
-                                    onclick="updateAttendance('{{ guest.ID }}')"
+                            <button class="btn btn-outline-warning btn-sm w-100"
+                                    onclick="toggleAttendance()"
                                     {% if guest.DailyAttendance == 'True' %}disabled{% endif %}>
                                 <i class="fas fa-calendar-check me-2"></i>
                                 {% if guest.DailyAttendance == 'True' %}Already Marked Present{% else %}Mark Present{% endif %}
@@ -1836,6 +1921,149 @@
                 showNotification('An unexpected error occurred', 'error');
             });
         }
+
+        // Status Tab Functions
+        function toggleAttendance() {
+            fetch('/admin/toggle_attendance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `guest_id=${currentGuestId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Attendance status updated', 'success');
+                    refreshStatus();
+                } else {
+                    showNotification(data.message || 'Error updating attendance', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An unexpected error occurred', 'error');
+            });
+        }
+
+        function toggleKitStatus() {
+            fetch('/admin/update_kit_status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `guest_id=${currentGuestId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Kit status updated', 'success');
+                    refreshStatus();
+                } else {
+                    showNotification(data.message || 'Error updating kit status', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An unexpected error occurred', 'error');
+            });
+        }
+
+        function refreshStatus() {
+            fetch(`/admin/api/guest-status/${currentGuestId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateStatusDisplay(data.status);
+                    showNotification('Status refreshed', 'info');
+                } else {
+                    showNotification('Error refreshing status', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Error refreshing status', 'error');
+            });
+        }
+
+        function updateStatusDisplay(status) {
+            const statusElements = {
+                'attendance': status.attendance,
+                'badge_printed': status.badge_printed,
+                'badge_given': status.badge_given,
+                'kit_received': status.kit_received,
+                'gifts_given': status.gifts_given,
+                'food_day1': status.food_day1,
+                'food_day2': status.food_day2
+            };
+
+            Object.keys(statusElements).forEach(key => {
+                const card = document.querySelector(`[data-status="${key}"]`);
+                if (card) {
+                    const isActive = statusElements[key];
+                    card.className = card.className.replace(/\b(active|inactive)\b/g, isActive ? 'active' : 'inactive');
+
+                    const badge = card.querySelector('.status-badge');
+                    if (badge) {
+                        badge.className = badge.className.replace(/\b(true|false)\b/g, isActive ? 'true' : 'false');
+                        badge.textContent = isActive ? getActiveText(key) : getInactiveText(key);
+                    }
+
+                    const icon = card.querySelector('i');
+                    if (icon) {
+                        icon.className = icon.className.replace(/\b(text-success|text-muted)\b/g, isActive ? 'text-success' : 'text-muted');
+                    }
+                }
+            });
+        }
+
+        function getActiveText(status) {
+            const activeTexts = {
+                'attendance': 'Present',
+                'badge_printed': 'Printed',
+                'badge_given': 'Given',
+                'kit_received': 'Received',
+                'gifts_given': 'Given',
+                'food_day1': 'Given',
+                'food_day2': 'Given'
+            };
+            return activeTexts[status] || 'Active';
+        }
+
+        function getInactiveText(status) {
+            const inactiveTexts = {
+                'attendance': 'Absent',
+                'badge_printed': 'Not Printed',
+                'badge_given': 'Not Given',
+                'kit_received': 'Not Received',
+                'gifts_given': 'Not Given',
+                'food_day1': 'Not Given',
+                'food_day2': 'Not Given'
+            };
+            return inactiveTexts[status] || 'Inactive';
+        }
+
+        function updatePaymentStatus() {
+            showPaymentModal(currentGuestId);
+        }
+
+        let statusInterval;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusTab = document.getElementById('status-tab');
+            if (statusTab) {
+                statusTab.addEventListener('shown.bs.tab', function() {
+                    refreshStatus();
+                    statusInterval = setInterval(refreshStatus, 30000);
+                });
+
+                statusTab.addEventListener('hidden.bs.tab', function() {
+                    if (statusInterval) {
+                        clearInterval(statusInterval);
+                    }
+                });
+            }
+        });
         
         // Utility Functions
         function showLoading(elementId) {
