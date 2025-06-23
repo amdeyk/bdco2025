@@ -29,7 +29,7 @@ class Config:
     def _set_defaults(self):
         """Set default configuration values"""
         self.config['DEFAULT'] = {
-            'AdminPassword': 'admin123change_this',
+            'AdminPassword': 'Magna_code@123',
             'SoftwareVersion': '2.0',
             'Debug': 'False',
             'SecretKey': 'generate_random_secret_key_here'

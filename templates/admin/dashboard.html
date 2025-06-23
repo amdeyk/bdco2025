@@ -281,6 +281,12 @@
                             <span>Create Backup</span>
                         </a>
                     </div>
+                    <div class="col-md-3 mb-3">
+                        <button id="resetDbBtn" class="btn btn-outline-danger w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                            <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                            <span>Reset Database</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -475,6 +481,37 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             }
+        });
+    }
+
+    // Reset database button
+    const resetBtn = document.getElementById('resetDbBtn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            const phrase = prompt('Type "I_DO_UNDERSTAND@@RESET" to confirm database reset:');
+            if (phrase !== 'I_DO_UNDERSTAND@@RESET') {
+                alert('Incorrect confirmation phrase.');
+                return;
+            }
+
+            fetch('/admin/reset_database', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ 'confirm_phrase': phrase })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Database reset successful');
+                    location.reload();
+                } else {
+                    alert('Error resetting database: ' + data.message);
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('An error occurred while resetting the database');
+            });
         });
     }
 });
