@@ -221,14 +221,6 @@
                         </div>
                     </div>
                     
-                    <div class="info-row">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted"><i class="fas fa-credit-card me-1"></i>Payment:</small>
-                            <span class="badge {% if guest.PaymentStatus == 'Paid' %}bg-success{% elif guest.PaymentStatus == 'Pending' %}bg-warning{% else %}bg-danger{% endif %} status-badge">
-                                {{ guest.PaymentStatus or 'Pending' }}
-                            </span>
-                        </div>
-                    </div>
                     
                     <div class="info-row">
                         <div class="d-flex justify-content-between align-items-center">
