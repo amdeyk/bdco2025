@@ -563,12 +563,6 @@
                                     </div>
                                     {% endif %}
                                     
-                                    {% if guest.PaymentAmount %}
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Payment Amount</label>
-                                        <div class="editable-field">₹{{ guest.PaymentAmount }}</div>
-                                    </div>
-                                    {% endif %}
                                     
                                     {% if guest.CompanyName %}
                                     <div class="mb-3">
@@ -1266,37 +1260,7 @@
                             </div>
                         </div>
 
-                        <!-- Payment Status -->
-                        <h6 class="mb-3">Payment Information</h6>
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-4">
-                                <div class="status-card {% if guest.PaymentStatus == 'Paid' %}active{% else %}inactive{% endif %}">
-                                    <div class="mb-2">
-                                        <i class="fas fa-money-bill-wave fa-2x {% if guest.PaymentStatus == 'Paid' %}text-success{% else %}text-muted{% endif %}"></i>
-                                    </div>
-                                    <div class="fw-bold">Payment Status</div>
-                                    <span class="status-badge {% if guest.PaymentStatus == 'Paid' %}true{% else %}false{% endif %}">
-                                        {{ guest.PaymentStatus or 'Pending' }}
-                                    </span>
-                                    {% if guest.PaymentAmount and guest.PaymentAmount != '0' %}
-                                    <small class="d-block text-muted mt-1">₹{{ guest.PaymentAmount }}</small>
-                                    {% endif %}
-                                </div>
-                            </div>
 
-                            <div class="col-md-4">
-                                <div class="status-card {% if guest.PaymentMethod %}active{% else %}inactive{% endif %}">
-                                    <div class="mb-2">
-                                        <i class="fas fa-credit-card fa-2x {% if guest.PaymentMethod %}text-info{% else %}text-muted{% endif %}"></i>
-                                    </div>
-                                    <div class="fw-bold">Payment Method</div>
-                                    <span class="badge bg-info">{{ guest.PaymentMethod or 'Not specified' }}</span>
-                                    {% if guest.PaymentDate %}
-                                    <small class="d-block text-muted mt-1">{{ guest.PaymentDate }}</small>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
 
                         <!-- Food Status -->
                         <h6 class="mb-3">Food & Meals</h6>
@@ -1386,11 +1350,6 @@
                                     </button>
                                 </div>
                                 <div class="col-md-3">
-                                    <button class="btn btn-outline-success btn-sm w-100" onclick="updatePaymentStatus()">
-                                        <i class="fas fa-money-bill-wave me-1"></i>Update Payment
-                                    </button>
-                                </div>
-                                <div class="col-md-3">
                                     <button class="btn btn-outline-secondary btn-sm w-100" onclick="refreshStatus()">
                                         <i class="fas fa-sync-alt me-1"></i>Refresh Status
                                     </button>
@@ -1454,22 +1413,6 @@
                             </button>
                         </div>
                         
-                        {% if guest.GuestRole == 'Delegates' %}
-                        <!-- Payment Actions -->
-                        <div class="quick-action-card">
-                            <h6 class="fw-bold text-primary mb-2">
-                                <i class="fas fa-money-bill-wave me-1"></i>
-                                Payment
-                            </h6>
-                            
-                            <button class="btn btn-outline-success btn-sm w-100" 
-                                    onclick="showPaymentModal('{{ guest.ID }}')"
-                                    {% if guest.PaymentReceived == 'True' %}disabled{% endif %}>
-                                <i class="fas fa-money-bill-wave me-2"></i>
-                                {% if guest.PaymentReceived == 'True' %}Payment Received{% else %}Record Payment{% endif %}
-                            </button>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
                 
@@ -1492,42 +1435,6 @@
         </div>
     </div>
 
-    <!-- Payment Modal -->
-    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="paymentModalLabel">Record Payment</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="paymentForm">
-                        <div class="mb-3">
-                            <label for="paymentAmount" class="form-label">Payment Amount (₹)</label>
-                            <input type="number" class="form-control" id="paymentAmount" step="0.01" min="0" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="paymentMethod" class="form-label">Payment Method</label>
-                            <select class="form-select" id="paymentMethod">
-                                <option value="cash">Cash</option>
-                                <option value="card">Card</option>
-                                <option value="upi">UPI</option>
-                                <option value="bank_transfer">Bank Transfer</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="paymentNotes" class="form-label">Notes (Optional)</label>
-                            <textarea class="form-control" id="paymentNotes" rows="2"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="processPayment()">Record Payment</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -2057,51 +1964,6 @@
             }
         }
         
-        // Payment Functions
-        function showPaymentModal(guestId) {
-            currentGuestId = guestId;
-            const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
-            modal.show();
-        }
-        
-        function processPayment() {
-            const amount = document.getElementById('paymentAmount').value;
-            const method = document.getElementById('paymentMethod').value;
-            const notes = document.getElementById('paymentNotes').value;
-            
-            if (!amount || parseFloat(amount) <= 0) {
-                showNotification('Please enter a valid payment amount', 'error');
-                return;
-            }
-            
-            fetch('/admin/update-payment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    guestId: currentGuestId,
-                    amount: parseFloat(amount),
-                    method: method,
-                    notes: notes
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showNotification(data.message || 'Payment recorded successfully', 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    showNotification(data.message || 'An error occurred', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('An unexpected error occurred', 'error');
-            });
-        }
-
         // Status Tab Functions
         function toggleAttendance() {
             fetch('/admin/toggle_attendance', {
@@ -2221,10 +2083,6 @@
                 'food_day2': 'Not Given'
             };
             return inactiveTexts[status] || 'Inactive';
-        }
-
-        function updatePaymentStatus() {
-            showPaymentModal(currentGuestId);
         }
 
         let statusInterval;

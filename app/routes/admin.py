@@ -586,6 +586,14 @@ async def process_admin_login(
             }
         )
 
+@router.get("/logout")
+async def admin_logout(request: Request):
+    """Admin logout route"""
+    response = RedirectResponse(url="/", status_code=303)
+    response.delete_cookie("session_id")
+    log_activity("Admin", "Admin logged out")
+    return response
+
 @router.get("/report/export/guest_list")
 async def export_guest_list(
     admin: Dict = Depends(get_current_admin),
