@@ -367,6 +367,241 @@ async def restore_backup(
             content={"success": False, "message": f"Error restoring backup: {str(e)}"}
         )
 
+@router.get("/reset_database", response_class=HTMLResponse)
+async def reset_database_page(request: Request, admin: Dict = Depends(get_current_admin)):
+    """Reset database confirmation page"""
+    try:
+        return templates.TemplateResponse(
+            "admin/reset_database.html",
+            {
+                "request": request,
+                "admin": admin,
+                "active_page": "reset_database"
+            }
+        )
+    except Exception as e:
+        logger.error(f"Error loading reset database page: {str(e)}")
+        return templates.TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "message": "Error loading reset database page",
+                "error_details": str(e) if config.getboolean('DEFAULT', 'Debug', fallback=False) else None
+            }
+        )
+
+
+@router.post("/reset_database")
+async def reset_database(
+    request: Request,
+    admin: Dict = Depends(get_current_admin),
+    confirmation_phrase: str = Form(...),
+    admin_password: str = Form(...)
+):
+    """Reset the entire database with password protection"""
+    try:
+        if admin_password != config.get('DEFAULT', 'AdminPassword'):
+            return templates.TemplateResponse(
+                "admin/reset_database.html",
+                {
+                    "request": request,
+                    "admin": admin,
+                    "error": "Incorrect admin password",
+                    "active_page": "reset_database"
+                }
+            )
+
+        if confirmation_phrase != "I_DO_UNDERSTAND@@RESET":
+            return templates.TemplateResponse(
+                "admin/reset_database.html",
+                {
+                    "request": request,
+                    "admin": admin,
+                    "error": "Incorrect confirmation phrase",
+                    "active_page": "reset_database"
+                }
+            )
+
+        reset_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_filename = f"pre_reset_backup_{reset_timestamp}.csv"
+        backup_path = guests_db.create_backup(backup_filename)
+
+        if not backup_path:
+            return templates.TemplateResponse(
+                "admin/reset_database.html",
+                {
+                    "request": request,
+                    "admin": admin,
+                    "error": "Failed to create backup. Reset aborted for safety.",
+                    "active_page": "reset_database"
+                }
+            )
+
+        reset_main_database()
+        reset_related_databases()
+
+        log_activity("System", f"Admin {admin['user_id']} performed complete database reset. Backup: {backup_filename}")
+
+        return templates.TemplateResponse(
+            "admin/reset_database.html",
+            {
+                "request": request,
+                "admin": admin,
+                "success": f"Database successfully reset. Backup created: {backup_filename}",
+                "backup_file": backup_filename,
+                "active_page": "reset_database"
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error resetting database: {str(e)}")
+        return templates.TemplateResponse(
+            "admin/reset_database.html",
+            {
+                "request": request,
+                "admin": admin,
+                "error": f"Error during database reset: {str(e)}",
+                "active_page": "reset_database"
+            }
+        )
+
+
+def reset_main_database():
+    """Reset the main guests database to initial state"""
+    try:
+        initial_headers = [
+            "ID", "Name", "Email", "Phone", "GuestRole", "RegistrationDate",
+            "DailyAttendance", "CheckInTime", "BadgePrinted", "BadgeGiven",
+            "BadgePrintedDate", "BadgeGivenDate", "KitReceived", "KitReceivedDate",
+            "GiftsGiven", "GiftGivenDate", "GiftNotes", "FoodCouponsDay1",
+            "FoodCouponsDay2", "FoodCouponsDay1Date", "FoodCouponsDay2Date",
+            "FoodNotes", "PaymentStatus", "PaymentAmount", "PaymentDate",
+            "PaymentMethod", "JourneyDetailsUpdated", "JourneyCompleted",
+            "LastJourneyUpdate", "InwardJourneyDate", "InwardJourneyFrom",
+            "InwardJourneyTo", "InwardJourneyDetails", "InwardPickupRequired",
+            "InwardJourneyRemarks", "OutwardJourneyDate", "OutwardJourneyFrom",
+            "OutwardJourneyTo", "OutwardJourneyDetails", "OutwardDropRequired",
+            "OutwardJourneyRemarks", "Organization", "Batch", "CompanyName"
+        ]
+
+        csv_path = config.get('DATABASE', 'CSVPath')
+        with open(csv_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(initial_headers)
+
+        logger.info("Main database reset successfully")
+
+    except Exception as e:
+        logger.error(f"Error resetting main database: {str(e)}")
+        raise
+
+
+def reset_related_databases():
+    """Reset all related CSV databases"""
+    try:
+        data_dir = os.path.dirname(config.get('DATABASE', 'CSVPath'))
+
+        journey_csv = os.path.join(data_dir, "journey.csv")
+        journey_headers = [
+            "guest_id", "inward_date", "inward_origin", "inward_destination",
+            "inward_transport_details", "pickup_required", "inward_remarks",
+            "outward_date", "outward_origin", "outward_destination",
+            "outward_transport_details", "drop_required", "outward_remarks",
+            "updated_at", "created_at"
+        ]
+        create_empty_csv(journey_csv, journey_headers)
+
+        presentations_csv = os.path.join(data_dir, "presentations.csv")
+        presentation_headers = [
+            "id", "guest_id", "file_name", "file_path", "file_type",
+            "file_size", "upload_date", "status"
+        ]
+        create_empty_csv(presentations_csv, presentation_headers)
+
+        faculty_csv = os.path.join(data_dir, "faculty.csv")
+        faculty_headers = [
+            "guest_id", "designation", "specialization", "experience_years",
+            "accommodation_required", "dietary_requirements", "special_requests",
+            "presentation_title", "presentation_duration", "av_requirements"
+        ]
+        create_empty_csv(faculty_csv, faculty_headers)
+
+        messages_csv = os.path.join(data_dir, "messages.csv")
+        message_headers = [
+            "id", "guest_id", "message", "timestamp", "read",
+            "response", "response_timestamp"
+        ]
+        create_empty_csv(messages_csv, message_headers)
+
+        changelog_csv = os.path.join(data_dir, "changelog.csv")
+        changelog_headers = [
+            "id", "title", "description", "author", "timestamp", "changes"
+        ]
+        create_empty_csv(changelog_csv, changelog_headers)
+
+        logger.info("All related databases reset successfully")
+
+    except Exception as e:
+        logger.error(f"Error resetting related databases: {str(e)}")
+        raise
+
+
+def create_empty_csv(file_path: str, headers: list):
+    """Create an empty CSV file with specified headers"""
+    try:
+        with open(file_path, 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(headers)
+    except Exception as e:
+        logger.error(f"Error creating empty CSV {file_path}: {str(e)}")
+        raise
+
+
+@router.get("/api/database-stats")
+async def get_database_stats(admin: Dict = Depends(get_current_admin)):
+    """Get current database statistics for reset confirmation"""
+    try:
+        guests = guests_db.read_all()
+
+        data_dir = os.path.dirname(config.get('DATABASE', 'CSVPath'))
+
+        journey_count = 0
+        journey_csv = os.path.join(data_dir, "journey.csv")
+        if os.path.exists(journey_csv):
+            with open(journey_csv, 'r', newline='', encoding='utf-8') as f:
+                journey_count = len(list(csv.DictReader(f)))
+
+        presentations_count = 0
+        presentations_csv = os.path.join(data_dir, "presentations.csv")
+        if os.path.exists(presentations_csv):
+            with open(presentations_csv, 'r', newline='', encoding='utf-8') as f:
+                presentations_count = len(list(csv.DictReader(f)))
+
+        messages_count = 0
+        messages_csv = os.path.join(data_dir, "messages.csv")
+        if os.path.exists(messages_csv):
+            with open(messages_csv, 'r', newline='', encoding='utf-8') as f:
+                messages_count = len(list(csv.DictReader(f)))
+
+        return JSONResponse(content={
+            "success": True,
+            "stats": {
+                "total_guests": len(guests),
+                "checked_in": sum(1 for g in guests if g.get("DailyAttendance") == "True"),
+                "badges_printed": sum(1 for g in guests if g.get("BadgePrinted") == "True"),
+                "journeys": journey_count,
+                "presentations": presentations_count,
+                "messages": messages_count
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Error getting database stats: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": f"Error getting stats: {str(e)}"}
+        )
+
 @router.get("/report", response_class=HTMLResponse)
 async def report_page(request: Request, admin: Dict = Depends(get_current_admin)):
     """Generate comprehensive reports and analytics"""
