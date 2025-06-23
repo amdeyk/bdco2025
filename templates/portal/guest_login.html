@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Guest Portal Login | MAGNACODE 2025{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-lg border-0 mb-4">
+                    <div class="card-body text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-graduation-cap fa-3x text-primary"></i>
+                        </div>
+                        <h2 class="h4 text-primary mb-1">MAGNACODE 2025</h2>
+                        <p class="text-muted mb-0">Guest Portal</p>
+                    </div>
+                </div>
+                <div class="card shadow-lg border-0">
+                    <div class="card-header bg-primary text-white text-center py-3">
+                        <h4 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i>Guest Portal Login</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        {% if error %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+                        <form method="post" action="/portal/guest/login" class="needs-validation" novalidate>
+                            <div class="mb-3">
+                                <label for="guest_id" class="form-label">
+                                    <i class="fas fa-id-card me-1"></i>Guest ID
+                                </label>
+                                <input type="text" class="form-control form-control-lg" id="guest_id" name="guest_id" placeholder="Enter your Guest ID" required autofocus>
+                                <div class="invalid-feedback">Please enter your Guest ID</div>
+                            </div>
+                            <div class="mb-4">
+                                <label for="phone" class="form-label">
+                                    <i class="fas fa-phone me-1"></i>Phone Number
+                                </label>
+                                <input type="text" class="form-control form-control-lg" id="phone" name="phone" placeholder="Enter your phone number" required>
+                                <div class="invalid-feedback">Please enter your phone number</div>
+                                <small class="text-muted">Your registered phone number (10 digits)</small>
+                            </div>
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-primary btn-lg py-3">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login to Portal
+                                </button>
+                            </div>
+                        </form>
+                        <div class="text-center">
+                            <div class="mb-3">
+                                <span class="text-muted">Don't have an account?</span>
+                                <a href="/portal/guest/register" class="text-primary text-decoration-none fw-bold">Register Here</a>
+                            </div>
+                            <div class="border-top pt-3">
+                                <a href="/" class="btn btn-outline-secondary"><i class="fas fa-home me-1"></i>Back to Home</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card mt-4 shadow-sm border-0">
+                    <div class="card-body">
+                        <h6 class="card-title"><i class="fas fa-info-circle text-primary me-2"></i>Portal Access Instructions</h6>
+                        <ul class="mb-0 small">
+                            <li>Use your Guest ID and registered phone number</li>
+                            <li>Access your conference information and updates</li>
+                            <li>Contact support if you need assistance</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '').substring(0, 10);
+        });
+    }
+    const form = document.querySelector('.needs-validation');
+    form.addEventListener('submit', function(e) {
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

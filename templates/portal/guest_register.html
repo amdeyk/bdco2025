@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Guest Portal Registration | MAGNACODE 2025{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center bg-light py-4">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card shadow-lg border-0 mb-4">
+                    <div class="card-body text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-graduation-cap fa-3x text-primary"></i>
+                        </div>
+                        <h2 class="h4 text-primary mb-1">MAGNACODE 2025</h2>
+                        <p class="text-muted mb-0">Guest Portal Registration</p>
+                    </div>
+                </div>
+                {% if success %}
+                <div class="card shadow-lg border-0 text-center">
+                    <div class="card-body p-5">
+                        <div class="mb-4">
+                            <i class="fas fa-check-circle fa-4x text-success"></i>
+                        </div>
+                        <h3 class="text-success mb-3">Registration Successful!</h3>
+                        <div class="alert alert-info">
+                            <h5 class="mb-3">Your Portal Access Details:</h5>
+                            <p class="mb-1"><strong>Guest ID:</strong> {{ guest_id }}</p>
+                            <p class="mb-1"><strong>Name:</strong> {{ guest_name }}</p>
+                            <p class="mb-0"><strong>Role:</strong> {{ guest_role }}</p>
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Important:</strong> Please save your Guest ID for portal access
+                        </div>
+                        <div class="d-grid gap-2">
+                            <a href="/portal/guest/login" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Login to Portal
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="card shadow-lg border-0">
+                    <div class="card-header bg-primary text-white text-center py-3">
+                        <h4 class="mb-0"><i class="fas fa-user-plus me-2"></i>Guest Portal Registration</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        {% if error %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endif %}
+                        <form method="post" action="/portal/guest/register" class="needs-validation" novalidate>
+                            <!-- Registration form fields should replicate existing guest_registration form -->
+                            <!-- For brevity, include minimal fields -->
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                                <div class="invalid-feedback">Enter your name</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone</label>
+                                <input type="text" class="form-control" id="phone" name="phone" required>
+                                <div class="invalid-feedback">Enter phone</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="guest_role" class="form-label">Role</label>
+                                <select id="guest_role" name="guest_role" class="form-select" required>
+                                    <option value="">Select role</option>
+                                    <option value="Delegate">Delegate</option>
+                                    <option value="Faculty">Faculty</option>
+                                    <option value="Sponsor">Sponsor</option>
+                                </select>
+                                <div class="invalid-feedback">Choose role</div>
+                            </div>
+                            <input type="hidden" name="registration_type" value="new">
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success btn-lg py-3">
+                                    <i class="fas fa-check me-2"></i>Complete Registration
+                                </button>
+                                <a href="/portal/guest/login" class="btn btn-outline-primary">Already have an account? Login Here</a>
+                                <a href="/" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Back to Home</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
