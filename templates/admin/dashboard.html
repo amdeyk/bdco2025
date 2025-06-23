@@ -1,4 +1,14 @@
 {% extends "base.html" %}
+{% block admin_nav %}
+<div class="navbar-nav ms-auto">
+    <a href="/admin/dashboard" class="nav-link">
+        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+    </a>
+    <a href="/logout" class="nav-link">
+        <i class="fas fa-sign-out-alt me-1"></i> Logout
+    </a>
+</div>
+{% endblock %}
 
 {% block title %}Admin Dashboard | Conference Management{% endblock %}
 

@@ -1,5 +1,15 @@
 <!-- templates/admin/reports/guest_report.html -->
 {% extends "base.html" %}
+{% block admin_nav %}
+<div class="navbar-nav ms-auto">
+    <a href="/admin/dashboard" class="nav-link">
+        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+    </a>
+    <a href="/logout" class="nav-link">
+        <i class="fas fa-sign-out-alt me-1"></i> Logout
+    </a>
+</div>
+{% endblock %}
 
 {% block title %}Guest Report | Conference Management{% endblock %}
 
@@ -44,17 +54,6 @@
                         </select>
                     </div>
                     
-                    <div class="col-md-4">
-                        <label for="payment" class="form-label">Filter by Payment</label>
-                        <select class="form-select" id="payment" name="payment">
-                            <option value="">All Payment Statuses</option>
-                            {% for status in payment_statuses %}
-                            <option value="{{ status }}" {% if status == selected_payment %}selected{% endif %}>
-                                {{ status }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
                     
                     <div class="col-12 text-end">
                         <button type="submit" class="btn btn-primary">
@@ -77,10 +76,10 @@
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Guest List</h5>
                 <div class="btn-group">
-                    <a href="/admin/report/export/guest_list?format=csv{% if selected_role %}&role={{ selected_role }}{% endif %}{% if selected_attendance %}&attendance={{ selected_attendance }}{% endif %}{% if selected_payment %}&payment={{ selected_payment }}{% endif %}" class="btn btn-sm btn-outline-success">
+                    <a href="/admin/report/export/guest_list?format=csv{% if selected_role %}&role={{ selected_role }}{% endif %}{% if selected_attendance %}&attendance={{ selected_attendance }}{% endif %}" class="btn btn-sm btn-outline-success">
                         <i class="fas fa-file-csv me-1"></i> Export CSV
                     </a>
-                    <a href="/admin/report/export/guest_list?format=excel{% if selected_role %}&role={{ selected_role }}{% endif %}{% if selected_attendance %}&attendance={{ selected_attendance }}{% endif %}{% if selected_payment %}&payment={{ selected_payment }}{% endif %}" class="btn btn-sm btn-outline-success">
+                    <a href="/admin/report/export/guest_list?format=excel{% if selected_role %}&role={{ selected_role }}{% endif %}{% if selected_attendance %}&attendance={{ selected_attendance }}{% endif %}" class="btn btn-sm btn-outline-success">
                         <i class="fas fa-file-excel me-1"></i> Export Excel
                     </a>
                 </div>
@@ -96,7 +95,6 @@
                                 <th>Contact</th>
                                 <th>Registration Date</th>
                                 <th>Attendance</th>
-                                <th>Payment</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -117,14 +115,6 @@
                                     <span class="badge {% if guest.DailyAttendance == 'True' %}bg-success{% else %}bg-secondary{% endif %}">
                                         {% if guest.DailyAttendance == 'True' %}Present{% else %}Absent{% endif %}
                                     </span>
-                                </td>
-                                <td>
-                                    <span class="badge {% if guest.PaymentStatus == 'Paid' %}bg-success{% elif guest.PaymentStatus == 'Pending' %}bg-warning{% else %}bg-danger{% endif %}">
-                                        {{ guest.PaymentStatus }}
-                                    </span>
-                                    {% if guest.PaymentStatus == 'Paid' %}
-                                    <small class="d-block">₹{{ guest.PaymentAmount }}</small>
-                                    {% endif %}
                                 </td>
                                 <td>
                                     <a href="/single_guest/{{ guest.ID }}" class="btn btn-sm btn-outline-primary">
