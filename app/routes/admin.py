@@ -18,6 +18,10 @@ from app.templates import templates
 from app.utils.logging_utils import log_activity
 from fastapi.responses import StreamingResponse
 import csv
+from app.models.guest import Guest
+from app.models.faculty import Faculty
+from app.models.presentation import Presentation
+from app.models.journey import Journey
 import io
 from app.utils.changelog import ChangelogManager
 import random
@@ -366,6 +370,46 @@ async def restore_backup(
             status_code=500,
             content={"success": False, "message": f"Error restoring backup: {str(e)}"}
         )
+
+@router.post("/reset_database")
+async def reset_database(
+    request: Request,
+    admin: Dict = Depends(get_current_admin),
+    confirm_phrase: str = Form(...),
+):
+    """Backup all data and reset CSV files to their initial headers"""
+    phrase = "I_DO_UNDERSTAND@@RESET"
+    if confirm_phrase != phrase:
+        return JSONResponse(status_code=400, content={"success": False, "message": "Invalid confirmation phrase"})
+
+    try:
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+
+        # Backup main guest database
+        guests_db.create_backup(f"pre_reset_{timestamp}.csv")
+
+        base_dir = os.path.dirname(config.get('DATABASE', 'CSVPath'))
+
+        def reset_file(path: str, headers: List[str]):
+            if os.path.exists(path):
+                shutil.copy2(path, os.path.join(config.get('DATABASE', 'BackupDir'), f"{os.path.basename(path)}_pre_reset_{timestamp}"))
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=headers)
+                writer.writeheader()
+
+        reset_file(config.get('DATABASE', 'CSVPath'), list(Guest().to_dict().keys()))
+        reset_file(os.path.join(base_dir, 'faculty.csv'), list(Faculty().to_dict().keys()))
+        reset_file(os.path.join(base_dir, 'journey.csv'), list(Journey().to_dict().keys()))
+        reset_file(os.path.join(base_dir, 'presentations.csv'), list(Presentation().to_dict().keys()))
+        reset_file(os.path.join(base_dir, 'messages.csv'), ['id', 'guest_id', 'message', 'read', 'created_at'])
+
+        log_activity("Reset", f"Admin {admin['user_id']} reset the database")
+
+        return JSONResponse(content={"success": True, "message": "Database reset successful"})
+    except Exception as e:
+        logger.error(f"Error resetting database: {str(e)}", exc_info=True)
+        return JSONResponse(status_code=500, content={"success": False, "message": f"Error resetting database: {str(e)}"})
 
 @router.get("/report", response_class=HTMLResponse)
 async def report_page(request: Request, admin: Dict = Depends(get_current_admin)):
