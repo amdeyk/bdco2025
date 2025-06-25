@@ -238,9 +238,6 @@
                     <button id="giveSelectedDay2Btn" class="btn btn-sm btn-outline-info" disabled>
                         <i class="fas fa-utensils me-1"></i> Give Day 2 to Selected
                     </button>
-                    <button id="downloadSelectedMealPlanBtn" class="btn btn-sm btn-outline-secondary" disabled>
-                        <i class="fas fa-download me-1"></i> Download Meal Plans
-                    </button>
                 </div>
             </div>
             <div class="card-body p-0">
@@ -297,10 +294,6 @@
                                                 {% if guest.FoodCouponsDay2 == 'True' %}disabled{% endif %}>
                                             <i class="fas fa-utensils"></i> Day 2
                                         </button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" 
-                                                onclick="downloadMealPlan('{{ guest.ID }}')">
-                                            <i class="fas fa-download"></i>
-                                        </button>
                                         <a href="/admin/single_guest/{{ guest.ID }}" class="btn btn-outline-primary btn-sm">
                                             <i class="fas fa-eye"></i>
                                         </a>
@@ -354,9 +347,6 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="downloadCurrentMealPlan()">
-                    <i class="fas fa-download me-1"></i> Download Meal Plan
-                </button>
             </div>
         </div>
     </div>
@@ -477,7 +467,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const guestCheckboxes = document.querySelectorAll('.guest-checkbox');
     const giveSelectedDay1Btn = document.getElementById('giveSelectedDay1Btn');
     const giveSelectedDay2Btn = document.getElementById('giveSelectedDay2Btn');
-    const downloadSelectedMealPlanBtn = document.getElementById('downloadSelectedMealPlanBtn');
     
     if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', function() {
@@ -502,7 +491,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const hasSelection = selectedGuests.length > 0;
         giveSelectedDay1Btn.disabled = !hasSelection;
         giveSelectedDay2Btn.disabled = !hasSelection;
-        downloadSelectedMealPlanBtn.disabled = !hasSelection;
     }
     
     // Handle bulk give day 1 coupons
@@ -567,19 +555,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Handle bulk download meal plans
-    if (downloadSelectedMealPlanBtn) {
-        downloadSelectedMealPlanBtn.addEventListener('click', function() {
-            const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
-                .map(checkbox => checkbox.value);
-                
-            if (selectedGuestIds.length > 0) {
-                selectedGuestIds.forEach(guestId => {
-                    downloadMealPlan(guestId);
-                });
-            }
-        });
-    }
     
     // QR Code Scanner Setup
     let html5QrCode;
@@ -744,9 +719,6 @@ function giveFoodCoupon(guestId, day) {
     }
 }
 
-function downloadMealPlan(guestId) {
-    window.open(`/admin/download_meal_plan/${guestId}`, '_blank');
-}
 
 function showFoodDetails(guestId) {
     const modal = new bootstrap.Modal(document.getElementById('foodDetailsModal'));
@@ -872,11 +844,6 @@ function createFoodDetailsContent(guest) {
     `;
 }
 
-function downloadCurrentMealPlan() {
-    if (currentGuestId) {
-        downloadMealPlan(currentGuestId);
-    }
-}
 
 function exportFoodData() {
     window.location.href = '/admin/report/export/food_list?format=csv';
