@@ -146,9 +146,6 @@
                     <button id="giveSelectedGiftsBtn" class="btn btn-sm btn-outline-primary" disabled>
                         <i class="fas fa-gift me-1"></i> Give Gifts to Selected
                     </button>
-                    <button id="downloadSelectedGiftListBtn" class="btn btn-sm btn-outline-secondary" disabled>
-                        <i class="fas fa-download me-1"></i> Download Gift Lists
-                    </button>
                 </div>
             </div>
             <div class="card-body p-0">
@@ -203,10 +200,6 @@
                                                 {% if guest.GiftsGiven == 'True' %}disabled{% endif %}>
                                             <i class="fas fa-gift"></i>
                                         </button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" 
-                                                onclick="downloadGiftList('{{ guest.ID }}')">
-                                            <i class="fas fa-download"></i>
-                                        </button>
                                         <a href="/admin/single_guest/{{ guest.ID }}" class="btn btn-outline-info btn-sm">
                                             <i class="fas fa-eye"></i>
                                         </a>
@@ -260,9 +253,6 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="downloadCurrentGiftList()">
-                    <i class="fas fa-download me-1"></i> Download Gift List
-                </button>
             </div>
         </div>
     </div>
@@ -352,7 +342,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const selectAllCheckbox = document.getElementById('selectAll');
     const guestCheckboxes = document.querySelectorAll('.guest-checkbox');
     const giveSelectedGiftsBtn = document.getElementById('giveSelectedGiftsBtn');
-    const downloadSelectedGiftListBtn = document.getElementById('downloadSelectedGiftListBtn');
     
     if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', function() {
@@ -376,7 +365,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const selectedGuests = document.querySelectorAll('.guest-checkbox:checked');
         const hasSelection = selectedGuests.length > 0;
         giveSelectedGiftsBtn.disabled = !hasSelection;
-        downloadSelectedGiftListBtn.disabled = !hasSelection;
     }
     
     // Handle bulk give gifts
@@ -410,19 +398,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Handle bulk download gift lists
-    if (downloadSelectedGiftListBtn) {
-        downloadSelectedGiftListBtn.addEventListener('click', function() {
-            const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
-                .map(checkbox => checkbox.value);
-                
-            if (selectedGuestIds.length > 0) {
-                selectedGuestIds.forEach(guestId => {
-                    downloadGiftList(guestId);
-                });
-            }
-        });
-    }
     
     // QR Code Scanner Setup
     let html5QrCode;
@@ -564,9 +539,6 @@ function giveGift(guestId) {
     }
 }
 
-function downloadGiftList(guestId) {
-    window.open(`/admin/download_gift_list/${guestId}`, '_blank');
-}
 
 function showGiftDetails(guestId) {
     const modal = new bootstrap.Modal(document.getElementById('giftDetailsModal'));
@@ -704,11 +676,6 @@ function createGiftDetailsContent(guest) {
     `;
 }
 
-function downloadCurrentGiftList() {
-    if (currentGuestId) {
-        downloadGiftList(currentGuestId);
-    }
-}
 
 function exportGiftData() {
     window.location.href = '/admin/report/export/gift_list?format=csv';
