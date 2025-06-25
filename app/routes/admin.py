@@ -27,6 +27,7 @@ from fastapi.responses import StreamingResponse
 import io
 from PIL import Image, ImageDraw
 import qrcode
+import pandas as pd
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
@@ -1005,6 +1006,105 @@ async def export_payments(admin: Dict = Depends(get_current_admin)):
         logger.error(f"Error exporting payments: {str(e)}")
         raise HTTPException(status_code=500, detail="Error exporting payments")
 
+@router.get("/report/export/faculty")
+async def export_faculty_list(
+    admin: Dict = Depends(get_current_admin),
+    format: str = "csv"
+):
+    """Export faculty list as CSV or Excel"""
+    try:
+        guests = guests_db.read_all()
+
+        # Filter only faculty members
+        faculty = [g for g in guests if g.get("GuestRole") == "Faculty"]
+
+        if format.lower() == "csv":
+            # Create CSV in memory
+            output = io.StringIO()
+            writer = csv.writer(output)
+
+            # Write header
+            writer.writerow([
+                "ID", "Name", "Email", "Phone", "Designation", "Institution",
+                "Registration Date", "Check-in Status", "Badge Status",
+                "Kit Status", "Presentations Count", "Journey Status"
+            ])
+
+            # Write data
+            for member in faculty:
+                writer.writerow([
+                    member.get("ID", ""),
+                    member.get("Name", ""),
+                    member.get("Email", ""),
+                    member.get("Phone", ""),
+                    member.get("faculty_designation", "N/A"),
+                    member.get("faculty_institution", "N/A"),
+                    member.get("RegistrationDate", ""),
+                    "Checked In" if member.get("DailyAttendance") == "True" else "Not Checked In",
+                    "Printed" if member.get("BadgePrinted") == "True" else "Not Printed",
+                    "Received" if member.get("KitReceived") == "True" else "Not Received",
+                    member.get("presentation_count", "0"),
+                    "Updated" if member.get("JourneyDetailsUpdated") == "True" else "Pending"
+                ])
+
+            # Return as downloadable CSV
+            output.seek(0)
+            filename = f"faculty_list_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+            return StreamingResponse(
+                iter([output.getvalue()]),
+                media_type="text/csv",
+                headers={"Content-Disposition": f"attachment; filename={filename}"}
+            )
+
+        elif format.lower() == "excel":
+            # If pandas and openpyxl are installed, use them for Excel export
+            try:
+                import pandas as pd
+                import io as io_excel
+
+                # Convert to pandas DataFrame
+                data = []
+                for member in faculty:
+                    data.append({
+                        "ID": member.get("ID", ""),
+                        "Name": member.get("Name", ""),
+                        "Email": member.get("Email", ""),
+                        "Phone": member.get("Phone", ""),
+                        "Designation": member.get("faculty_designation", "N/A"),
+                        "Institution": member.get("faculty_institution", "N/A"),
+                        "Registration Date": member.get("RegistrationDate", ""),
+                        "Check-in Status": "Checked In" if member.get("DailyAttendance") == "True" else "Not Checked In",
+                        "Badge Status": "Printed" if member.get("BadgePrinted") == "True" else "Not Printed",
+                        "Kit Status": "Received" if member.get("KitReceived") == "True" else "Not Received",
+                        "Presentations Count": member.get("presentation_count", "0"),
+                        "Journey Status": "Updated" if member.get("JourneyDetailsUpdated") == "True" else "Pending"
+                    })
+
+                df = pd.DataFrame(data)
+
+                # Create Excel in memory
+                output = io_excel.BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    df.to_excel(writer, index=False, sheet_name="Faculty")
+
+                # Return as downloadable Excel
+                output.seek(0)
+                filename = f"faculty_list_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+                return StreamingResponse(
+                    iter([output.getvalue()]),
+                    media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    headers={"Content-Disposition": f"attachment; filename={filename}"}
+                )
+            except ImportError:
+                # Fall back to CSV if pandas/openpyxl not available
+                return await export_faculty_list(admin, format="csv")
+
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported export format")
+    except Exception as e:
+        logger.error(f"Error exporting faculty list: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error exporting faculty list")
+
 @router.get("/report/guests", response_class=HTMLResponse)
 async def guest_report(
     request: Request, 
@@ -1050,29 +1150,47 @@ async def guest_report(
         logger.error(f"Error generating guest report: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error generating guest report")
 
-@router.get("/report/faculty", response_class=HTMLResponse)
-async def faculty_report(request: Request, admin: Dict = Depends(get_current_admin)):
-    """Detailed faculty report"""
+def get_faculty_details(faculty_list):
+    """Enhance faculty list with detailed information from faculty.csv"""
     try:
-        guests = [g for g in guests_db.read_all() if g.get("GuestRole") == "Faculty"]
-        
-        # Get faculty-specific data
         faculty_data = []
         faculty_csv = os.path.join(os.path.dirname(config.get('DATABASE', 'CSVPath')), "faculty.csv")
         if os.path.exists(faculty_csv):
             with open(faculty_csv, 'r', newline='', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 faculty_data = list(reader)
-                
+
         # Map faculty data to guests
         faculty_map = {f.get("guest_id"): f for f in faculty_data}
-        
-        for guest in guests:
+
+        for guest in faculty_list:
             faculty_info = faculty_map.get(guest.get("ID"))
             if faculty_info:
-                for key, value in faculty_info.items():
-                    if key != "guest_id":
-                        guest[f"faculty_{key}"] = value
+                guest["faculty_designation"] = faculty_info.get("designation", "N/A")
+                guest["faculty_institution"] = faculty_info.get("institution", "N/A")
+                guest["faculty_specialization"] = faculty_info.get("specialization", "N/A")
+                guest["faculty_experience_years"] = faculty_info.get("experience_years", "N/A")
+                guest["faculty_accommodation_required"] = faculty_info.get("accommodation_required", "False")
+            else:
+                guest["faculty_designation"] = "N/A"
+                guest["faculty_institution"] = "N/A"
+                guest["faculty_specialization"] = "N/A"
+                guest["faculty_experience_years"] = "N/A"
+                guest["faculty_accommodation_required"] = "False"
+
+        return faculty_list
+    except Exception as e:
+        logger.error(f"Error enhancing faculty details: {str(e)}")
+        return faculty_list
+
+
+@router.get("/report/faculty", response_class=HTMLResponse)
+async def faculty_report(request: Request, admin: Dict = Depends(get_current_admin)):
+    """Detailed faculty report"""
+    try:
+        guests = [g for g in guests_db.read_all() if g.get("GuestRole") == "Faculty"]
+        guests = get_faculty_details(guests)
+        
         
         # Get presentation data
         presentations = []
@@ -1086,7 +1204,8 @@ async def faculty_report(request: Request, admin: Dict = Depends(get_current_adm
         presentation_counts = defaultdict(int)
         for p in presentations:
             presentation_counts[p.get("guest_id")] += 1
-            
+
+        # Add presentation count to each faculty member
         for guest in guests:
             guest["presentation_count"] = presentation_counts.get(guest.get("ID"), 0)
         
