@@ -70,9 +70,10 @@
     
     .stats-title {
         font-size: 0.9rem;
-        color: #718096;
+        color: #2d3748;
         text-transform: uppercase;
         letter-spacing: 1px;
+        font-weight: 600;
     }
     
     /* Timeline styling */
@@ -100,8 +101,9 @@
     
     .timeline-date {
         font-size: 0.75rem;
-        color: #718096;
+        color: #4a5568;
         margin-bottom: 0.25rem;
+        font-weight: 500;
     }
     
     .timeline-content {
@@ -144,6 +146,26 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
     }
+
+    /* Improved text contrast */
+    .text-muted {
+        color: #4a5568 !important;
+    }
+
+    .card-body p {
+        color: #2d3748;
+    }
+
+    .timeline-content p {
+        color: #4a5568 !important;
+    }
+
+    /* Badge improvements for better contrast */
+    .badge.bg-light {
+        background-color: #e2e8f0 !important;
+        color: #2d3748 !important;
+        border: 1px solid #cbd5e0;
+    }
 </style>
 {% endblock %}
 
@@ -151,7 +173,7 @@
 <div class="row mb-4">
     <div class="col-12">
         <h1 class="h3 mb-2">Admin Dashboard</h1>
-        <p class="text-muted">Overview and management panel for the conference</p>
+        <p class="text-secondary">Overview and management panel for the conference</p>
     </div>
 </div>
 
@@ -402,14 +424,14 @@
                                 <h6 class="mb-1">{{ activity.title }}</h6>
                                 <span class="badge bg-light text-dark">{{ activity.type }}</span>
                             </div>
-                            <p class="mb-0 text-muted">{{ activity.description }}</p>
+                            <p class="mb-0" style="color: #4a5568;">{{ activity.description }}</p>
                         </div>
                     </div>
                     {% endfor %}
                     
                     {% if not recent_activity %}
                     <div class="text-center py-4">
-                        <p class="text-muted mb-0">No recent activity</p>
+                        <p class="mb-0" style="color: #2d3748;">No recent activity</p>
                     </div>
                     {% endif %}
                 </div>
