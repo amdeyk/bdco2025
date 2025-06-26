@@ -33,6 +33,7 @@ class FacultyProfile(BaseModel):
     name: str
     email: EmailStr
     phone: str
+    kmc_number: Optional[str] = None
     photo_path: Optional[str] = None
     roles: List[FacultyRole]
     kit_faculty: bool = False
