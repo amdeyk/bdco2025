@@ -482,7 +482,7 @@ def reset_main_database():
             "InwardJourneyTo", "InwardJourneyDetails", "InwardPickupRequired",
             "InwardJourneyRemarks", "OutwardJourneyDate", "OutwardJourneyFrom",
             "OutwardJourneyTo", "OutwardJourneyDetails", "OutwardDropRequired",
-            "OutwardJourneyRemarks", "Organization", "Batch", "CompanyName"
+            "OutwardJourneyRemarks", "Organization", "KMCNumber", "Batch", "CompanyName"
         ]
 
         csv_path = config.get('DATABASE', 'CSVPath')
@@ -3603,6 +3603,9 @@ def ensure_all_guest_fields():
             "BadgeGivenDate": "",
             "KitReceivedDate": "",
             "CheckInTime": "",
+
+            # New KMC column
+            "KMCNumber": "",
 
             # Payment related fields
             "PaymentStatus": "Pending",
