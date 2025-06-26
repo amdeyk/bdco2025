@@ -860,7 +860,7 @@ async def export_guest_list(
             
             # Write header
             writer.writerow([
-                "ID", "Name", "Email", "Phone", "Role", "Registration Date", 
+                "ID", "Name", "Email", "Phone", "KMC Number", "Role", "Registration Date",
                 "Check-in Status", "Kit Status", "Badge Status", "Payment Status", "Amount"
             ])
             
@@ -871,6 +871,7 @@ async def export_guest_list(
                     guest.get("Name", ""),
                     guest.get("Email", ""),
                     guest.get("Phone", ""),
+                    guest.get("KMCNumber", ""),
                     guest.get("GuestRole", ""),
                     guest.get("RegistrationDate", ""),
                     "Checked In" if guest.get("DailyAttendance") == "True" else "Not Checked In",
@@ -903,6 +904,7 @@ async def export_guest_list(
                         "Name": guest.get("Name", ""),
                         "Email": guest.get("Email", ""),
                         "Phone": guest.get("Phone", ""),
+                        "KMC Number": guest.get("KMCNumber", ""),
                         "Role": guest.get("GuestRole", ""),
                         "Registration Date": guest.get("RegistrationDate", ""),
                         "Check-in Status": "Checked In" if guest.get("DailyAttendance") == "True" else "Not Checked In",
@@ -2730,6 +2732,7 @@ async def update_guest_basic_info(request: Request, admin: Dict = Depends(get_cu
         name = data.get('name')
         email = data.get('email')
         phone = data.get('phone')
+        kmc_number = data.get('kmc_number')
         
         guests = guests_db.read_all()
         updated = False
@@ -2739,6 +2742,7 @@ async def update_guest_basic_info(request: Request, admin: Dict = Depends(get_cu
                 guest["Name"] = name
                 guest["Email"] = email
                 guest["Phone"] = phone
+                guest["KMCNumber"] = kmc_number
                 updated = True
                 break
                 
@@ -2994,6 +2998,10 @@ def create_magnacode_badge(guest: dict) -> Image.Image:
     draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='white', anchor="mm", font_size=22)
 
     contact_y = role_y + role_height + 30
+    kmc = guest.get('KMCNumber', '')
+    if kmc:
+        draw.text((info_x + 15, contact_y), f"KMC: {kmc}", fill=charcoal, font_size=16)
+        contact_y += 40
     phone = guest.get('Phone', '')
     if phone:
         if len(phone) == 10 and phone.isdigit():
@@ -3175,6 +3183,13 @@ def create_magnacode_badge_working(guest: dict) -> Image.Image:
         draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='white', anchor="mm")
 
     contact_y = role_y + role_height + 30
+    kmc = guest.get('KMCNumber', '')
+    if kmc:
+        try:
+            draw.text((info_x + 15, contact_y), f"KMC: {kmc}", fill=charcoal, font_size=16)
+        except TypeError:
+            draw.text((info_x + 15, contact_y), f"KMC: {kmc}", fill=charcoal)
+        contact_y += 40
     phone = guest.get('Phone', '')
     if phone:
         if len(phone) == 10 and phone.isdigit():

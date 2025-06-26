@@ -16,6 +16,7 @@
             <div class="col-md-6">
                 <p><strong>Phone:</strong> {{ guest.Phone }}</p>
                 <p><strong>Email:</strong> {{ guest.Email or 'Not provided' }}</p>
+                <p><strong>KMC:</strong> {{ guest.KMCNumber or 'N/A' }}</p>
                 <p>
                     <strong>Attendance:</strong> 
                     <span class="text-{% if guest.DailyAttendance == 'True' %}success{% else %}danger{% endif %}">

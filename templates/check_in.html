@@ -72,6 +72,7 @@
                                     <p class="mb-0"><strong>ID:</strong> {{ guest.ID }}</p>
                                     <p class="mb-0"><strong>Phone:</strong> {{ guest.Phone }}</p>
                                     <p class="mb-0"><strong>Email:</strong> {{ guest.Email or 'Not provided' }}</p>
+                                    <p class="mb-0"><strong>KMC:</strong> {{ guest.KMCNumber or 'N/A' }}</p>
                                     
                                     <div class="mt-2">
                                         <span class="badge {% if guest.DailyAttendance == 'True' %}bg-success{% else %}bg-warning{% endif %} me-2">

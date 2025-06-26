@@ -548,6 +548,10 @@
                                         <label class="form-label fw-bold text-muted">Phone</label>
                                         <div class="editable-field" id="displayPhone">{{ guest.Phone or 'Not provided' }}</div>
                                     </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-muted">KMC Number</label>
+                                        <div class="editable-field" id="displayKMC">{{ guest.KMCNumber or 'Not provided' }}</div>
+                                    </div>
                                 </div>
                                 
                                 <div class="col-md-6">
@@ -594,6 +598,12 @@
                                         <div class="mb-3">
                                             <label class="form-label">Phone</label>
                                             <input type="tel" class="form-control" id="editPhone" value="{{ guest.Phone or '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">KMC Number</label>
+                                            <input type="text" class="form-control" id="editKMCNumber" value="{{ guest.KMCNumber or '' }}">
                                         </div>
                                     </div>
                                 </div>
@@ -1659,6 +1669,7 @@
             const name = document.getElementById('editName').value;
             const email = document.getElementById('editEmail').value;
             const phone = document.getElementById('editPhone').value;
+            const kmcNumber = document.getElementById('editKMCNumber').value;
             
             showLoading('basicEdit');
             
@@ -1671,7 +1682,8 @@
                     guest_id: currentGuestId,
                     name: name,
                     email: email,
-                    phone: phone
+                    phone: phone,
+                    kmc_number: kmcNumber
                 })
             })
             .then(response => response.json())
@@ -1682,6 +1694,7 @@
                     document.getElementById('displayName').textContent = name || 'Not provided';
                     document.getElementById('displayEmail').textContent = email || 'Not provided';
                     document.getElementById('displayPhone').textContent = phone || 'Not provided';
+                    document.getElementById('displayKMC').textContent = kmcNumber || 'Not provided';
                     
                     showNotification(data.message || 'Basic information updated successfully', 'success');
                     toggleBasicEdit();
