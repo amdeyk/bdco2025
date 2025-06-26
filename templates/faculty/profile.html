@@ -44,6 +44,10 @@
                         <dd class="mt-1 text-sm text-gray-900">{{ faculty.phone }}</dd>
                     </div>
                     <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">KMC Number</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ faculty.kmc_number or 'N/A' }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
                         <dt class="text-sm font-medium text-gray-500">Roles</dt>
                         <dd class="mt-1 text-sm text-gray-900">
                             {% for role in faculty.roles %}
@@ -278,6 +282,11 @@
                 <div class="mb-4">
                     <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
                     <input type="tel" name="phone" id="phone" value="{{ faculty.phone }}"
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label for="kmc_number" class="block text-sm font-medium text-gray-700">KMC Number</label>
+                    <input type="text" name="kmc_number" id="kmc_number" value="{{ faculty.kmc_number or '' }}"
                         class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
                 </div>
                 <div class="mb-4">

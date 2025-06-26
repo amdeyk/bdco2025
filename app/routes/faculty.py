@@ -65,7 +65,11 @@ async def get_current_faculty(token: str = Depends(oauth2_scheme)) -> FacultyPro
     faculty = next((f for f in faculty_data if f["id"] == faculty_id), None)
     if faculty is None:
         raise credentials_exception
-    return FacultyProfile(**faculty)
+
+    faculty_info = faculty.copy()
+    faculty_info["kmc_number"] = faculty.get("KMCNumber") or faculty.get("kmc_number")
+
+    return FacultyProfile(**faculty_info)
 
 @router.get("/dashboard", response_class=HTMLResponse)
 async def faculty_dashboard(request: Request):
@@ -182,6 +186,7 @@ async def update_profile(
     request: Request,
     email: str = Form(...),
     phone: str = Form(...),
+    kmc_number: str = Form(""),
     photo: Optional[UploadFile] = File(None),
     current_faculty: FacultyProfile = Depends(get_current_faculty)
 ):
@@ -220,6 +225,7 @@ async def update_profile(
     faculty_data[faculty_idx].update({
         "email": email,
         "phone": phone,
+        "KMCNumber": kmc_number,
         "updated_at": datetime.now().isoformat()
     })
     
