@@ -190,19 +190,32 @@
                                     <div class="btn-group btn-group-sm">
                                         <button type="button" class="btn btn-outline-primary btn-sm" 
                                                 onclick="markJourneyUpdated('{{ guest.ID }}')"
-                                                {% if guest.JourneyDetailsUpdated == 'True' %}disabled{% endif %}>
+                                                {% if guest.JourneyDetailsUpdated == 'True' %}disabled{% endif %}
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                title="Mark journey details as updated">
                                             <i class="fas fa-pen"></i>
                                         </button>
                                         <button type="button" class="btn btn-outline-success btn-sm" 
                                                 onclick="markJourneyCompleted('{{ guest.ID }}')"
-                                                {% if guest.JourneyCompleted == 'True' %}disabled{% endif %}>
+                                                {% if guest.JourneyCompleted == 'True' %}disabled{% endif %}
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                title="Mark journey as completed">
                                             <i class="fas fa-check"></i>
                                         </button>
-                                        <a href="/admin/single_guest/{{ guest.ID }}" class="btn btn-outline-info btn-sm">
+                                        <a href="/admin/single_guest/{{ guest.ID }}" 
+                                           class="btn btn-outline-info btn-sm"
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="View guest details">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <button type="button" class="btn btn-outline-secondary btn-sm" 
-                                                onclick="viewJourneyDetails('{{ guest.ID }}')">
+                                                onclick="editJourneyDetailsModal('{{ guest.ID }}')"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                title="Edit journey details">
                                             <i class="fas fa-route"></i>
                                         </button>
                                     </div>
@@ -250,7 +263,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" onclick="editJourneyDetails()">
+                <button type="button" class="btn btn-primary" onclick="editJourneyDetailsModal(currentEditingGuestId)">
                     <i class="fas fa-edit me-1"></i> Edit Details
                 </button>
             </div>
@@ -293,6 +306,151 @@
         </div>
     </div>
 </div>
+<!-- Journey Edit Modal -->
+<div class="modal fade" id="journeyEditModal" tabindex="-1" aria-labelledby="journeyEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="journeyEditModalLabel">
+                    <i class="fas fa-route me-2"></i>Edit Journey Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="journeyEditContent">
+                    <!-- Loading state -->
+                    <div class="text-center" id="journeyEditLoading">
+                        <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                        <p class="mt-2">Loading journey details...</p>
+                    </div>
+                    
+                    <!-- Edit form - will be populated by JavaScript -->
+                    <div id="journeyEditForm" style="display: none;">
+                        <div class="row">
+                            <!-- Guest Info Header -->
+                            <div class="col-12 mb-3">
+                                <div class="alert alert-info">
+                                    <strong>Guest:</strong> <span id="editGuestName"></span> 
+                                    (<span id="editGuestId"></span>)
+                                </div>
+                            </div>
+                            
+                            <!-- Inward Journey -->
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-plane-arrival me-2"></i>
+                                            Inward Journey
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Date</label>
+                                            <input type="date" class="form-control" id="modalInwardDate">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">From</label>
+                                            <input type="text" class="form-control" id="modalInwardOrigin" 
+                                                   placeholder="Origin city/airport">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">To</label>
+                                            <input type="text" class="form-control" id="modalInwardDestination" 
+                                                   placeholder="Destination city/airport">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Transport Details</label>
+                                            <textarea class="form-control" id="modalInwardDetails" rows="2" 
+                                                      placeholder="Flight number, time, etc."></textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="modalInwardPickup">
+                                                <label class="form-check-label" for="modalInwardPickup">
+                                                    Pickup required from airport/station
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Remarks</label>
+                                            <textarea class="form-control" id="modalInwardRemarks" rows="2" 
+                                                      placeholder="Special requirements, contact details, etc."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Outward Journey -->
+                            <div class="col-md-6">
+                                <div class="card border-danger">
+                                    <div class="card-header bg-danger text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-plane-departure me-2"></i>
+                                            Outward Journey
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Date</label>
+                                            <input type="date" class="form-control" id="modalOutwardDate">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">From</label>
+                                            <input type="text" class="form-control" id="modalOutwardOrigin" 
+                                                   placeholder="Origin city/airport">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">To</label>
+                                            <input type="text" class="form-control" id="modalOutwardDestination" 
+                                                   placeholder="Destination city/airport">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Transport Details</label>
+                                            <textarea class="form-control" id="modalOutwardDetails" rows="2" 
+                                                      placeholder="Flight number, time, etc."></textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="modalOutwardDrop">
+                                                <label class="form-check-label" for="modalOutwardDrop">
+                                                    Drop required to airport/station
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Remarks</label>
+                                            <textarea class="form-control" id="modalOutwardRemarks" rows="2" 
+                                                      placeholder="Special requirements, contact details, etc."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-success" id="saveJourneyChanges" onclick="saveModalJourneyDetails()">
+                    <i class="fas fa-save me-1"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="row mt-5">
     <div class="col-12">
         <div class="card bg-light border-0">
@@ -325,6 +483,12 @@ document.addEventListener('DOMContentLoaded', function() {
             lengthMenu: "Show _MENU_ guests per page",
             info: "Showing _START_ to _END_ of _TOTAL_ guests"
         }
+    });
+
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
     });
     
     // Handle select all checkbox
@@ -516,6 +680,155 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Global variable to store current editing guest ID
+let currentEditingGuestId = null;
+
+// Function to open journey edit modal
+function editJourneyDetailsModal(guestId) {
+    currentEditingGuestId = guestId;
+    const modal = new bootstrap.Modal(document.getElementById('journeyEditModal'));
+
+    // Show loading state
+    document.getElementById('journeyEditLoading').style.display = 'block';
+    document.getElementById('journeyEditForm').style.display = 'none';
+
+    modal.show();
+
+    // Fetch guest and journey details
+    fetchGuestJourneyDetails(guestId);
+}
+
+// Function to fetch guest journey details
+function fetchGuestJourneyDetails(guestId) {
+    // First, get guest basic info
+    fetch(`/admin/api/guest/${guestId}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Populate guest info
+            document.getElementById('editGuestName').textContent = data.guest.Name || 'Unknown';
+            document.getElementById('editGuestId').textContent = guestId;
+
+            // Now fetch journey details
+            return fetch(`/admin/api/journey-details/${guestId}`);
+        } else {
+            throw new Error('Guest not found');
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            populateJourneyForm(data.journey);
+        } else {
+            // If no journey data, show empty form
+            populateJourneyForm({});
+        }
+
+        // Hide loading, show form
+        document.getElementById('journeyEditLoading').style.display = 'none';
+        document.getElementById('journeyEditForm').style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Error fetching journey details:', error);
+        document.getElementById('journeyEditLoading').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Error loading journey details: ${error.message}
+            </div>
+        `;
+    });
+}
+
+// Function to populate the journey form
+function populateJourneyForm(journey) {
+    // Inward journey
+    document.getElementById('modalInwardDate').value = journey.inward_date || '';
+    document.getElementById('modalInwardOrigin').value = journey.inward_origin || '';
+    document.getElementById('modalInwardDestination').value = journey.inward_destination || '';
+    document.getElementById('modalInwardDetails').value = journey.inward_details || '';
+    document.getElementById('modalInwardPickup').checked = journey.inward_pickup || false;
+    document.getElementById('modalInwardRemarks').value = journey.inward_remarks || '';
+
+    // Outward journey
+    document.getElementById('modalOutwardDate').value = journey.outward_date || '';
+    document.getElementById('modalOutwardOrigin').value = journey.outward_origin || '';
+    document.getElementById('modalOutwardDestination').value = journey.outward_destination || '';
+    document.getElementById('modalOutwardDetails').value = journey.outward_details || '';
+    document.getElementById('modalOutwardDrop').checked = journey.outward_drop || false;
+    document.getElementById('modalOutwardRemarks').value = journey.outward_remarks || '';
+}
+
+// Function to save journey details from modal
+function saveModalJourneyDetails() {
+    if (!currentEditingGuestId) {
+        showNotification('Error: No guest selected', 'error');
+        return;
+    }
+
+    // Disable save button and show loading
+    const saveBtn = document.getElementById('saveJourneyChanges');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
+
+    const journeyData = {
+        guest_id: currentEditingGuestId,
+        inward_date: document.getElementById('modalInwardDate').value,
+        inward_from: document.getElementById('modalInwardOrigin').value,
+        inward_to: document.getElementById('modalInwardDestination').value,
+        inward_details: document.getElementById('modalInwardDetails').value,
+        inward_pickup: document.getElementById('modalInwardPickup').checked,
+        inward_remarks: document.getElementById('modalInwardRemarks').value,
+        outward_date: document.getElementById('modalOutwardDate').value,
+        outward_from: document.getElementById('modalOutwardOrigin').value,
+        outward_to: document.getElementById('modalOutwardDestination').value,
+        outward_details: document.getElementById('modalOutwardDetails').value,
+        outward_drop: document.getElementById('modalOutwardDrop').checked,
+        outward_remarks: document.getElementById('modalOutwardRemarks').value
+    };
+
+    fetch('/admin/update_journey_details', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(journeyData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Restore button state
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+
+        if (data.success) {
+            showNotification(data.message || 'Journey details updated successfully', 'success');
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('journeyEditModal'));
+            modal.hide();
+
+            // Refresh the page to show updated data
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification(data.message || 'An error occurred', 'error');
+        }
+    })
+    .catch(error => {
+        // Restore button state
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+
+        console.error('Error:', error);
+        showNotification('An unexpected error occurred', 'error');
+    });
+}
+
+// Update the existing viewJourneyDetails function to use the new modal
+function viewJourneyDetails(guestId) {
+    // Redirect to the edit modal instead
+    editJourneyDetailsModal(guestId);
+}
+
 // Individual action functions
 function markJourneyUpdated(guestId) {
     if (confirm('Mark journey details as updated for this guest?')) {
@@ -567,74 +880,10 @@ function markJourneyCompleted(guestId) {
     }
 }
 
-function viewJourneyDetails(guestId) {
-    const modal = new bootstrap.Modal(document.getElementById('journeyDetailsModal'));
-    const content = document.getElementById('journeyDetailsContent');
-    
-    content.innerHTML = `
-        <div class="text-center">
-            <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
-            <p class="mt-2">Loading journey details...</p>
-        </div>
-    `;
-    
-    modal.show();
-    
-    // Fetch journey details (implement this endpoint)
-    fetch(`/api/journey-details/${guestId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const journey = data.journey;
-                content.innerHTML = `
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6><i class="fas fa-plane-arrival me-2"></i>Inward Journey</h6>
-                            <table class="table table-sm">
-                                <tr><td>Date:</td><td>${journey.inward_date || 'Not provided'}</td></tr>
-                                <tr><td>Origin:</td><td>${journey.inward_origin || 'Not provided'}</td></tr>
-                                <tr><td>Destination:</td><td>${journey.inward_destination || 'Not provided'}</td></tr>
-                                <tr><td>Remarks:</td><td>${journey.inward_remarks || 'None'}</td></tr>
-                            </table>
-                        </div>
-                        <div class="col-md-6">
-                            <h6><i class="fas fa-plane-departure me-2"></i>Outward Journey</h6>
-                            <table class="table table-sm">
-                                <tr><td>Date:</td><td>${journey.outward_date || 'Not provided'}</td></tr>
-                                <tr><td>Origin:</td><td>${journey.outward_origin || 'Not provided'}</td></tr>
-                                <tr><td>Destination:</td><td>${journey.outward_destination || 'Not provided'}</td></tr>
-                                <tr><td>Remarks:</td><td>${journey.outward_remarks || 'None'}</td></tr>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            } else {
-                content.innerHTML = `
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        No journey details found for this guest.
-                    </div>
-                `;
-            }
-        })
-        .catch(error => {
-            content.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    Error loading journey details: ${error.message}
-                </div>
-            `;
-        });
-}
-
 function exportJourneyData() {
     window.location.href = '/admin/report/export/journey_list?format=csv';
 }
 
-function editJourneyDetails() {
-    // Implement journey editing functionality
-    showNotification('Journey editing feature coming soon!', 'info');
-}
 
 // Notification function
 function showNotification(message, type) {
