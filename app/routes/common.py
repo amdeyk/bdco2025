@@ -1123,6 +1123,10 @@ def create_magnacode_badge(guest: dict) -> Image.Image:
     draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='white', anchor="mm", font_size=22)
 
     contact_y = role_y + role_height + 30
+    kmc = guest.get('KMCNumber', '')
+    if kmc:
+        draw.text((info_x + 15, contact_y), f"KMC: {kmc}", fill=charcoal, font_size=16)
+        contact_y += 40
     phone = guest.get('Phone', '')
     if phone:
         if len(phone) == 10 and phone.isdigit():
