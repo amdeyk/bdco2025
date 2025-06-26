@@ -42,6 +42,7 @@ class Guest:
         self.payment_date = ""
         self.payment_method = ""
         self.organization = ""
+        self.kmc_number = ""
         self.notes = ""
         # New fields
         self.journey_details_updated = "False"
@@ -65,9 +66,11 @@ class Guest:
             # Convert to standard object attribute names (camelCase to snake_case)
             attr_name = key[0].lower() + key[1:]
             
-            # Special case for ID
+            # Special cases for fields that don't map directly
             if key == "ID":
                 attr_name = "id"
+            elif key == "KMCNumber":
+                attr_name = "kmc_number"
             
             # Check if attribute exists and set value
             if hasattr(instance, attr_name):
@@ -98,6 +101,7 @@ class Guest:
             "PaymentDate": self.payment_date,
             "PaymentMethod": self.payment_method,
             "Organization": self.organization,
+            "KMCNumber": self.kmc_number,
             "Notes": self.notes,
             "JourneyDetailsUpdated": self.journey_details_updated,
             "JourneyCompleted": self.journey_completed,
@@ -126,5 +130,8 @@ class Guest:
             
         if self.guest_role not in ["Delegate", "Faculty", "Staff", "Sponsor", "Guest"]:
             errors.append("Invalid guest role")
-            
+
+        if self.kmc_number and not self.kmc_number.isdigit():
+            errors.append("KMC number must be numeric")
+
         return errors
