@@ -192,10 +192,15 @@
                                 <label for="batch" class="form-label">Batch/Year</label>
                                 <input type="text" class="form-control" id="batch" name="batch" placeholder="Enter your batch or year">
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="organization" class="form-label">Organization/Institution</label>
                                 <input type="text" class="form-control" id="organization" name="organization" placeholder="Enter your current organization">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="delegateKmcNumber" class="form-label">KMC Number</label>
+                                <input type="text" class="form-control" id="delegateKmcNumber" name="kmc_number" placeholder="Enter your KMC number" required disabled>
                             </div>
                         </div>
                         
@@ -215,7 +220,12 @@
                                 <label for="specialty" class="form-label">Specialty/Expertise</label>
                                 <input type="text" class="form-control" id="specialty" name="specialty" placeholder="Enter your specialty or field of expertise">
                             </div>
-                            
+
+                            <div class="mb-3">
+                                <label for="facultyKmcNumber" class="form-label">KMC Number</label>
+                                <input type="text" class="form-control" id="facultyKmcNumber" name="kmc_number" placeholder="Enter your KMC number" required disabled>
+                            </div>
+
                             <div class="mb-3">
                                 <label for="accommodationNeeded" class="form-label">Accommodation Required</label>
                                 <div class="form-check">
@@ -380,21 +390,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const delegateFields = document.getElementById('delegate-fields');
     const facultyFields = document.getElementById('faculty-fields');
     const sponsorFields = document.getElementById('sponsor-fields');
-    
+    const delegateKmc = document.getElementById('delegateKmcNumber');
+    const facultyKmc = document.getElementById('facultyKmcNumber');
+
     if (guestRoleSelect) {
         guestRoleSelect.addEventListener('change', function() {
             // Hide all role-specific fields
             delegateFields.style.display = 'none';
             facultyFields.style.display = 'none';
             sponsorFields.style.display = 'none';
-            
+
+            // Disable all KMC inputs by default
+            if (delegateKmc) { delegateKmc.disabled = true; delegateKmc.required = false; }
+            if (facultyKmc) { facultyKmc.disabled = true; facultyKmc.required = false; }
+
             // Show fields based on selected role
             switch (this.value) {
                 case 'Delegate':
                     delegateFields.style.display = 'block';
+                    if (delegateKmc) { delegateKmc.disabled = false; delegateKmc.required = true; }
                     break;
                 case 'Faculty':
                     facultyFields.style.display = 'block';
+                    if (facultyKmc) { facultyKmc.disabled = false; facultyKmc.required = true; }
                     break;
                 case 'Sponsor':
                     sponsorFields.style.display = 'block';
@@ -511,6 +529,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <td><strong>Organization:</strong></td>
                         <td>${document.getElementById('organization').value || 'Not provided'}</td>
                     </tr>
+                    <tr>
+                        <td><strong>KMC Number:</strong></td>
+                        <td>${document.getElementById('delegateKmcNumber').value || 'Not provided'}</td>
+                    </tr>
                 `;
                 break;
                 
@@ -527,6 +549,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     <tr>
                         <td><strong>Specialty:</strong></td>
                         <td>${document.getElementById('specialty').value || 'Not provided'}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>KMC Number:</strong></td>
+                        <td>${document.getElementById('facultyKmcNumber').value || 'Not provided'}</td>
                     </tr>
                     <tr>
                         <td><strong>Accommodation:</strong></td>
