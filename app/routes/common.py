@@ -125,11 +125,14 @@ async def check_in_guest(request: Request, guest_id: str = Form(...)):
         # Log the check-in
         log_checkin(guest["ID"], guest.get("Name", ""), guest.get("GuestRole", ""))
 
+        kmc_number = guest.get("KMCNumber")
+
         return templates.TemplateResponse(
             "check_in.html",
             {
                 "request": request,
                 "guest": guest,
+                "kmc_number": kmc_number,
                 "recent_checkins": recent_checkins,
                 "active_page": "check_in"
             }

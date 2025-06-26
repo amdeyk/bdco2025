@@ -453,7 +453,8 @@
                                         </p>
                                         <p class="text-muted mb-0">
                                             <i class="fas fa-envelope me-1"></i> {{ guest.Email or 'Not provided' }} |
-                                            <i class="fas fa-phone me-1"></i> {{ guest.Phone or 'Not provided' }}
+                                            <i class="fas fa-phone me-1"></i> {{ guest.Phone or 'Not provided' }} |
+                                            <strong>KMC:</strong> {{ guest.KMCNumber or 'N/A' }}
                                         </p>
                                     </div>
                                 </div>
@@ -537,6 +538,10 @@
                                     <div class="mb-3">
                                         <label class="form-label fw-bold text-muted">Phone</label>
                                         <div class="editable-field" id="displayPhone">{{ guest.Phone or 'Not provided' }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-muted">KMC Number</label>
+                                        <div class="editable-field">{{ guest.KMCNumber or 'N/A' }}</div>
                                     </div>
                                 </div>
                                 
