@@ -559,7 +559,8 @@ async def update_profile(
     request: Request,
     guest: Dict = Depends(get_current_guest),
     email: str = Form(...),
-    phone: str = Form(...)
+    phone: str = Form(...),
+    kmc_number: str = Form("")
 ):
     """Update guest profile information"""
     try:
@@ -580,11 +581,12 @@ async def update_profile(
         # Update guest
         guests = guests_db.read_all()
         updated = False
-        
+
         for g in guests:
             if g["ID"] == guest["ID"]:
                 g["Email"] = email
                 g["Phone"] = phone
+                g["KMCNumber"] = kmc_number
                 updated = True
                 break
         

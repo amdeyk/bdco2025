@@ -213,6 +213,13 @@
                             <small class="text-end"><strong>{{ guest.Email or 'Not provided' }}</strong></small>
                         </div>
                     </div>
+
+                    <div class="info-row">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="fas fa-id-badge me-1"></i>KMC No:</small>
+                            <strong>{{ guest.KMCNumber or 'N/A' }}</strong>
+                        </div>
+                    </div>
                     
                     <div class="info-row">
                         <div class="d-flex justify-content-between">
@@ -767,6 +774,10 @@
                         <label for="phone" class="form-label">Phone Number</label>
                         <input type="text" class="form-control" id="phone" name="phone" value="{{ guest.Phone }}">
                         <div class="form-text">10-digit phone number without spaces or hyphens</div>
+                    </div>
+                    <div class="compact-input">
+                        <label for="kmc_number" class="form-label">KMC Number</label>
+                        <input type="text" class="form-control" id="kmc_number" name="kmc_number" value="{{ guest.KMCNumber or '' }}">
                     </div>
                 </div>
                 <div class="modal-footer">
