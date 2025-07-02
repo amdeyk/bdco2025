@@ -256,13 +256,13 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
                         presentations.append(row)
 
         # Get messages
-        messages = []
+        guest_messages = []
         if os.path.exists(MESSAGES_CSV):
             with open(MESSAGES_CSV, mode='r', newline='', encoding='utf-8') as file:
                 reader = csv.DictReader(file)
                 for row in reader:
                     if row.get("guest_id") == guest["ID"]:
-                        messages.append(row)
+                        guest_messages.append(row)
         
         # *** UPDATED: Get journey details using synchronized service ***
         journey_service = create_journey_service(config)
@@ -298,7 +298,7 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
                 "request": request,
                 "guest": guest,
                 "presentations": presentations,
-                "messages": messages,
+                "guest_messages": guest_messages,
                 "inward_journey": inward_journey,
                 "outward_journey": outward_journey,
                 "user_role": "faculty" if guest["is_faculty"] else "guest",
