@@ -112,10 +112,16 @@ async def check_in_guest(request: Request, guest_id: str = Form(...)):
                 }
             )
 
-        # Add photo URL if exists
-        photo_path = os.path.join(config.get('PATHS', 'StaticDir'), 'uploads', 'profile_photos', f"{guest['ID']}.jpg")
+        # Add photo URL if exists (do not persist this field to the CSV)
+        guest_photo_url = None
+        photo_path = os.path.join(
+            config.get('PATHS', 'StaticDir'),
+            'uploads',
+            'profile_photos',
+            f"{guest['ID']}.jpg"
+        )
         if os.path.exists(photo_path):
-            guest["photo_url"] = f"/static/uploads/profile_photos/{guest['ID']}.jpg"
+            guest_photo_url = f"/static/uploads/profile_photos/{guest['ID']}.jpg"
 
         # Mark attendance
         guest["DailyAttendance"] = "True"
@@ -127,11 +133,16 @@ async def check_in_guest(request: Request, guest_id: str = Form(...)):
 
         kmc_number = guest.get("KMCNumber")
 
+        # Prepare data for the template (include photo URL if available)
+        guest_for_template = guest.copy()
+        if guest_photo_url:
+            guest_for_template["photo_url"] = guest_photo_url
+
         return templates.TemplateResponse(
             "check_in.html",
             {
                 "request": request,
-                "guest": guest,
+                "guest": guest_for_template,
                 "kmc_number": kmc_number,
                 "recent_checkins": recent_checkins,
                 "active_page": "check_in"
