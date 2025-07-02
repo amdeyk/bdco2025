@@ -28,6 +28,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Guest</th>
+                        <th>Phone</th>
                         <th>Role</th>
                         <th>Title</th>
                         <th>Uploaded</th>
@@ -38,13 +39,14 @@
                 {% for p in presentations %}
                     <tr>
                         <td>{{ p.guest_name }} ({{ p.guest_id }})</td>
+                        <td>{{ p.guest_phone or 'Not provided' }}</td>
                         <td>{{ p.guest_role }}</td>
                         <td>{{ p.title }}</td>
                         <td>{{ p.upload_date }}</td>
                         <td><a href="{{ p.file_url }}" class="btn btn-sm btn-primary"><i class="fas fa-download me-1"></i>Download</a></td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="5" class="text-center">No presentations found.</td></tr>
+                    <tr><td colspan="6" class="text-center">No presentations found.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>

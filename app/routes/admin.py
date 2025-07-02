@@ -1554,6 +1554,7 @@ async def presentations_management(request: Request, admin: Dict = Depends(get_c
             if g:
                 p['guest_name'] = g.get('Name', 'Unknown')
                 p['guest_role'] = g.get('GuestRole', '')
+                p['guest_phone'] = g.get('Phone', '')
             p['file_url'] = f"/admin/download_presentation/{p.get('file_path')}"
 
         return templates.TemplateResponse(
