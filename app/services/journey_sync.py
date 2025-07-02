@@ -67,7 +67,9 @@ class JourneyDataService:
         """Update journey details from admin interface"""
         try:
             journey_data = self._convert_admin_to_journey_format(admin_data)
-            self._update_guests_csv_journey(guest_id, admin_data)
+            # Update guests.csv using the normalized journey fields to avoid
+            # writing unexpected columns
+            self._sync_to_guests_csv(guest_id, journey_data)
             self._update_journey_csv(guest_id, journey_data)
             logger.info("Journey updated from admin interface for %s", guest_id)
             return True
