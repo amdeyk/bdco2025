@@ -1812,14 +1812,14 @@ async def single_guest_view(request: Request, admin: Dict = Depends(get_current_
 
         # Get guest messages
         messages_csv = os.path.join(os.path.dirname(config.get('DATABASE', 'CSVPath')), 'messages.csv')
-        messages = []
+        guest_messages = []
         if os.path.exists(messages_csv):
             with open(messages_csv, 'r', newline='', encoding='utf-8') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
                     if row.get('guest_id') == guest_id:
                         row['message'] = row.get('message') or row.get('content', '')
-                        messages.append(row)
+                        guest_messages.append(row)
 
         # Get guest activities (placeholder for now)
         activities = []
@@ -1832,7 +1832,7 @@ async def single_guest_view(request: Request, admin: Dict = Depends(get_current_
                 "guest": guest,
                 "guest_activities": activities,
                 "presentations": presentations,
-                "messages": messages,
+                "guest_messages": guest_messages,
                 "active_page": "all_guests"
             }
         )
@@ -2775,7 +2775,7 @@ async def messages_management(request: Request, q: str = ""):
     logging.info(f"[{trace_id}] Admin accessed messages_management with search='{q}'")
     messages_path = config.get('DATABASE', 'MessagesCSV', fallback='./data/messages.csv')
     guests_path = config.get('DATABASE', 'CSVPath', fallback='./data/guests.csv')
-    messages = []
+    guest_messages = []
     guests_map = {}
     guests_list = []
 
@@ -2800,7 +2800,7 @@ async def messages_management(request: Request, q: str = ""):
                 ):
                     continue
                 message_text = msg.get('message') or msg.get('content', '')
-                messages.append({
+                guest_messages.append({
                     "id": msg.get('id'),
                     "guest_id": msg['guest_id'],
                     "name": guest.get('Name', 'Unknown'),
@@ -2814,12 +2814,12 @@ async def messages_management(request: Request, q: str = ""):
     except Exception as e:
         logging.error(f"[{trace_id}] Failed reading messages: {e}")
 
-    logging.info(f"[{trace_id}] Loaded {len(messages)} messages for admin display.")
+    logging.info(f"[{trace_id}] Loaded {len(guest_messages)} messages for admin display.")
     return templates.TemplateResponse(
         "admin/messages_management.html",
         {
             "request": request,
-            "messages": messages,
+            "guest_messages": guest_messages,
             "search_query": q,
             "trace_id": trace_id,
             "guests": guests_list,

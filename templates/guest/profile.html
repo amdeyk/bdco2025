@@ -717,8 +717,8 @@
                             
                             <h6 class="mb-3">Message History</h6>
                             <div id="messageHistory" style="max-height: 400px; overflow-y: auto;">
-                                {% if messages %}
-                                    {% for msg in messages %}
+                                {% if guest_messages %}
+                                    {% for msg in guest_messages %}
                                     <div class="message-bubble">
                                         <div class="d-flex justify-content-between align-items-start mb-2">
                                             <small class="text-muted">
