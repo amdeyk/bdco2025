@@ -987,11 +987,6 @@
                     <div class="tab-pane fade" id="food" role="tabpanel" aria-labelledby="food-tab">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 class="mb-0">Food & Meal Management</h5>
-                            <div class="btn-group">
-                                <button class="btn btn-outline-secondary btn-sm" onclick="downloadMealPlan()">
-                                    <i class="fas fa-download me-1"></i> Meal Plan
-                                </button>
-                            </div>
                         </div>
                         
                         <!-- Food Coupon Status -->
@@ -1475,10 +1470,6 @@
                     showNotification('An unexpected error occurred', 'error');
                 });
             }
-        }
-
-        function downloadMealPlan() {
-            window.open(`/admin/download_meal_plan/${currentGuestId}`, '_blank');
         }
 
         function toggleFoodNotesEdit() {
