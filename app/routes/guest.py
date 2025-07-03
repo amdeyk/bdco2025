@@ -15,6 +15,7 @@ from PIL import Image, ImageDraw
 
 from app.services.qr_service import QRService
 from app.services.journey_sync import create_journey_service
+from app.services import EmailService
 
 from app.services.csv_db import CSVDatabase
 from app.services.auth import auth_service
@@ -35,6 +36,8 @@ guests_db = CSVDatabase(
 )
 # Initialize QR service
 qr_service = QRService(config.get('PATHS', 'StaticDir'))
+# Email service for registration notifications
+email_service = EmailService()
 # Use singleton auth_service from app.services.auth
 
 # Define storage paths
@@ -718,7 +721,15 @@ async def register_guest(
             qr_service.generate_guest_badge_qr(guest_id)
         except Exception as qr_error:
             logger.warning(f"Failed to generate QR code for guest {guest_id}: {str(qr_error)}")
-        
+
+        # Send confirmation email
+        if email:
+            try:
+                html = templates.get_template("email/registration.html").render(name=name, guest_id=guest_id)
+                email_service.send_email(email, "Registration Confirmation", html)
+            except Exception as mail_error:
+                logger.warning(f"Failed to send registration email: {mail_error}")
+
         return JSONResponse(
             content={
                 "success": True,
