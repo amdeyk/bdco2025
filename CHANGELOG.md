@@ -11,3 +11,5 @@ All notable changes to this project will be documented in this file.
   configured SMTP settings.
 - Improve email reliability by falling back to STARTTLS when the initial
   SSL connection is refused.
+- Enhance `EmailService` to try multiple ports (587, 465, 25) and update
+  `email_config.ini` default port to 587 for custom domain servers.
