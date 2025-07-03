@@ -15,3 +15,5 @@ All notable changes to this project will be documented in this file.
   `email_config.ini` default port to 587 for custom domain servers.
 - Correct `email_config.ini` SMTP hostname to `mail.magnacode1.qubixvirtual.in`
   and add `test_correct_email.py` for verifying the configuration.
+- Update mail server host to `mail.qubixvirtual.in` across configuration and
+  test scripts after DNS troubleshooting confirmed it as the valid server.

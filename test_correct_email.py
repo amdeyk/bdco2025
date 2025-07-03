@@ -17,7 +17,7 @@ def test_email_configurations():
     configs = [
         {
             "name": "Secure SSL/TLS (Recommended)",
-            "server": "mail.magnacode1.qubixvirtual.in",
+            "server": "mail.qubixvirtual.in",
             "port": 465,
             "use_ssl": True,
             "username": "magnacode@magnacode1.qubixvirtual.in",
@@ -25,7 +25,7 @@ def test_email_configurations():
         },
         {
             "name": "Non-SSL (Alternative)",
-            "server": "mail.magnacode1.qubixvirtual.in",
+            "server": "mail.qubixvirtual.in",
             "port": 2525,
             "use_ssl": False,
             "username": "magnacode@magnacode1.qubixvirtual.in",
