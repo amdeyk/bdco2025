@@ -9,3 +9,5 @@ All notable changes to this project will be documented in this file.
 - Fix check-in failures caused by temporary `photo_url` field being saved to the CSV database during guest lookup.
 - Send a confirmation email after successful guest registration using the
   configured SMTP settings.
+- Improve email reliability by falling back to STARTTLS when the initial
+  SSL connection is refused.
