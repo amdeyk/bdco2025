@@ -16,10 +16,11 @@ def test_email_configurations():
     # Your correct server configurations from the hosting provider
     configs = [
         {
-            "name": "Secure SSL/TLS (Recommended)",
+            "name": "Secure STARTTLS (Recommended)",
             "server": "mail.qubixvirtual.in",
-            "port": 465,
-            "use_ssl": True,
+            "port": 587,
+            "use_ssl": False,
+            "use_starttls": True,
             "username": "magnacode@magnacode1.qubixvirtual.in",
             "password": "Hello!@12345",
         },
@@ -28,6 +29,7 @@ def test_email_configurations():
             "server": "mail.qubixvirtual.in",
             "port": 2525,
             "use_ssl": False,
+            "use_starttls": False,
             "username": "magnacode@magnacode1.qubixvirtual.in",
             "password": "Hello!@12345",
         },
@@ -41,7 +43,10 @@ def test_email_configurations():
     for config in configs:
         print(f"\nTesting {config['name']}...")
         print(f"   Server: {config['server']}:{config['port']}")
-        print(f"   Method: {'SSL' if config['use_ssl'] else 'Plain SMTP'}")
+        method = (
+            'SSL' if config.get('use_ssl') else 'STARTTLS' if config.get('use_starttls') else 'Plain SMTP'
+        )
+        print(f"   Method: {method}")
 
         try:
             # Create SSL context
@@ -49,16 +54,20 @@ def test_email_configurations():
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
 
-            if config['use_ssl']:
-                # SSL connection (port 465)
-                with smtplib.SMTP_SSL(config['server'], config['port'], context=context, timeout=10) as server:
+            if config.get('use_ssl'):
+                # SSL connection
+                with smtplib.SMTP_SSL(
+                    config['server'], config['port'], context=context, timeout=10
+                ) as server:
                     server.set_debuglevel(0)
                     server.login(config['username'], config['password'])
                     print(f"\u2705 {config['name']} - LOGIN SUCCESSFUL")
                     successful_configs.append(config)
             else:
-                # Plain SMTP connection (port 2525)
+                # STARTTLS or plain SMTP
                 with smtplib.SMTP(config['server'], config['port'], timeout=10) as server:
+                    if config.get('use_starttls'):
+                        server.starttls(context=context)
                     server.set_debuglevel(0)
                     server.login(config['username'], config['password'])
                     print(f"\u2705 {config['name']} - LOGIN SUCCESSFUL")
@@ -111,7 +120,7 @@ def send_test_email(config, recipient):
     - Configuration: {config['name']}
     - Server: {config['server']}
     - Port: {config['port']}
-    - Method: {'SSL' if config['use_ssl'] else 'Plain SMTP'}
+    - Method: {'SSL' if config.get('use_ssl') else 'STARTTLS' if config.get('use_starttls') else 'Plain SMTP'}
     - Timestamp: {datetime.now()}
 
     Your email configuration is working correctly!
@@ -129,12 +138,16 @@ def send_test_email(config, recipient):
     context.verify_mode = ssl.CERT_NONE
 
     try:
-        if config['use_ssl']:
-            with smtplib.SMTP_SSL(config['server'], config['port'], context=context, timeout=30) as server:
+        if config.get('use_ssl'):
+            with smtplib.SMTP_SSL(
+                config['server'], config['port'], context=context, timeout=30
+            ) as server:
                 server.login(config['username'], config['password'])
                 server.sendmail(config['username'], recipient, msg.as_string())
         else:
             with smtplib.SMTP(config['server'], config['port'], timeout=30) as server:
+                if config.get('use_starttls'):
+                    server.starttls(context=context)
                 server.login(config['username'], config['password'])
                 server.sendmail(config['username'], recipient, msg.as_string())
 
@@ -161,14 +174,22 @@ def main():
         print(f"\nRECOMMENDATIONS:")
         print("=" * 30)
 
-        ssl_configs = [c for c in successful_configs if c['use_ssl']]
-        if ssl_configs:
-            recommended = ssl_configs[0]
+        starttls_configs = [c for c in successful_configs if c.get('use_starttls')]
+        ssl_configs = [c for c in successful_configs if c.get('use_ssl')]
+        if starttls_configs:
+            recommended = starttls_configs[0]
             print(f"\u2705 RECOMMENDED: {recommended['name']}")
             print(f"   Update your email_config.ini with:")
             print(f"   SMTPServer = {recommended['server']}")
             print(f"   SMTPPort = {recommended['port']}")
-            print(f"   (SSL will be used automatically)")
+            print("   (STARTTLS will be used)")
+        elif ssl_configs:
+            recommended = ssl_configs[0]
+            print(f"\u2705 ALTERNATIVE: {recommended['name']}")
+            print(f"   Update your email_config.ini with:")
+            print(f"   SMTPServer = {recommended['server']}")
+            print(f"   SMTPPort = {recommended['port']}")
+            print("   (SSL will be used automatically)")
         else:
             recommended = successful_configs[0]
             print(f"\u2705 USE: {recommended['name']}")

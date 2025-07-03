@@ -17,3 +17,4 @@ All notable changes to this project will be documented in this file.
   and add `test_correct_email.py` for verifying the configuration.
 - Update mail server host to `mail.qubixvirtual.in` across configuration and
   test scripts after DNS troubleshooting confirmed it as the valid server.
+- Switch default SMTP port to 587 with STARTTLS after confirming SSL on port 465 fails.
