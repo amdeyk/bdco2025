@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 MAGNACODE Email configuration test script
-Specifically designed to test magnacode1.qubixvirtual.in server
+Specifically designed to test mail.qubixvirtual.in server
 """
 
 import sys
@@ -21,7 +21,7 @@ from app.services.email_service import EmailService
 def probe_direct_smtp_connection():
     """Probe direct SMTP connection with different methods"""
 
-    smtp_server = "magnacode1.qubixvirtual.in"
+    smtp_server = "mail.qubixvirtual.in"
     username = "magnacode@magnacode1.qubixvirtual.in"
     password = "Hello!@12345"
 
@@ -73,7 +73,7 @@ def probe_direct_smtp_connection():
 def send_test_email(port, method, use_ssl, recipient):
     """Send a test email using the specified configuration"""
 
-    smtp_server = "magnacode1.qubixvirtual.in"
+    smtp_server = "mail.qubixvirtual.in"
     username = "magnacode@magnacode1.qubixvirtual.in"
     password = "Hello!@12345"
     sender_email = "magnacode@magnacode1.qubixvirtual.in"
@@ -164,7 +164,7 @@ def probe_with_email_service():
 def main():
     print("MAGNACODE 2025 - Email Server Test")
     print("=" * 50)
-    print("Testing magnacode1.qubixvirtual.in email server...")
+    print("Testing mail.qubixvirtual.in email server...")
 
     successful_configs = probe_direct_smtp_connection()
     if successful_configs:
@@ -206,7 +206,7 @@ def main():
     else:
         print("\n❌ No working email configurations found!")
         print("\nTroubleshooting steps:")
-        print("1. Verify the server hostname: magnacode1.qubixvirtual.in")
+        print("1. Verify the server hostname: mail.qubixvirtual.in")
         print("2. Check username: magnacode@magnacode1.qubixvirtual.in")
         print("3. Verify the password is correct")
         print("4. Contact your hosting provider for SMTP settings")
