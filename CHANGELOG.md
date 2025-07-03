@@ -18,3 +18,5 @@ All notable changes to this project will be documented in this file.
 - Update mail server host to `mail.qubixvirtual.in` across configuration and
   test scripts after DNS troubleshooting confirmed it as the valid server.
 - Switch default SMTP port to 587 with STARTTLS after confirming SSL on port 465 fails.
+- Add enhanced HTML registration email template and update guest registration
+  to send richly formatted confirmation emails using connection testing.

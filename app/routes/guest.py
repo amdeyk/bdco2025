@@ -150,6 +150,273 @@ def generate_qr_base64(data: str) -> str:
         logger.error(f"Error generating QR code: {str(e)}")
         return ""
 
+# Enhanced registration confirmation email template
+def create_registration_email_content(guest_data):
+    """Create enhanced HTML email content for registration confirmation"""
+
+    # Extract guest information
+    guest_id = guest_data.get('ID')
+    name = guest_data.get('Name')
+    email = guest_data.get('Email')
+    phone = guest_data.get('Phone')
+    role = guest_data.get('GuestRole')
+    kmc_number = guest_data.get('KMCNumber', '')
+    registration_date = guest_data.get('RegistrationDate')
+
+    # Format phone number nicely
+    formatted_phone = phone
+    if phone and len(phone) == 10 and phone.isdigit():
+        formatted_phone = f"+91 {phone[:5]} {phone[5:]}"
+
+    # Role-specific content
+    role_specific_content = ""
+    if role == "Faculty":
+        role_specific_content = """
+        <div style="background-color: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #1976d2; margin: 0 0 10px 0; font-size: 16px;">
+                🎓 Faculty Information
+            </h3>
+            <p style="margin: 5px 0; color: #333;">
+                As a faculty member, you'll have access to:
+            </p>
+            <ul style="margin: 10px 0; padding-left: 20px; color: #333;">
+                <li>Faculty lounge and networking areas</li>
+                <li>Presentation upload portal</li>
+                <li>Speaker coordination services</li>
+                <li>Priority conference materials</li>
+            </ul>
+        </div>
+        """
+    elif role == "Delegate":
+        role_specific_content = """
+        <div style="background-color: #e8f5e8; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #2e7d32; margin: 0 0 10px 0; font-size: 16px;">
+                👥 Delegate Information
+            </h3>
+            <p style="margin: 5px 0; color: #333;">
+                As a delegate, you'll enjoy:
+            </p>
+            <ul style="margin: 10px 0; padding-left: 20px; color: #333;">
+                <li>Full access to all conference sessions</li>
+                <li>Networking opportunities</li>
+                <li>Conference materials and documentation</li>
+                <li>Certificate of participation</li>
+            </ul>
+        </div>
+        """
+    elif role == "Sponsor":
+        role_specific_content = """
+        <div style="background-color: #fff3e0; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <h3 style="color: #f57c00; margin: 0 0 10px 0; font-size: 16px;">
+                🤝 Sponsor Information
+            </h3>
+            <p style="margin: 5px 0; color: #333;">
+                Thank you for sponsoring our event! You'll have:
+            </p>
+            <ul style="margin: 10px 0; padding-left: 20px; color: #333;">
+                <li>Dedicated sponsor area access</li>
+                <li>Brand visibility opportunities</li>
+                <li>Networking with healthcare professionals</li>
+                <li>Sponsor appreciation ceremony</li>
+            </ul>
+        </div>
+        """
+
+    # KMC number section (if provided)
+    kmc_section = ""
+    if kmc_number:
+        kmc_section = f"""
+        <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; font-weight: 600; color: #555; width: 150px;">
+                KMC Number:
+            </td>
+            <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; color: #333;">
+                {kmc_number}
+            </td>
+        </tr>
+        """
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Registration Confirmation - MAGNACODE 2025</title>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: 'Segoe UI', Arial, sans-serif;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <div style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); padding: 30px; text-align: center;">
+                <div style="background-color: white; width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; color: #1e3a8a;">
+                    MC
+                </div>
+                <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 300;">
+                    MAGNACODE 2025
+                </h1>
+                <p style="color: #e0f2fe; margin: 8px 0 0 0; font-size: 16px;">
+                    Healthcare and Education Foundation
+                </p>
+                <p style="color: #fbbf24; margin: 5px 0 0 0; font-size: 14px; font-weight: 500;">
+                    September 21-22, 2025 | Bangalore
+                </p>
+            </div>
+            <div style="text-align: center; padding: 30px 30px 20px; background-color: #f8fffe;">
+                <div style="background-color: #10b981; width: 60px; height: 60px; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                    <span style="color: white; font-size: 24px;">✓</span>
+                </div>
+                <h2 style="color: #065f46; margin: 0 0 10px 0; font-size: 24px;">
+                    Registration Confirmed!
+                </h2>
+                <p style="color: #047857; margin: 0; font-size: 16px;">
+                    Welcome to MAGNACODE 2025, {name}!
+                </p>
+            </div>
+            <div style="padding: 30px;">
+                <h3 style="color: #1f2937; margin: 0 0 20px 0; font-size: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
+                    📋 Your Registration Details
+                </h3>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; font-weight: 600; color: #555; width: 150px; background-color: #f8fafc;">
+                            Registration ID:
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; color: #333;">
+                            <span style="background-color: #3b82f6; color: white; padding: 4px 12px; border-radius: 20px; font-weight: 600; font-size: 16px;">
+                                {guest_id}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; font-weight: 600; color: #555; background-color: #f8fafc;">
+                            Full Name:
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; color: #333; font-weight: 500;">
+                            {name}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; font-weight: 600; color: #555; background-color: #f8fafc;">
+                            Role:
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; color: #333;">
+                            <span style="background-color: #10b981; color: white; padding: 3px 10px; border-radius: 15px; font-size: 14px;">
+                                {role}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; font-weight: 600; color: #555; background-color: #f8fafc;">
+                            Email:
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; color: #333;">
+                            {email}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; font-weight: 600; color: #555; background-color: #f8fafc;">
+                            Phone:
+                        </td>
+                        <td style="padding: 12px; border-bottom: 1px solid #e0e0e0; color: #333;">
+                            {formatted_phone}
+                        </td>
+                    </tr>
+                    {kmc_section}
+                    <tr>
+                        <td style="padding: 12px; font-weight: 600; color: #555; background-color: #f8fafc;">
+                            Registration Date:
+                        </td>
+                        <td style="padding: 12px; color: #333;">
+                            {registration_date}
+                        </td>
+                    </tr>
+                </table>
+                {role_specific_content}
+                <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 0 8px 8px 0; margin: 20px 0;">
+                    <h3 style="color: #92400e; margin: 0 0 15px 0; font-size: 18px;">
+                        🔔 Important Instructions
+                    </h3>
+                    <ul style="margin: 0; padding-left: 20px; color: #78350f;">
+                        <li style="margin: 8px 0;"><strong>Save your Registration ID:</strong> {guest_id}</li>
+                        <li style="margin: 8px 0;"><strong>Bring this ID</strong> for check-in at the conference</li>
+                        <li style="margin: 8px 0;"><strong>Check-in opens:</strong> September 21, 2025 at 8:00 AM</li>
+                        <li style="margin: 8px 0;"><strong>Venue:</strong> The Chancery Pavilion, Bangalore</li>
+                    </ul>
+                </div>
+                <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="color: #0c4a6e; margin: 0 0 15px 0; font-size: 18px;">
+                        📅 Conference Schedule
+                    </h3>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                        <div style="flex: 1; margin-right: 10px;">
+                            <h4 style="color: #0369a1; margin: 0 0 8px 0; font-size: 16px;">Day 1 - September 21</h4>
+                            <p style="margin: 0; color: #1e40af; font-size: 14px;">
+                                📍 Registration & Opening Ceremony<br>
+                                🎤 Keynote Sessions<br>
+                                🍽️ Networking Lunch
+                            </p>
+                        </div>
+                        <div style="flex: 1; margin-left: 10px;">
+                            <h4 style="color: #0369a1; margin: 0 0 8px 0; font-size: 16px;">Day 2 - September 22</h4>
+                            <p style="margin: 0; color: #1e40af; font-size: 14px;">
+                                🔬 Technical Sessions<br>
+                                🏆 Awards Ceremony<br>
+                                🎉 Closing Reception
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div style="background-color: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="color: #334155; margin: 0 0 15px 0; font-size: 18px;">
+                        📞 Need Help?
+                    </h3>
+                    <p style="margin: 5px 0; color: #475569;">
+                        <strong>Conference Helpline:</strong> <a href="tel:+918480002958" style="color: #3b82f6; text-decoration: none;">+91 84800 02958</a>
+                    </p>
+                    <p style="margin: 5px 0; color: #475569;">
+                        <strong>Email Support:</strong> <a href="mailto:info@magnacode.org" style="color: #3b82f6; text-decoration: none;">info@magnacode.org</a>
+                    </p>
+                    <p style="margin: 5px 0; color: #475569;">
+                        <strong>Website:</strong> <a href="https://www.magnacode.org" style="color: #3b82f6; text-decoration: none;">www.magnacode.org</a>
+                    </p>
+                </div>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="https://www.magnacode.org/guest/login" 
+                       style="background-color: #3b82f6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+                        🔑 Access Your Profile
+                    </a>
+                </div>
+            </div>
+            <div style="background-color: #1f2937; color: #d1d5db; text-align: center; padding: 30px;">
+                <h3 style="color: #f59e0b; margin: 0 0 15px 0; font-size: 20px;">
+                    MAGNACODE 2025
+                </h3>
+                <p style="margin: 5px 0; font-size: 14px;">
+                    Healthcare Excellence • Education Innovation
+                </p>
+                <p style="margin: 5px 0; font-size: 14px;">
+                    Organized by Healthcare and Education Foundation
+                </p>
+                <p style="margin: 15px 0 5px 0; font-size: 12px; color: #9ca3af;">
+                    The Chancery Pavilion, Bangalore | September 21-22, 2025
+                </p>
+                <div style="margin: 20px 0;">
+                    <a href="https://www.magnacode.org" style="color: #60a5fa; text-decoration: none; margin: 0 10px;">Website</a>
+                    <span style="color: #4b5563;">|</span>
+                    <a href="mailto:info@magnacode.org" style="color: #60a5fa; text-decoration: none; margin: 0 10px;">Contact</a>
+                    <span style="color: #4b5563;">|</span>
+                    <a href="tel:+918480002958" style="color: #60a5fa; text-decoration: none; margin: 0 10px;">Support</a>
+                </div>
+                <p style="margin: 10px 0 0 0; font-size: 11px; color: #6b7280;">
+                    This email was sent to {email} because you registered for MAGNACODE 2025.
+                </p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+
+    return html_content
+
 # Routes
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -722,13 +989,41 @@ async def register_guest(
         except Exception as qr_error:
             logger.warning(f"Failed to generate QR code for guest {guest_id}: {str(qr_error)}")
 
-        # Send confirmation email
+        # Send confirmation email (with enhanced template)
+        email_sent = False
         if email:
             try:
-                html = templates.get_template("email/registration.html").render(name=name, guest_id=guest_id)
-                email_service.send_email(email, "Registration Confirmation", html)
+                # Test email connection first
+                if email_service.test_connection():
+                    # Create complete guest data for email template
+                    guest_data = {
+                        "ID": guest_id,
+                        "Name": name,
+                        "Email": email,
+                        "Phone": phone,
+                        "GuestRole": guest_role,
+                        "KMCNumber": kmc_number,
+                        "RegistrationDate": datetime.now().strftime("%B %d, %Y")
+                    }
+
+                    # Create enhanced email content
+                    email_content = create_registration_email_content(guest_data)
+
+                    email_sent = email_service.send_email(
+                        email,
+                        "🎉 Registration Confirmed - MAGNACODE 2025",
+                        email_content
+                    )
+
+                    if email_sent:
+                        logger.info(f"Enhanced registration confirmation email sent to {email}")
+                    else:
+                        logger.error(f"Failed to send registration email to {email}")
+                else:
+                    logger.error("Email connection test failed, skipping email send")
+
             except Exception as mail_error:
-                logger.warning(f"Failed to send registration email: {mail_error}")
+                logger.error(f"Email sending error: {mail_error}")
 
         return JSONResponse(
             content={
