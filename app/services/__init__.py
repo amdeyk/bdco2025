@@ -1,2 +1,3 @@
-# app/utils/__init__.py
-"""Utility functions for the application"""
+"""Service layer for the application."""
+
+from .email_service import EmailService
