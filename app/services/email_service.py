@@ -27,12 +27,31 @@ class EmailService:
         msg['Subject'] = subject
         msg.attach(MIMEText(html_message, 'html'))
 
+        context = ssl.create_default_context()
+
         try:
-            context = ssl.create_default_context()
+            # First attempt an SSL connection (commonly used with port 465)
             with smtplib.SMTP_SSL(self.smtp_server, self.smtp_port, context=context) as server:
                 server.login(self.username, self.password)
                 server.sendmail(self.sender_email, recipient, msg.as_string())
             return True
+        except ConnectionRefusedError as exc:
+            # If the SSL connection is refused, try STARTTLS (typically port 587)
+            self.logger.warning(
+                f"SMTP SSL connection to {self.smtp_server}:{self.smtp_port} failed: {exc}. "
+                "Attempting STARTTLS."
+            )
+            try:
+                with smtplib.SMTP(self.smtp_server, self.smtp_port) as server:
+                    server.starttls(context=context)
+                    server.login(self.username, self.password)
+                    server.sendmail(self.sender_email, recipient, msg.as_string())
+                return True
+            except Exception as tls_exc:
+                self.logger.error(
+                    f"Failed to send email to {recipient} using STARTTLS: {tls_exc}"
+                )
+                return False
         except Exception as exc:
             self.logger.error(f"Failed to send email to {recipient}: {exc}")
             return False
