@@ -514,8 +514,8 @@ def reset_related_databases():
 
         presentations_csv = os.path.join(data_dir, "presentations.csv")
         presentation_headers = [
-            "id", "guest_id", "file_name", "file_path", "file_type",
-            "file_size", "upload_date", "status"
+            "id", "guest_id", "title", "description", "file_path",
+            "file_type", "upload_date"
         ]
         create_empty_csv(presentations_csv, presentation_headers)
 
@@ -556,6 +556,26 @@ def create_empty_csv(file_path: str, headers: list):
     except Exception as e:
         logger.error(f"Error creating empty CSV {file_path}: {str(e)}")
         raise
+
+
+def resolve_presentation_filename(row: Dict) -> str:
+    """Find the correct filename for a presentation record."""
+    presentations_dir = os.path.join(
+        config.get('PATHS', 'StaticDir'), 'uploads', 'presentations'
+    )
+    candidates = [
+        row.get('file_path'),
+        row.get('file_name'),
+        row.get('file_type'),
+        row.get('title'),
+    ]
+    for cand in candidates:
+        if not cand:
+            continue
+        name = os.path.basename(cand).strip()
+        if name and os.path.exists(os.path.join(presentations_dir, name)):
+            return name
+    return ''
 
 
 @router.get("/api/database-stats")
@@ -1556,12 +1576,16 @@ async def presentations_management(request: Request, admin: Dict = Depends(get_c
                 p['guest_role'] = g.get('GuestRole', '')
                 p['guest_phone'] = g.get('Phone', '')
 
-            raw_name = p.get('file_path') or p.get('file_name', '')
-            file_name = os.path.basename(raw_name).strip()
+            # Backwards compatible filename resolution
+            file_name = resolve_presentation_filename(p)
             if file_name:
                 p['file_url'] = f"/admin/download_presentation/{file_name}"
             else:
                 p['file_url'] = ''
+
+            # Normalize title field for old records
+            if 'title' not in p and p.get('file_name'):
+                p['title'] = p.get('file_name')
 
         return templates.TemplateResponse(
             "admin/presentations_management.html",
@@ -1814,12 +1838,13 @@ async def single_guest_view(request: Request, admin: Dict = Depends(get_current_
                 reader = csv.DictReader(f)
                 for row in reader:
                     if row.get('guest_id') == guest_id:
-                        raw_name = row.get('file_path') or row.get('file_name', '')
-                        file_name = os.path.basename(raw_name).strip()
+                        file_name = resolve_presentation_filename(row)
                         if file_name:
                             row['file_url'] = f"/admin/download_presentation/{file_name}"
                         else:
                             row['file_url'] = ''
+                        if 'title' not in row and row.get('file_name'):
+                            row['title'] = row.get('file_name')
                         presentations.append(row)
 
         # Get guest messages
