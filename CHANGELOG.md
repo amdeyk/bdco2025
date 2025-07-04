@@ -20,3 +20,5 @@ All notable changes to this project will be documented in this file.
 - Switch default SMTP port to 587 with STARTTLS after confirming SSL on port 465 fails.
 - Add enhanced HTML registration email template and update guest registration
   to send richly formatted confirmation emails using connection testing.
+- Remove "Access Your Profile" button and email support line from the
+  registration confirmation email.

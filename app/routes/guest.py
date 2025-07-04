@@ -373,17 +373,8 @@ def create_registration_email_content(guest_data):
                         <strong>Conference Helpline:</strong> <a href="tel:+918480002958" style="color: #3b82f6; text-decoration: none;">+91 84800 02958</a>
                     </p>
                     <p style="margin: 5px 0; color: #475569;">
-                        <strong>Email Support:</strong> <a href="mailto:info@magnacode.org" style="color: #3b82f6; text-decoration: none;">info@magnacode.org</a>
-                    </p>
-                    <p style="margin: 5px 0; color: #475569;">
                         <strong>Website:</strong> <a href="https://www.magnacode.org" style="color: #3b82f6; text-decoration: none;">www.magnacode.org</a>
                     </p>
-                </div>
-                <div style="text-align: center; margin: 30px 0;">
-                    <a href="https://www.magnacode.org/guest/login" 
-                       style="background-color: #3b82f6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: 600; font-size: 16px; display: inline-block; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
-                        🔑 Access Your Profile
-                    </a>
                 </div>
             </div>
             <div style="background-color: #1f2937; color: #d1d5db; text-align: center; padding: 30px;">
