@@ -24,3 +24,6 @@ All notable changes to this project will be documented in this file.
   registration confirmation email.
 - Add a standalone abstract submission page that verifies mobile numbers and sends
   a confirmation email after upload.
+- Convert abstract submission into a two-step flow with mobile verification and
+  expanded file type support. Confirmation now includes file details and
+  timestamp.

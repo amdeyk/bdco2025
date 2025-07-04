@@ -40,7 +40,10 @@ guests_db = CSVDatabase(
 UPLOADS_DIR = os.path.join(config.get('PATHS', 'StaticDir'), 'uploads')
 PRESENTATIONS_DIR = os.path.join(UPLOADS_DIR, 'presentations')
 PRESENTATIONS_CSV = os.path.join(os.path.dirname(config.get('DATABASE', 'CSVPath')), 'presentations.csv')
-ALLOWED_PRESENTATION_EXTENSIONS = {'.pdf', '.ppt', '.pptx', '.doc', '.docx', '.mp4', '.avi', '.webm'}
+# Accept common document and image formats including Mac equivalents
+ALLOWED_PRESENTATION_EXTENSIONS = {
+    '.pdf', '.ppt', '.pptx', '.doc', '.docx', '.jpg', '.jpeg', '.key', '.pages'
+}
 
 os.makedirs(PRESENTATIONS_DIR, exist_ok=True)
 # Using singleton auth_service from app.services.auth
@@ -1196,30 +1199,75 @@ def create_magnacode_badge(guest: dict) -> Image.Image:
 
 @router.get("/abstract", response_class=HTMLResponse)
 async def abstract_page(request: Request):
-    """Render the abstract submission page"""
+    """Render the abstract submission page (step 1)"""
     return templates.TemplateResponse(
         "abstract_submission.html",
-        {"request": request}
+        {"request": request, "step": "check"}
     )
 
 
 @router.post("/abstract", response_class=HTMLResponse)
-async def submit_abstract(request: Request, phone: str = Form(...), file: UploadFile = File(...)):
-    """Handle abstract submission uploads"""
+async def submit_abstract(
+    request: Request,
+    step: str = Form(...),
+    phone: str = Form(...),
+    file: UploadFile | None = File(None)
+):
+    """Handle the abstract submission multi-step form"""
     guests = guests_db.read_all()
-    guest = next((g for g in guests if g.get("Phone") == phone), None)
+    guest = next((g for g in guests if g.get("Phone") == phone.strip()), None)
 
+    if step == "check":
+        if not guest:
+            return templates.TemplateResponse(
+                "abstract_submission.html",
+                {"request": request, "error": "Mobile number not found", "step": "check"}
+            )
+
+        # Show guest info and allow upload
+        return templates.TemplateResponse(
+            "abstract_submission.html",
+            {
+                "request": request,
+                "step": "upload",
+                "guest_name": guest.get("Name"),
+                "guest_email": guest.get("Email"),
+                "phone": phone,
+            }
+        )
+
+    # Upload step
     if not guest:
         return templates.TemplateResponse(
             "abstract_submission.html",
-            {"request": request, "error": "Mobile number not found"}
+            {"request": request, "error": "Mobile number not found", "step": "check"}
+        )
+
+    if file is None or not file.filename:
+        return templates.TemplateResponse(
+            "abstract_submission.html",
+            {
+                "request": request,
+                "error": "No file uploaded",
+                "step": "upload",
+                "guest_name": guest.get("Name"),
+                "guest_email": guest.get("Email"),
+                "phone": phone,
+            }
         )
 
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in ALLOWED_PRESENTATION_EXTENSIONS:
         return templates.TemplateResponse(
             "abstract_submission.html",
-            {"request": request, "error": "File type not allowed"}
+            {
+                "request": request,
+                "error": "File type not allowed",
+                "step": "upload",
+                "guest_name": guest.get("Name"),
+                "guest_email": guest.get("Email"),
+                "phone": phone,
+            }
         )
 
     unique_name = f"{guest['ID']}_{int(datetime.now().timestamp())}_{uuid.uuid4().hex}{ext}"
@@ -1234,28 +1282,44 @@ async def submit_abstract(request: Request, phone: str = Form(...), file: Upload
             writer.writerow(["id", "guest_id", "title", "description", "file_path", "file_type", "upload_date"])
 
     with open(PRESENTATIONS_CSV, mode='a', newline='', encoding='utf-8') as f:
-        writer = csv.DictWriter(f, fieldnames=["id", "guest_id", "title", "description", "file_path", "file_type", "upload_date"])
-        writer.writerow({
-            "id": str(uuid.uuid4()),
-            "guest_id": guest["ID"],
-            "title": "Abstract Submission",
-            "description": "",
-            "file_path": unique_name,
-            "file_type": ext.lstrip('.'),
-            "upload_date": datetime.now().isoformat()
-        })
+        writer = csv.DictWriter(
+            f,
+            fieldnames=["id", "guest_id", "title", "description", "file_path", "file_type", "upload_date"],
+        )
+        writer.writerow(
+            {
+                "id": str(uuid.uuid4()),
+                "guest_id": guest["ID"],
+                "title": "Abstract Submission",
+                "description": "",
+                "file_path": unique_name,
+                "file_type": ext.lstrip("."),
+                "upload_date": datetime.now().isoformat(),
+            }
+        )
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     if guest.get("Email"):
         email_service = EmailService()
         email_service.send_email(
             guest["Email"],
             "Abstract Submission Received",
-            f"<p>Dear {guest.get('Name')},</p><p>Your abstract has been received.</p>"
+            (
+                f"<p>Dear {guest.get('Name')},</p>"
+                f"<p>Your file <strong>{file.filename}</strong> was submitted on {timestamp}.</p>"
+            ),
         )
 
     return templates.TemplateResponse(
         "abstract_submission.html",
-        {"request": request, "success": "Abstract submitted successfully."}
+        {
+            "request": request,
+            "success": "Abstract submitted successfully. A confirmation email has been sent.",
+            "submitted_file": file.filename,
+            "timestamp": timestamp,
+            "step": "check",
+        },
     )
 
 
