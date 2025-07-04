@@ -22,3 +22,5 @@ All notable changes to this project will be documented in this file.
   to send richly formatted confirmation emails using connection testing.
 - Remove "Access Your Profile" button and email support line from the
   registration confirmation email.
+- Add a standalone abstract submission page that verifies mobile numbers and sends
+  a confirmation email after upload.
