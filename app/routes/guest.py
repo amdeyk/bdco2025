@@ -6,6 +6,7 @@ from typing import Optional, Dict
 import os
 import logging
 import uuid
+from app.utils.helpers import generate_unique_id
 from datetime import datetime
 import shutil
 import io
@@ -955,7 +956,8 @@ async def register_guest(
                     content={"success": False, "message": "Invalid registration ID"}
                 )
         else:
-            guest_id = str(uuid.uuid4())[:8].upper()
+            existing_ids = [g["ID"] for g in guests_db.read_all()]
+            guest_id = generate_unique_id(existing_ids, 4)
         
         # Create guest record
         guest = {

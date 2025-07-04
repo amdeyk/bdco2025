@@ -2,6 +2,7 @@
 from typing import Dict, Optional, List
 from datetime import datetime
 import uuid
+from app.utils.helpers import generate_random_id
 
 class Guest:
     """Model for guest records"""
@@ -22,7 +23,7 @@ class Guest:
             email: Email address
             guest_role: Role at the conference (Delegate, Faculty, Staff, etc.)
         """
-        self.id = str(uuid.uuid4())[:8].upper()  # Short ID for convenience
+        self.id = generate_random_id(4)
         self.name = name
         self.phone = phone
         self.email = email

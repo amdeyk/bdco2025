@@ -32,3 +32,4 @@ All notable changes to this project will be documented in this file.
 - Handle missing or malformed presentation file paths to prevent broken admin
   download links.
 - Resolve admin presentation downloads when CSV headers were misaligned with older data.
+- Generate shorter 4-character guest IDs and remove the unused Batch field from registration and profile pages.

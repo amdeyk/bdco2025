@@ -188,10 +188,6 @@
                         
                         <!-- Delegate-specific fields -->
                         <div id="delegate-fields">
-                            <div class="mb-3">
-                                <label for="batch" class="form-label">Batch/Year</label>
-                                <input type="text" class="form-control" id="batch" name="batch" placeholder="Enter your batch or year">
-                            </div>
 
                             <div class="mb-3">
                                 <label for="organization" class="form-label">Organization/Institution</label>
@@ -521,10 +517,6 @@ document.addEventListener('DOMContentLoaded', function() {
         switch (role) {
             case 'Delegate':
                 detailsHTML += `
-                    <tr>
-                        <td><strong>Batch/Year:</strong></td>
-                        <td>${document.getElementById('batch').value || 'Not provided'}</td>
-                    </tr>
                     <tr>
                         <td><strong>Organization:</strong></td>
                         <td>${document.getElementById('organization').value || 'Not provided'}</td>

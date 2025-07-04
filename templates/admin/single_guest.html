@@ -560,12 +560,7 @@
                                         <div class="editable-field">{{ guest.RegistrationDate or 'Not available' }}</div>
                                     </div>
                                     
-                                    {% if guest.GuestRole == 'Delegates' and guest.Batch %}
-                                    <div class="mb-3">
-                                        <label class="form-label fw-bold text-muted">Batch</label>
-                                        <div class="editable-field">{{ guest.Batch }}</div>
-                                    </div>
-                                    {% endif %}
+                                    {# Batch field removed as it is irrelevant #}
                                     
                                     
                                     {% if guest.CompanyName %}
