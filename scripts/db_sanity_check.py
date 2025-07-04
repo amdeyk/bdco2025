@@ -3,6 +3,7 @@ import os
 from app.config import Config
 from app.services.csv_db import CSVDatabase
 from app.models.guest import Guest
+from app.utils.helpers import generate_unique_id
 
 
 def run_sanity_check():
@@ -35,7 +36,7 @@ def run_sanity_check():
         gid = row.get('ID')
         if not gid or gid in seen_ids:
             # Generate a new ID if missing or duplicate
-            row['ID'] = Guest().id
+            row['ID'] = generate_unique_id(list(seen_ids))
             updated = True
         seen_ids.add(row['ID'])
 

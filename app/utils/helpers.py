@@ -23,6 +23,16 @@ def generate_random_id(length: int = 8) -> str:
     chars = string.ascii_uppercase + string.digits
     return ''.join(random.choice(chars) for _ in range(length))
 
+def generate_unique_id(existing_ids: List[str], length: int = 4) -> str:
+    """Generate a unique alphanumeric ID not present in existing_ids."""
+    if existing_ids is None:
+        existing_ids = []
+
+    attempt = generate_random_id(length)
+    while attempt in existing_ids:
+        attempt = generate_random_id(length)
+    return attempt
+
 def slugify(value: str) -> str:
     """
     Convert a string to a slug - lowercase, with spaces and special chars replaced by hyphens
