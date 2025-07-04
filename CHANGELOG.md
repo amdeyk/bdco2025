@@ -31,3 +31,4 @@ All notable changes to this project will be documented in this file.
   directory components before generating admin download links.
 - Handle missing or malformed presentation file paths to prevent broken admin
   download links.
+- Resolve admin presentation downloads when CSV headers were misaligned with older data.
