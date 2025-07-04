@@ -1555,8 +1555,13 @@ async def presentations_management(request: Request, admin: Dict = Depends(get_c
                 p['guest_name'] = g.get('Name', 'Unknown')
                 p['guest_role'] = g.get('GuestRole', '')
                 p['guest_phone'] = g.get('Phone', '')
-            file_name = os.path.basename(p.get('file_path', ''))
-            p['file_url'] = f"/admin/download_presentation/{file_name}"
+
+            raw_name = p.get('file_path') or p.get('file_name', '')
+            file_name = os.path.basename(raw_name).strip()
+            if file_name:
+                p['file_url'] = f"/admin/download_presentation/{file_name}"
+            else:
+                p['file_url'] = ''
 
         return templates.TemplateResponse(
             "admin/presentations_management.html",
@@ -1573,10 +1578,11 @@ async def presentations_management(request: Request, admin: Dict = Depends(get_c
 async def download_presentation(admin: Dict = Depends(get_current_admin), file_name: str = FastAPIPath(...)):
     """Download an uploaded presentation file"""
     try:
-        file_path = os.path.join(config.get('PATHS', 'StaticDir'), 'uploads', 'presentations', file_name)
+        safe_name = os.path.basename(file_name).strip()
+        file_path = os.path.join(config.get('PATHS', 'StaticDir'), 'uploads', 'presentations', safe_name)
         if not os.path.exists(file_path):
             raise HTTPException(status_code=404, detail="File not found")
-        return StreamingResponse(open(file_path, 'rb'), headers={'Content-Disposition': f'attachment; filename="{file_name}"'})
+        return StreamingResponse(open(file_path, 'rb'), headers={'Content-Disposition': f'attachment; filename="{safe_name}"'})
     except Exception as e:
         logger.error(f"Error downloading presentation: {e}")
         raise HTTPException(status_code=500, detail="Error downloading presentation")
@@ -1808,8 +1814,12 @@ async def single_guest_view(request: Request, admin: Dict = Depends(get_current_
                 reader = csv.DictReader(f)
                 for row in reader:
                     if row.get('guest_id') == guest_id:
-                        file_name = os.path.basename(row.get('file_path', ''))
-                        row['file_url'] = f"/admin/download_presentation/{file_name}"
+                        raw_name = row.get('file_path') or row.get('file_name', '')
+                        file_name = os.path.basename(raw_name).strip()
+                        if file_name:
+                            row['file_url'] = f"/admin/download_presentation/{file_name}"
+                        else:
+                            row['file_url'] = ''
                         presentations.append(row)
 
         # Get guest messages
