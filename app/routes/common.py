@@ -1,16 +1,19 @@
 # app/routes/common.py
-from fastapi import APIRouter, Request, Depends, HTTPException, Form
+from fastapi import APIRouter, Request, Depends, HTTPException, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from datetime import datetime
 import logging
 import os
+import csv
+import uuid
 
 from app.services.csv_db import CSVDatabase
 from app.services.auth import auth_service
 from app.config import Config
 from app.templates import templates
 from app.utils.logging_utils import log_activity, log_checkin
+from app.services import EmailService
 
 from fastapi import Path as FastAPIPath  # Rename FastAPI Path
 from pathlib import Path  # Keep pathlib Path for file operations
@@ -33,6 +36,13 @@ guests_db = CSVDatabase(
     config.get('DATABASE', 'CSVPath'),
     config.get('DATABASE', 'BackupDir')
 )
+# Paths for abstract submissions and presentations
+UPLOADS_DIR = os.path.join(config.get('PATHS', 'StaticDir'), 'uploads')
+PRESENTATIONS_DIR = os.path.join(UPLOADS_DIR, 'presentations')
+PRESENTATIONS_CSV = os.path.join(os.path.dirname(config.get('DATABASE', 'CSVPath')), 'presentations.csv')
+ALLOWED_PRESENTATION_EXTENSIONS = {'.pdf', '.ppt', '.pptx', '.doc', '.docx', '.mp4', '.avi', '.webm'}
+
+os.makedirs(PRESENTATIONS_DIR, exist_ok=True)
 # Using singleton auth_service from app.services.auth
 
 @router.get("/check_in", response_class=HTMLResponse)
@@ -1182,6 +1192,71 @@ def create_magnacode_badge(guest: dict) -> Image.Image:
     draw.ellipse([(logo_x - logo_radius, logo_y - logo_radius), (logo_x + logo_radius, logo_y + logo_radius)], fill='white', outline=bright_orange, width=3)
     draw.text((logo_x, logo_y), "MC", fill=navy_blue, anchor="mm", font_size=20)
     return badge
+
+
+@router.get("/abstract", response_class=HTMLResponse)
+async def abstract_page(request: Request):
+    """Render the abstract submission page"""
+    return templates.TemplateResponse(
+        "abstract_submission.html",
+        {"request": request}
+    )
+
+
+@router.post("/abstract", response_class=HTMLResponse)
+async def submit_abstract(request: Request, phone: str = Form(...), file: UploadFile = File(...)):
+    """Handle abstract submission uploads"""
+    guests = guests_db.read_all()
+    guest = next((g for g in guests if g.get("Phone") == phone), None)
+
+    if not guest:
+        return templates.TemplateResponse(
+            "abstract_submission.html",
+            {"request": request, "error": "Mobile number not found"}
+        )
+
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_PRESENTATION_EXTENSIONS:
+        return templates.TemplateResponse(
+            "abstract_submission.html",
+            {"request": request, "error": "File type not allowed"}
+        )
+
+    unique_name = f"{guest['ID']}_{int(datetime.now().timestamp())}_{uuid.uuid4().hex}{ext}"
+    save_path = os.path.join(PRESENTATIONS_DIR, unique_name)
+    with open(save_path, "wb") as f:
+        content = await file.read()
+        f.write(content)
+
+    if not os.path.exists(PRESENTATIONS_CSV):
+        with open(PRESENTATIONS_CSV, mode='w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(["id", "guest_id", "title", "description", "file_path", "file_type", "upload_date"])
+
+    with open(PRESENTATIONS_CSV, mode='a', newline='', encoding='utf-8') as f:
+        writer = csv.DictWriter(f, fieldnames=["id", "guest_id", "title", "description", "file_path", "file_type", "upload_date"])
+        writer.writerow({
+            "id": str(uuid.uuid4()),
+            "guest_id": guest["ID"],
+            "title": "Abstract Submission",
+            "description": "",
+            "file_path": unique_name,
+            "file_type": ext.lstrip('.'),
+            "upload_date": datetime.now().isoformat()
+        })
+
+    if guest.get("Email"):
+        email_service = EmailService()
+        email_service.send_email(
+            guest["Email"],
+            "Abstract Submission Received",
+            f"<p>Dear {guest.get('Name')},</p><p>Your abstract has been received.</p>"
+        )
+
+    return templates.TemplateResponse(
+        "abstract_submission.html",
+        {"request": request, "success": "Abstract submitted successfully."}
+    )
 
 
 def validate_guest_data(guest: dict) -> bool:
