@@ -27,3 +27,5 @@ All notable changes to this project will be documented in this file.
 - Convert abstract submission into a two-step flow with mobile verification and
   expanded file type support. Confirmation now includes file details and
   timestamp.
+- Fix presentation download failures by normalizing stored paths and stripping
+  directory components before generating admin download links.

@@ -1555,7 +1555,8 @@ async def presentations_management(request: Request, admin: Dict = Depends(get_c
                 p['guest_name'] = g.get('Name', 'Unknown')
                 p['guest_role'] = g.get('GuestRole', '')
                 p['guest_phone'] = g.get('Phone', '')
-            p['file_url'] = f"/admin/download_presentation/{p.get('file_path')}"
+            file_name = os.path.basename(p.get('file_path', ''))
+            p['file_url'] = f"/admin/download_presentation/{file_name}"
 
         return templates.TemplateResponse(
             "admin/presentations_management.html",
@@ -1807,7 +1808,8 @@ async def single_guest_view(request: Request, admin: Dict = Depends(get_current_
                 reader = csv.DictReader(f)
                 for row in reader:
                     if row.get('guest_id') == guest_id:
-                        row['file_url'] = f"/admin/download_presentation/{row.get('file_path')}"
+                        file_name = os.path.basename(row.get('file_path', ''))
+                        row['file_url'] = f"/admin/download_presentation/{file_name}"
                         presentations.append(row)
 
         # Get guest messages
