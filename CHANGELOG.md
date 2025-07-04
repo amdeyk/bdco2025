@@ -29,3 +29,5 @@ All notable changes to this project will be documented in this file.
   timestamp.
 - Fix presentation download failures by normalizing stored paths and stripping
   directory components before generating admin download links.
+- Handle missing or malformed presentation file paths to prevent broken admin
+  download links.
