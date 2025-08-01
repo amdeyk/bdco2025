@@ -74,6 +74,20 @@ async def admin_dashboard(request: Request, admin: Dict = Depends(get_current_ad
         # Calculate real statistics from guest data
         checked_in_count = sum(1 for g in guests if g.get("DailyAttendance") == "True")
         faculty_count = sum(1 for g in guests if g.get("GuestRole") == "Faculty")
+        # Count delegates separately for dashboard stats
+        delegate_count = sum(1 for g in guests if g.get("GuestRole") == "Delegate")
+
+        # Attendance counts Faculty or Delegate guests who checked in or received a meal coupon
+        attendance_count = sum(
+            1
+            for g in guests
+            if g.get("GuestRole") in ["Faculty", "Delegate"]
+            and (
+                g.get("DailyAttendance") == "True"
+                or g.get("FoodCouponsDay1") == "True"
+                or g.get("FoodCouponsDay2") == "True"
+            )
+        )
         
         # Calculate completion rate (percentage of fully registered guests)
         completed_guests = sum(1 for g in guests if g.get("Email") and g.get("Phone"))
@@ -166,11 +180,11 @@ async def admin_dashboard(request: Request, admin: Dict = Depends(get_current_ad
         # Prepare stats for the template
         stats = {
             "total_guests": len(guests),
-            "checked_in": checked_in_count,
+            "delegate_count": delegate_count,
             "faculty_count": faculty_count,
-            "completion_rate": round(completion_rate, 1),
-            "trend_labels": trend_labels[-7:] if len(trend_labels) > 7 else trend_labels, # Last 7 days
-            "trend_values": trend_values[-7:] if len(trend_values) > 7 else trend_values, # Last 7 days
+            "attendance_count": attendance_count,
+            "trend_labels": trend_labels[-7:] if len(trend_labels) > 7 else trend_labels,  # Last 7 days
+            "trend_values": trend_values[-7:] if len(trend_values) > 7 else trend_values,  # Last 7 days
             "role_labels": role_labels,
             "role_values": role_values
         }
