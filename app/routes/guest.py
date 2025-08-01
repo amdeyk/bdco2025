@@ -243,7 +243,7 @@ def create_registration_email_content(guest_data):
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Registration Confirmation - MAGNACODE 2025</title>
+        <title>Registration Confirmation - Magna Endocrine Update 2025</title>
     </head>
     <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: 'Segoe UI', Arial, sans-serif;">
         <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
@@ -252,7 +252,7 @@ def create_registration_email_content(guest_data):
                     MC
                 </div>
                 <h1 style="color: white; margin: 0; font-size: 28px; font-weight: 300;">
-                    MAGNACODE 2025
+                    Magna Endocrine Update 2025
                 </h1>
                 <p style="color: #e0f2fe; margin: 8px 0 0 0; font-size: 16px;">
                     Healthcare and Education Foundation
@@ -269,7 +269,7 @@ def create_registration_email_content(guest_data):
                     Registration Confirmed!
                 </h2>
                 <p style="color: #047857; margin: 0; font-size: 16px;">
-                    Welcome to MAGNACODE 2025, {name}!
+                    Welcome to Magna Endocrine Update 2025, {name}!
                 </p>
             </div>
             <div style="padding: 30px;">
@@ -380,7 +380,7 @@ def create_registration_email_content(guest_data):
             </div>
             <div style="background-color: #1f2937; color: #d1d5db; text-align: center; padding: 30px;">
                 <h3 style="color: #f59e0b; margin: 0 0 15px 0; font-size: 20px;">
-                    MAGNACODE 2025
+                    Magna Endocrine Update 2025
                 </h3>
                 <p style="margin: 5px 0; font-size: 14px;">
                     Healthcare Excellence • Education Innovation
@@ -399,7 +399,7 @@ def create_registration_email_content(guest_data):
                     <a href="tel:+918480002958" style="color: #60a5fa; text-decoration: none; margin: 0 10px;">Support</a>
                 </div>
                 <p style="margin: 10px 0 0 0; font-size: 11px; color: #6b7280;">
-                    This email was sent to {email} because you registered for MAGNACODE 2025.
+                    This email was sent to {email} because you registered for Magna Endocrine Update 2025.
                 </p>
             </div>
         </div>
@@ -1004,7 +1004,7 @@ async def register_guest(
 
                     email_sent = email_service.send_email(
                         email,
-                        "🎉 Registration Confirmed - MAGNACODE 2025",
+                        "🎉 Registration Confirmed - Magna Endocrine Update 2025",
                         email_content
                     )
 
@@ -1055,7 +1055,7 @@ def create_magnacode_badge(guest: dict) -> Image.Image:
         blue_val = int(30 + (108 * intensity))
         draw.line([(0, y), (width_px, y)], fill=f'#{blue_val:02x}3a8a')
 
-    draw.text((width_px//2, 60), "MAGNACODE 2025", fill='white', anchor="mm", font_size=54)
+    draw.text((width_px//2, 60), "Magna Endocrine Update 2025", fill='white', anchor="mm", font_size=48)
     draw.text((width_px//2, 120), "Healthcare and Education Foundation", fill='white', anchor="mm", font_size=28)
     draw.text((width_px//2, 170), "21st & 22nd September 2025", fill=gold, anchor="mm", font_size=24)
     draw.text((width_px//2, 210), "Bangalore", fill='white', anchor="mm", font_size=22)

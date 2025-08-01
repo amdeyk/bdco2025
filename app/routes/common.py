@@ -1072,7 +1072,7 @@ def create_magnacode_badge(guest: dict) -> Image.Image:
         blue_val = int(30 + (108 * intensity))
         draw.line([(0, y), (width_px, y)], fill=f'#{blue_val:02x}3a8a')
 
-    draw.text((width_px//2, 60), "MAGNACODE 2025", fill='white', anchor="mm", font_size=54)
+    draw.text((width_px//2, 60), "Magna Endocrine Update 2025", fill='white', anchor="mm", font_size=48)
     draw.text((width_px//2, 120), "Healthcare and Education Foundation", fill='white', anchor="mm", font_size=28)
     draw.text((width_px//2, 170), "21st & 22nd September 2025", fill=gold, anchor="mm", font_size=24)
     draw.text((width_px//2, 210), "Bangalore", fill='white', anchor="mm", font_size=22)

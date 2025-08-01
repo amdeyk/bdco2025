@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-MAGNACODE Email test script using correct mail server settings
+Magna Endocrine Update 2025 email test script using correct mail server settings
 """
 
 import smtplib
@@ -35,7 +35,7 @@ def test_email_configurations():
         },
     ]
 
-    print("MAGNACODE 2025 - Correct Email Server Test")
+    print("Magna Endocrine Update 2025 - Email Server Test")
     print("=" * 50)
 
     successful_configs = []
@@ -90,14 +90,14 @@ def send_test_email(config, recipient):
 
     # Create message
     msg = MIMEMultipart('alternative')
-    msg['From'] = f"MAGNACODE Admin <{config['username']}>"
+    msg['From'] = f"Magna Endocrine Update 2025 Admin <{config['username']}>"
     msg['To'] = recipient
-    msg['Subject'] = f"Email Test - MAGNACODE 2025 ({config['name']})"
+    msg['Subject'] = f"Email Test - Magna Endocrine Update 2025 ({config['name']})"
 
     html_content = f"""
     <html>
     <body>
-        <h2>Email Test Successful - MAGNACODE 2025</h2>
+          <h2>Email Test Successful - Magna Endocrine Update 2025</h2>
         <p>This test email was sent successfully using:</p>
         <ul>
             <li><strong>Configuration:</strong> {config['name']}</li>
@@ -108,13 +108,13 @@ def send_test_email(config, recipient):
         </ul>
         <p>Your email configuration is working correctly!</p>
         <br>
-        <p>Best regards,<br>MAGNACODE 2025 Team</p>
+          <p>Best regards,<br>Magna Endocrine Update 2025 Team</p>
     </body>
     </html>
     """
 
     text_content = f"""
-    Email Test Successful - MAGNACODE 2025
+  Email Test Successful - Magna Endocrine Update 2025
 
     This test email was sent successfully using:
     - Configuration: {config['name']}
@@ -126,7 +126,7 @@ def send_test_email(config, recipient):
     Your email configuration is working correctly!
 
     Best regards,
-    MAGNACODE 2025 Team
+  Magna Endocrine Update 2025 Team
     """
 
     msg.attach(MIMEText(text_content, 'plain'))
@@ -160,7 +160,7 @@ def send_test_email(config, recipient):
 
 
 def main():
-    print("Testing MAGNACODE email server configurations...")
+    print("Testing Magna Endocrine Update 2025 email server configurations...")
 
     # Test connections
     successful_configs = test_email_configurations()
