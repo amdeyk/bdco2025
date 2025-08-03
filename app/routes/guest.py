@@ -1132,18 +1132,18 @@ def create_magnacode_badge_working(guest: dict) -> Image.Image:
     role_y = name_y + name_height + 20
     role_height = 60
     try:
-        draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='white', anchor="mm", font_size=30)
+        draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='black', anchor="mm", font_size=30)
     except TypeError:
-        draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='white', anchor="mm")
+        draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='black', anchor="mm")
 
     # Guest ID
     id_y = role_y + role_height + 20
     id_height = 60
     guest_id = guest.get('ID', 'UNKNOWN')
     try:
-        draw.text((info_x + info_width//2, id_y + id_height//2), f"ID: {guest_id}", fill='white', anchor="mm", font_size=30)
+        draw.text((info_x + info_width//2, id_y + id_height//2), f"ID: {guest_id}", fill='black', anchor="mm", font_size=30)
     except TypeError:
-        draw.text((info_x + info_width//2, id_y + id_height//2), f"ID: {guest_id}", fill='white', anchor="mm")
+        draw.text((info_x + info_width//2, id_y + id_height//2), f"ID: {guest_id}", fill='black', anchor="mm")
 
     return badge
 
