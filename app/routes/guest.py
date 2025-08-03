@@ -944,19 +944,34 @@ async def register_guest(
                 status_code=400,
                 content={"success": False, "message": "Invalid email format"}
             )
-        
+
+        guests = guests_db.read_all()
+
+        # Check for duplicate phone number
+        if any(g.get("Phone") == phone for g in guests):
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "This phone number is already registered."}
+            )
+
+        # Check for duplicate KMC number if provided
+        if kmc_number and any(g.get("KMCNumber") == kmc_number for g in guests):
+            return JSONResponse(
+                status_code=400,
+                content={"success": False, "message": "This KMC number is already registered."}
+            )
+
         # Generate or use existing ID
         if registration_type == "existing" and existing_id:
             guest_id = existing_id
             # Verify ID exists
-            guests = guests_db.read_all()
             if not any(g["ID"] == guest_id for g in guests):
                 return JSONResponse(
                     status_code=400,
                     content={"success": False, "message": "Invalid registration ID"}
                 )
         else:
-            existing_ids = [g["ID"] for g in guests_db.read_all()]
+            existing_ids = [g["ID"] for g in guests]
             guest_id = generate_unique_id(existing_ids, 4)
         
         # Create guest record
@@ -972,7 +987,6 @@ async def register_guest(
         }
         
         # Add to database
-        guests = guests_db.read_all()
         guests.append(guest)
         guests_db.write_all(guests)
 
