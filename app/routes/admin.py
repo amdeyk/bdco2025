@@ -3117,82 +3117,60 @@ def validate_guest_data_safe(guest: dict) -> bool:
 
 
 def create_magnacode_badge_working(guest: dict) -> Image.Image:
-    """Simplified badge generator compatible with older Pillow versions"""
-    dpi = 300
-    width_px = int(90 * dpi / 25.4)
-    height_px = int(140 * dpi / 25.4)
+    """Badge generator with role-based backgrounds."""
 
-    badge = Image.new('RGB', (width_px, height_px), '#ffffff')
+    # 1. Define image paths and role mapping
+    base_path = Path("static/raw_id_card")
+    role_image_map = {
+        'Delegates': base_path / "DELEGATE.jpg",
+        'Faculty': base_path / "FACULTY.jpg",
+        'Sponsor': base_path / "SPONSOR.jpg",
+    }
+    default_image = base_path / "ORGANIZER.jpg"
+
+    guest_role = guest.get('GuestRole', 'Event')
+    image_path = role_image_map.get(guest_role, default_image)
+
+    # 2. Load the background image
+    try:
+        badge = Image.open(image_path)
+    except FileNotFoundError:
+        badge = Image.new('RGB', (1081, 1441), '#ffffff')
+
     draw = ImageDraw.Draw(badge)
+    width_px, height_px = badge.size
 
     navy_blue = '#1e3a8a'
-    bright_orange = '#f97316'
-    sky_blue = '#e0f2fe'
-    pearl_gray = '#f8fafc'
-    charcoal = '#334155'
-    gold = '#fbbf24'
 
-    header_height = 413
-    draw.rectangle([(0, 0), (width_px, header_height)], fill=navy_blue)
+    # --- ADJUST QR CODE POSITION ---
+    qr_size = 300
+    qr_padding = 20
+    qr_x = 100
+    qr_y = 600
 
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=12, border=1)
+    qr.add_data(f"MAGNACODE2025:{guest.get('ID', 'UNKNOWN')}")
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color=navy_blue, back_color="white")
     try:
-        draw.text((width_px//2, 60), "Magna Endocrine Update 2025", fill='white', anchor="mm", font_size=48)
-        draw.text((width_px//2, 120), "Healthcare and Education Foundation", fill='white', anchor="mm", font_size=28)
-        draw.text((width_px//2, 170), "21st & 22nd September 2025", fill=gold, anchor="mm", font_size=24)
-        draw.text((width_px//2, 210), "Bangalore", fill='white', anchor="mm", font_size=22)
-    except TypeError:
-        draw.text((width_px//2, 60), "Magna Endocrine Update 2025", fill='white', anchor="mm")
-        draw.text((width_px//2, 120), "Healthcare and Education Foundation", fill='white', anchor="mm")
-        draw.text((width_px//2, 170), "21st & 22nd September 2025", fill=gold, anchor="mm")
-        draw.text((width_px//2, 210), "Bangalore", fill='white', anchor="mm")
-
-    content_start_y = 460
-    margin = 55
-
-    qr_size = 240
-    qr_padding = 30
-    qr_container_size = qr_size + (qr_padding * 2)
-    qr_x = margin
-    qr_y = content_start_y + 100
-
-    draw.rectangle([(qr_x, qr_y), (qr_x + qr_container_size, qr_y + qr_container_size)], fill='white', outline=navy_blue, width=4)
-
-    try:
-        qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=2)
-        qr.add_data(f"MAGNACODE2025:{guest.get('ID', 'UNKNOWN')}")
-        qr.make(fit=True)
-        qr_img = qr.make_image(fill_color=navy_blue, back_color="white")
+        qr_resized = qr_img.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
+    except AttributeError:
         qr_resized = qr_img.resize((qr_size, qr_size))
-        badge.paste(qr_resized, (qr_x + qr_padding, qr_y + qr_padding))
-    except Exception:
-        draw.rectangle([(qr_x + qr_padding, qr_y + qr_padding), (qr_x + qr_padding + qr_size, qr_y + qr_padding + qr_size)], fill='#f0f0f0', outline=navy_blue, width=2)
-        draw.text((qr_x + qr_container_size//2, qr_y + qr_container_size//2), "QR", fill=navy_blue, anchor="mm")
+    badge.paste(qr_resized, (qr_x + qr_padding, qr_y + qr_padding))
 
-    try:
-        draw.text((qr_x + qr_container_size//2, qr_y + qr_container_size + 25), "Scan for Check-in", fill=charcoal, anchor="mm", font_size=18)
-    except TypeError:
-        draw.text((qr_x + qr_container_size//2, qr_y + qr_container_size + 25), "Scan for Check-in", fill=charcoal, anchor="mm")
+    # --- ADJUST GUEST INFO POSITION ---
+    info_x = qr_x + qr_size + 80
+    info_width = width_px - info_x - 100
+    info_y = qr_y + 20
 
-    info_x = qr_x + qr_container_size + 50
-    info_width = width_px - info_x - margin
-    info_y = content_start_y + 50
-
-    id_height = 60
-    draw.rectangle([(info_x, info_y), (width_px - margin, info_y + id_height)], fill=bright_orange)
-    try:
-        draw.text((info_x + info_width//2, info_y + id_height//2), f"ID: {guest.get('ID', 'UNKNOWN')}", fill='white', anchor="mm", font_size=24)
-    except TypeError:
-        draw.text((info_x + info_width//2, info_y + id_height//2), f"ID: {guest.get('ID', 'UNKNOWN')}", fill='white', anchor="mm")
-
-    name_y = info_y + id_height + 25
     guest_name = guest.get('Name', 'Unknown Guest')
-    role = guest.get('GuestRole', '')
+    role = guest.get('GuestRole', 'Event')
     if role in ['Delegates', 'Faculty'] and guest_name and not any(prefix in guest_name.upper() for prefix in ['DR.', 'PROF.', 'MR.', 'MS.', 'MRS.']):
         guest_name = f"Dr. {guest_name}"
 
-    name_height = 95
-    draw.rectangle([(info_x, name_y), (width_px - margin, name_y + name_height)], fill=sky_blue, outline=navy_blue, width=3)
-
+    # Guest Name
+    name_y = info_y
+    name_height = 100
     if len(guest_name) > 20:
         words = guest_name.split(' ')
         if len(words) > 1:
@@ -3200,102 +3178,40 @@ def create_magnacode_badge_working(guest: dict) -> Image.Image:
             line1 = ' '.join(words[:mid])
             line2 = ' '.join(words[mid:])
             try:
-                draw.text((info_x + info_width//2, name_y + 30), line1, fill=navy_blue, anchor="mm", font_size=22)
-                draw.text((info_x + info_width//2, name_y + 65), line2, fill=navy_blue, anchor="mm", font_size=22)
+                draw.text((info_x + info_width//2, name_y + 35), line1, fill=navy_blue, anchor="mm", font_size=35)
+                draw.text((info_x + info_width//2, name_y + 75), line2, fill=navy_blue, anchor="mm", font_size=35)
             except TypeError:
-                draw.text((info_x + info_width//2, name_y + 30), line1, fill=navy_blue, anchor="mm")
-                draw.text((info_x + info_width//2, name_y + 65), line2, fill=navy_blue, anchor="mm")
+                draw.text((info_x + info_width//2, name_y + 35), line1, fill=navy_blue, anchor="mm")
+                draw.text((info_x + info_width//2, name_y + 75), line2, fill=navy_blue, anchor="mm")
         else:
             try:
-                draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm", font_size=20)
+                draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm", font_size=35)
             except TypeError:
                 draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm")
     else:
         try:
-            draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm", font_size=24)
+            draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm", font_size=40)
         except TypeError:
             draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm")
 
-    role_colors = {
-        'Delegates': '#059669',
-        'Faculty': '#dc2626',
-        'Sponsor': '#d97706',
-        'Event': '#7c3aed'
-    }
-    role = guest.get('GuestRole', 'Event')
-    if role not in role_colors:
-        role = 'Event'
-    role_color = role_colors[role]
+    # Guest Role
     role_y = name_y + name_height + 20
-    role_height = 50
-    draw.rectangle([(info_x, role_y), (width_px - margin, role_y + role_height)], fill=role_color)
+    role_height = 60
     try:
-        draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='white', anchor="mm", font_size=22)
+        draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='white', anchor="mm", font_size=30)
     except TypeError:
         draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='white', anchor="mm")
 
-    contact_y = role_y + role_height + 30
-    kmc = guest.get('KMCNumber', '')
-    if kmc:
-        try:
-            draw.text((info_x + 15, contact_y), f"KMC: {kmc}", fill=charcoal, font_size=16)
-        except TypeError:
-            draw.text((info_x + 15, contact_y), f"KMC: {kmc}", fill=charcoal)
-        contact_y += 40
-    phone = guest.get('Phone', '')
-    if phone:
-        if len(phone) == 10 and phone.isdigit():
-            formatted_phone = f"{phone[:3]}-{phone[3:6]}-{phone[6:]}"
-        else:
-            formatted_phone = phone
-        try:
-            draw.text((info_x + 15, contact_y), f"Phone: {formatted_phone}", fill=charcoal, font_size=16)
-        except TypeError:
-            draw.text((info_x + 15, contact_y), f"Phone: {formatted_phone}", fill=charcoal)
-        contact_y += 40
-
-    org = guest.get('Organization', '')
-    if org:
-        if len(org) > 25:
-            org = org[:22] + "..."
-        try:
-            draw.text((info_x + 15, contact_y), f"Org: {org}", fill=charcoal, font_size=16)
-        except TypeError:
-            draw.text((info_x + 15, contact_y), f"Org: {org}", fill=charcoal)
-
-    footer_y = height_px - 140
-    draw.rectangle([(0, footer_y), (width_px, height_px)], fill=pearl_gray)
-    draw.rectangle([(0, footer_y), (width_px, footer_y + 4)], fill=bright_orange)
-    footer_lines = [
-        "Venue: The Chancery Pavilion, Bangalore",
-        "Healthcare Excellence • Education Innovation",
-        "www.magnacode.org • info@magnacode.org"
-    ]
-    for i, line in enumerate(footer_lines):
-        try:
-            draw.text((width_px//2, footer_y + 25 + (i * 35)), line, fill=charcoal, anchor="mm", font_size=16)
-        except TypeError:
-            draw.text((width_px//2, footer_y + 25 + (i * 35)), line, fill=charcoal, anchor="mm")
-
-    corner_size = 30
-    draw.polygon([(width_px - corner_size - 15, 15), (width_px - 15, 15), (width_px - 15, corner_size + 15)], fill=bright_orange)
-    draw.polygon([(15, height_px - corner_size - 15), (corner_size + 15, height_px - corner_size - 15), (15, height_px - 15)], fill=bright_orange)
-    draw.rectangle([(0, 0), (10, height_px)], fill=bright_orange)
-    draw.rectangle([(width_px - 10, 0), (width_px, height_px)], fill=bright_orange)
-    draw.rectangle([(0, 0), (width_px - 1, height_px - 1)], fill=None, outline=navy_blue, width=4)
-
-    logo_diameter = 70
-    logo_x = width_px - 90
-    logo_y = 90
-    logo_radius = logo_diameter // 2
-    draw.ellipse([(logo_x - logo_radius, logo_y - logo_radius), (logo_x + logo_radius, logo_y + logo_radius)], fill='white', outline=bright_orange, width=3)
+    # Guest ID
+    id_y = role_y + role_height + 20
+    id_height = 60
+    guest_id = guest.get('ID', 'UNKNOWN')
     try:
-        draw.text((logo_x, logo_y), "MC", fill=navy_blue, anchor="mm", font_size=20)
+        draw.text((info_x + info_width//2, id_y + id_height//2), f"ID: {guest_id}", fill='white', anchor="mm", font_size=30)
     except TypeError:
-        draw.text((logo_x, logo_y), "MC", fill=navy_blue, anchor="mm")
+        draw.text((info_x + info_width//2, id_y + id_height//2), f"ID: {guest_id}", fill='white', anchor="mm")
 
     return badge
-
 
 def test_badge_generation() -> bool:
     """Simple test to verify badge generation works"""
