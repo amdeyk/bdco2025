@@ -3168,9 +3168,9 @@ def create_magnacode_badge_working(guest: dict) -> Image.Image:
     if role in ['Delegates', 'Faculty'] and guest_name and not any(prefix in guest_name.upper() for prefix in ['DR.', 'PROF.', 'MR.', 'MS.', 'MRS.']):
         guest_name = f"Dr. {guest_name}"
 
-    # Guest Name
+    # Guest Name (bigger font)
     name_y = info_y
-    name_height = 100
+    name_height = 120  # Increased height for bigger font
     if len(guest_name) > 20:
         words = guest_name.split(' ')
         if len(words) > 1:
@@ -3178,38 +3178,47 @@ def create_magnacode_badge_working(guest: dict) -> Image.Image:
             line1 = ' '.join(words[:mid])
             line2 = ' '.join(words[mid:])
             try:
-                draw.text((info_x + info_width//2, name_y + 35), line1, fill=navy_blue, anchor="mm", font_size=35)
-                draw.text((info_x + info_width//2, name_y + 75), line2, fill=navy_blue, anchor="mm", font_size=35)
+                draw.text((info_x + info_width//2, name_y + 40), line1, fill=navy_blue, anchor="mm", font_size=55)
+                draw.text((info_x + info_width//2, name_y + 90), line2, fill=navy_blue, anchor="mm", font_size=55)
             except TypeError:
-                draw.text((info_x + info_width//2, name_y + 35), line1, fill=navy_blue, anchor="mm")
-                draw.text((info_x + info_width//2, name_y + 75), line2, fill=navy_blue, anchor="mm")
+                draw.text((info_x + info_width//2, name_y + 40), line1, fill=navy_blue, anchor="mm")
+                draw.text((info_x + info_width//2, name_y + 90), line2, fill=navy_blue, anchor="mm")
         else:
             try:
-                draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm", font_size=35)
+                draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm", font_size=55)
             except TypeError:
                 draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm")
     else:
         try:
-            draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm", font_size=40)
+            draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm", font_size=60)
         except TypeError:
             draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm")
 
-    # Guest Role
-    role_y = name_y + name_height + 20
+    # Guest Role (black color)
+    role_y = name_y + name_height
     role_height = 60
     try:
-        draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='white', anchor="mm", font_size=30)
+        draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='black', anchor="mm", font_size=30)
     except TypeError:
-        draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='white', anchor="mm")
+        draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='black', anchor="mm")
 
-    # Guest ID
-    id_y = role_y + role_height + 20
+    # Guest ID (black color)
+    id_y = role_y + role_height + 10
     id_height = 60
     guest_id = guest.get('ID', 'UNKNOWN')
     try:
-        draw.text((info_x + info_width//2, id_y + id_height//2), f"ID: {guest_id}", fill='white', anchor="mm", font_size=30)
+        draw.text((info_x + info_width//2, id_y + id_height//2), f"ID: {guest_id}", fill='black', anchor="mm", font_size=30)
     except TypeError:
-        draw.text((info_x + info_width//2, id_y + id_height//2), f"ID: {guest_id}", fill='white', anchor="mm")
+        draw.text((info_x + info_width//2, id_y + id_height//2), f"ID: {guest_id}", fill='black', anchor="mm")
+
+    # Guest Phone (newly added, black color)
+    phone_y = id_y + id_height + 10
+    phone_height = 60
+    guest_phone = guest.get('Phone', 'N/A')
+    try:
+        draw.text((info_x + info_width//2, phone_y + phone_height//2), f"Phone: {guest_phone}", fill='black', anchor="mm", font_size=30)
+    except TypeError:
+        draw.text((info_x + info_width//2, phone_y + phone_height//2), f"Phone: {guest_phone}", fill='black', anchor="mm")
 
     return badge
 
