@@ -37,3 +37,4 @@ All notable changes to this project will be documented in this file.
 - Update admin dashboard stats: delegates count replaces checked-in, and new attendance count covers faculty and delegates with check-in or meal coupon.
 - Enforce unique phone and KMC numbers during guest registration with server validation and frontend error messaging.
 - Generate badges using role-specific background images and reposition guest details and QR codes accordingly.
+- Add step-by-step abstract upload guide images below mobile number verification on the abstract submission page.
