@@ -38,3 +38,4 @@ All notable changes to this project will be documented in this file.
 - Enforce unique phone and KMC numbers during guest registration with server validation and frontend error messaging.
 - Generate badges using role-specific background images and reposition guest details and QR codes accordingly.
 - Add step-by-step abstract upload guide images below mobile number verification on the abstract submission page.
+- Fix abstract submission template's static asset links by using the correct `path` parameter with `url_for` to avoid missing route errors.
