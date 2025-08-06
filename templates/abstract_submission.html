@@ -28,22 +28,58 @@
         <button type="submit" class="btn btn-primary">Check Number</button>
       </div>
     </form>
-    <div class="mt-4">
-      <div class="row row-cols-2 row-cols-md-4 g-3 text-center">
-        <div class="col">
-          <img src="{{ url_for('static', path='images/step1.jpeg') }}" alt="Step 1" class="img-fluid rounded shadow-sm">
-        </div>
-        <div class="col">
-          <img src="{{ url_for('static', path='images/step2.jpeg') }}" alt="Step 2" class="img-fluid rounded shadow-sm">
-        </div>
-        <div class="col">
-          <img src="{{ url_for('static', path='images/step3.jpeg') }}" alt="Step 3" class="img-fluid rounded shadow-sm">
-        </div>
-        <div class="col">
-          <img src="{{ url_for('static', path='images/step4.jpeg') }}" alt="Step 4" class="img-fluid rounded shadow-sm">
-        </div>
-      </div>
+    <!-- NEW FLEX IMAGE ROW BELOW -->
+    <style>
+      .steps-flex-row {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 72px;
+        margin-top: 72px;
+        flex-wrap: nowrap;
+      }
+      .step-img {
+        max-width: 340px;
+        width: 100%;
+        height: auto;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+        transition: transform 0.2s;
+        background: #fff;
+        padding: 6px;
+      }
+      .step-img:hover {
+        transform: scale(1.15);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      }
+      @media (max-width: 1200px) {
+        .step-img {
+          max-width: 180px;
+        }
+        .steps-flex-row {
+          gap: 16px;
+        }
+      }
+      @media (max-width: 700px) {
+        .steps-flex-row {
+          flex-wrap: wrap;
+          justify-content: flex-start;
+          gap: 12px;
+        }
+        .step-img {
+          max-width: 120px;
+          margin-bottom: 14px;
+        }
+      }
+    </style>
+    <div class="steps-flex-row">
+      <img src="{{ url_for('static', path='images/step1.jpeg') }}" alt="Step 1" class="step-img">
+      <img src="{{ url_for('static', path='images/step2.jpeg') }}" alt="Step 2" class="step-img">
+      <img src="{{ url_for('static', path='images/step3.jpeg') }}" alt="Step 3" class="step-img">
+      <img src="{{ url_for('static', path='images/step4.jpeg') }}" alt="Step 4" class="step-img">
     </div>
+    <!-- END FLEX IMAGE ROW -->
     {% elif step == 'upload' %}
     <p><strong>Name:</strong> {{ guest_name }}<br><strong>Email:</strong> {{ guest_email }}</p>
     <form method="post" enctype="multipart/form-data">
