@@ -411,11 +411,30 @@ def create_registration_email_content(guest_data):
     return html_content
 
 # Routes
+@router.get("/fetch-id")
+async def fetch_guest_id(phone: str):
+    """Fetch guest ID by phone number."""
+    try:
+        guests = guests_db.read_all()
+        guest = next((g for g in guests if g["Phone"] == phone), None)
+        if guest:
+            return JSONResponse({"success": True, "guest_id": guest["ID"]})
+        return JSONResponse(
+            {"success": False, "message": "Wrong mobile number"},
+            status_code=404,
+        )
+    except Exception as e:
+        logger.error(f"Fetch guest ID error: {str(e)}")
+        return JSONResponse(
+            {"success": False, "message": "An error occurred"},
+            status_code=500,
+        )
+
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
     """Guest login page"""
     return templates.TemplateResponse(
-        "guest/login.html", 
+        "guest/login.html",
         {
             "request": request,
             "active_page": "login"
