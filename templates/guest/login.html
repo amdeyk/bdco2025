@@ -57,6 +57,24 @@
         
         <div class="card mt-4 shadow-sm border-0">
             <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-search text-primary me-2"></i> Forgot Guest ID?</h5>
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-5">
+                        <input type="text" class="form-control" id="fetch_phone" placeholder="Enter phone number">
+                    </div>
+                    <div class="col-md-5">
+                        <input type="text" class="form-control" id="fetched_id" placeholder="Guest ID" readonly>
+                    </div>
+                    <div class="col-md-2 d-grid">
+                        <button class="btn btn-outline-primary" id="fetch_id_btn">Fetch ID</button>
+                    </div>
+                </div>
+                <div class="mt-2"><small id="fetch_id_message"></small></div>
+            </div>
+        </div>
+
+        <div class="card mt-4 shadow-sm border-0">
+            <div class="card-body">
                 <h5 class="card-title"><i class="fas fa-info-circle text-primary me-2"></i> Login Instructions</h5>
                 <p class="card-text">To login, please enter your Guest ID and the phone number you provided during registration.</p>
                 <ul class="mb-0">
@@ -86,12 +104,54 @@ document.addEventListener('DOMContentLoaded', function() {
             this.value = this.value.replace(/[^0-9]/g, '').substring(0, 10);
         });
     }
-    
+
+    // Fetch guest ID by phone number
+    const fetchPhoneInput = document.getElementById('fetch_phone');
+    const fetchIdBtn = document.getElementById('fetch_id_btn');
+    const fetchedIdInput = document.getElementById('fetched_id');
+    const fetchIdMessage = document.getElementById('fetch_id_message');
+
+    if (fetchPhoneInput) {
+        fetchPhoneInput.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '').substring(0, 10);
+        });
+    }
+
+    if (fetchIdBtn) {
+        fetchIdBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            fetchIdMessage.textContent = '';
+            fetchIdMessage.className = '';
+            const phone = fetchPhoneInput.value;
+            if (phone.length !== 10) {
+                fetchedIdInput.value = '';
+                fetchIdMessage.textContent = 'Enter a valid 10-digit mobile number';
+                fetchIdMessage.className = 'text-danger';
+                return;
+            }
+            try {
+                const response = await fetch(`/guest/fetch-id?phone=${phone}`);
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    fetchedIdInput.value = data.guest_id;
+                } else {
+                    fetchedIdInput.value = '';
+                    fetchIdMessage.textContent = data.message || 'Wrong mobile number';
+                    fetchIdMessage.className = 'text-danger';
+                }
+            } catch (error) {
+                fetchedIdInput.value = '';
+                fetchIdMessage.textContent = 'Error fetching ID';
+                fetchIdMessage.className = 'text-danger';
+            }
+        });
+    }
+
     // Focus on Guest ID field
     const guestIdInput = document.getElementById('guest_id');
     if (guestIdInput) {
         guestIdInput.focus();
     }
 });
-</script>
-{% endblock %}
+  </script>
+  {% endblock %}
