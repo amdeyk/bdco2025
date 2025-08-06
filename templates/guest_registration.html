@@ -113,21 +113,21 @@
                         
                         <div class="mb-3">
                             <label for="registrationType" class="form-label">Registration Type</label>
-                            <div class="d-flex">
-                                <div class="form-check me-4">
-                                    <input class="form-check-input" type="radio" name="registration_type" id="newRegistration" value="new" checked>
-                                    <label class="form-check-label" for="newRegistration">
-                                        New Registration
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="registration_type" id="existingRegistration" value="existing">
-                                    <label class="form-check-label" for="existingRegistration">
-                                        Activate Existing ID
-                                    </label>
-                                </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="registration_type" id="newRegistration" value="new" checked>
+                                <label class="form-check-label" for="newRegistration">
+                                    New Registration
+                                </label>
+                            </div>
+                            <!-- Highlighted instruction -->
+                            <div 
+                                class="mt-3 p-3 rounded" 
+                                style="background: #e8f0fe; color: #194081; font-weight: 600; border-left: 5px solid #4285f4; font-size: 1.05rem;">
+                                Please Select <b>Delegate</b> or <b>Faculty</b> option to Register for Conference
                             </div>
                         </div>
+
+
                         
                         <div id="existingIdField" class="mb-3" style="display: none;">
                             <label for="existingId" class="form-label">Existing Registration ID</label>
