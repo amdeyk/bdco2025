@@ -528,8 +528,17 @@ def reset_related_databases():
 
         presentations_csv = os.path.join(data_dir, "presentations.csv")
         presentation_headers = [
-            "id", "guest_id", "title", "description", "file_path",
-            "file_type", "upload_date"
+            "id",
+            "guest_id",
+            "title",
+            "description",
+            "file_path",
+            "file_type",
+            "upload_date",
+            "selected_status",
+            "marks_allotted",
+            "remarks_by",
+            "approval_date",
         ]
         create_empty_csv(presentations_csv, presentation_headers)
 

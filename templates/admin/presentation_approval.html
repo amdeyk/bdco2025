@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Presentation Approvals{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="h3 mb-4">Presentation Approval Dashboard</h1>
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in presentations %}
+                <tr>
+                    <td>{{ p.title }}</td>
+                    <td>{{ p.selected_status or 'Pending' }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#approvalModal-{{ p.id }}">
+                            Approve
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% for p in presentations %}
+<div class="modal fade" id="approvalModal-{{ p.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Approve Presentation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/approvals/save" method="post" onsubmit="return confirm('Are you sure you want to save? This action cannot be undone.');">
+                <div class="modal-body">
+                    <input type="hidden" name="presentation_id" value="{{ p.id }}">
+                    <div class="mb-3">
+                        <a href="/static/uploads/presentations/{{ p.file_path }}" class="btn btn-info" download>Download Presentation</a>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <div>
+                            <button type="button" class="btn btn-success me-2" onclick="this.form.status.value='Selected'">Selected</button>
+                            <button type="button" class="btn btn-danger" onclick="this.form.status.value='Not Selected'">Not Selected</button>
+                            <input type="hidden" name="status" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="marks" class="form-label">Marks (0-10)</label>
+                        <input type="number" class="form-control" name="marks" min="0" max="10" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="remarks" class="form-label">Remarks by (Name)</label>
+                        <input type="text" class="form-control" name="remarks" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Approval</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}
