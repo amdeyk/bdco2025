@@ -1236,12 +1236,36 @@ async def submit_abstract(
     if not os.path.exists(PRESENTATIONS_CSV):
         with open(PRESENTATIONS_CSV, mode='w', newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
-            writer.writerow(["id", "guest_id", "title", "description", "file_path", "file_type", "upload_date"])
+            writer.writerow([
+                "id",
+                "guest_id",
+                "title",
+                "description",
+                "file_path",
+                "file_type",
+                "upload_date",
+                "selected_status",
+                "marks_allotted",
+                "remarks_by",
+                "approval_date",
+            ])
 
     with open(PRESENTATIONS_CSV, mode='a', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(
             f,
-            fieldnames=["id", "guest_id", "title", "description", "file_path", "file_type", "upload_date"],
+            fieldnames=[
+                "id",
+                "guest_id",
+                "title",
+                "description",
+                "file_path",
+                "file_type",
+                "upload_date",
+                "selected_status",
+                "marks_allotted",
+                "remarks_by",
+                "approval_date",
+            ],
         )
         writer.writerow(
             {
@@ -1252,6 +1276,10 @@ async def submit_abstract(
                 "file_path": unique_name,
                 "file_type": ext.lstrip("."),
                 "upload_date": datetime.now().isoformat(),
+                "selected_status": "",
+                "marks_allotted": "",
+                "remarks_by": "",
+                "approval_date": "",
             }
         )
 

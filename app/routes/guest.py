@@ -720,10 +720,37 @@ async def upload_presentation(
         if not os.path.exists(PRESENTATIONS_CSV):
             with open(PRESENTATIONS_CSV, mode='w', newline='', encoding='utf-8') as file:
                 writer = csv.writer(file)
-                writer.writerow(["id", "guest_id", "title", "description", "file_path", "file_type", "upload_date"])
-        
+                writer.writerow([
+                    "id",
+                    "guest_id",
+                    "title",
+                    "description",
+                    "file_path",
+                    "file_type",
+                    "upload_date",
+                    "selected_status",
+                    "marks_allotted",
+                    "remarks_by",
+                    "approval_date",
+                ])
+
         with open(PRESENTATIONS_CSV, mode='a', newline='', encoding='utf-8') as file:
-            writer = csv.DictWriter(file, fieldnames=["id", "guest_id", "title", "description", "file_path", "file_type", "upload_date"])
+            writer = csv.DictWriter(
+                file,
+                fieldnames=[
+                    "id",
+                    "guest_id",
+                    "title",
+                    "description",
+                    "file_path",
+                    "file_type",
+                    "upload_date",
+                    "selected_status",
+                    "marks_allotted",
+                    "remarks_by",
+                    "approval_date",
+                ],
+            )
             writer.writerow({
                 "id": str(uuid.uuid4()),
                 "guest_id": guest["ID"],
@@ -731,7 +758,11 @@ async def upload_presentation(
                 "description": description,
                 "file_path": filename,
                 "file_type": file_type,
-                "upload_date": datetime.now().isoformat()
+                "upload_date": datetime.now().isoformat(),
+                "selected_status": "",
+                "marks_allotted": "",
+                "remarks_by": "",
+                "approval_date": "",
             })
         
         return JSONResponse(
