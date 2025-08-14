@@ -11,6 +11,7 @@
                 <tr>
                     <th>Title</th>
                     <th>Status</th>
+                    <th>Remarks</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -19,10 +20,17 @@
                 <tr>
                     <td>{{ p.title }}</td>
                     <td>{{ p.selected_status or 'Pending' }}</td>
+                    <td>{{ p.remarks_by or 'N/A' }}</td>
                     <td>
+                        {% if p.selected_status %}
+                        <button class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#approvalModal-{{ p.id }}">
+                            View
+                        </button>
+                        {% else %}
                         <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#approvalModal-{{ p.id }}">
                             Approve
                         </button>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -45,6 +53,13 @@
                     <div class="mb-3">
                         <a href="/static/uploads/presentations/{{ p.file_path }}" class="btn btn-info" download>Download Presentation</a>
                     </div>
+                    {% if p.selected_status %}
+                    <div class="mb-3">
+                        <p><strong>Status:</strong> {{ p.selected_status }}</p>
+                        <p><strong>Marks:</strong> {{ p.marks_allotted }}</p>
+                        <p><strong>Remarks:</strong> {{ p.remarks_by }}</p>
+                    </div>
+                    {% else %}
                     <div class="mb-3">
                         <label class="form-label">Status</label>
                         <div>
@@ -61,14 +76,33 @@
                         <label for="remarks" class="form-label">Remarks by (Name)</label>
                         <input type="text" class="form-control" name="remarks" required>
                     </div>
+                    {% endif %}
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    {% if not p.selected_status %}
                     <button type="submit" class="btn btn-primary">Save Approval</button>
+                    {% endif %}
                 </div>
             </form>
         </div>
     </div>
 </div>
 {% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (id) {
+        const modal = document.getElementById(`approvalModal-${id}`);
+        if (modal) {
+            const m = new bootstrap.Modal(modal);
+            m.show();
+        }
+    }
+});
+</script>
 {% endblock %}

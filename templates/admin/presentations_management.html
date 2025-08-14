@@ -32,7 +32,10 @@
                         <th>Role</th>
                         <th>Title</th>
                         <th>Uploaded</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
                         <th>File</th>
+                        <th>Approval</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -43,10 +46,13 @@
                         <td>{{ p.guest_role }}</td>
                         <td>{{ p.title }}</td>
                         <td>{{ p.upload_date }}</td>
+                        <td>{{ p.selected_status or 'Pending' }}</td>
+                        <td>{{ p.remarks_by or 'N/A' }}</td>
                         <td><a href="{{ p.file_url }}" class="btn btn-sm btn-primary"><i class="fas fa-download me-1"></i>Download</a></td>
+                        <td><a href="/approvals/dashboard?id={{ p.id }}" class="btn btn-sm btn-outline-primary">Review</a></td>
                     </tr>
                 {% else %}
-                    <tr><td colspan="6" class="text-center">No presentations found.</td></tr>
+                    <tr><td colspan="9" class="text-center">No presentations found.</td></tr>
                 {% endfor %}
                 </tbody>
             </table>

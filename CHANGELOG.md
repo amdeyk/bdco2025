@@ -41,3 +41,4 @@ All notable changes to this project will be documented in this file.
 - Fix abstract submission template's static asset links by using the correct `path` parameter with `url_for` to avoid missing route errors.
 - Provide a mobile number lookup on the guest login page to fetch forgotten IDs instantly.
 - Introduce presentation approval workflow with dedicated approver login and CSV fields for selection status, marks, remarks, and approval date.
+- Lock presentation approvals after first decision and display approval status and remarks on admin and guest views with direct links to the review page.
