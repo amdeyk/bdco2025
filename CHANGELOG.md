@@ -42,3 +42,4 @@ All notable changes to this project will be documented in this file.
 - Provide a mobile number lookup on the guest login page to fetch forgotten IDs instantly.
 - Introduce presentation approval workflow with dedicated approver login and CSV fields for selection status, marks, remarks, and approval date.
 - Lock presentation approvals after first decision and display approval status and remarks on admin and guest views with direct links to the review page.
+- Show KMC Number field in the first step of guest registration for Delegate and Faculty roles.
