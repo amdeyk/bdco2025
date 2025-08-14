@@ -34,6 +34,17 @@
                         <p class="card-text small">
                             <i class="fas fa-calendar-alt me-1"></i> {{ presentation.upload_date }}
                         </p>
+                        <p class="card-text small">
+                            Status:
+                            {% set status = presentation.selected_status or 'Pending' %}
+                            {% if status == 'Selected' %}
+                                <span class="badge bg-success">{{ status }}</span>
+                            {% elif status == 'Not Selected' %}
+                                <span class="badge bg-danger">{{ status }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ status }}</span>
+                            {% endif %}
+                        </p>
                     </div>
                     <div class="card-footer bg-white">
                         <a href="{{ presentation.file_url }}" class="btn btn-sm btn-outline-primary" target="_blank">
