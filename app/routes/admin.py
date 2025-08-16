@@ -1621,6 +1621,56 @@ async def presentations_management(request: Request, admin: Dict = Depends(get_c
             {"request": request, "message": "Error loading presentations", "error_details": str(e) if config.getboolean('DEFAULT', 'Debug', fallback=False) else None}
         )
 
+@router.get("/report/export/presentations")
+async def export_presentations_report(admin: Dict = Depends(get_current_admin)):
+    """Export presentations report as CSV"""
+    try:
+        presentations_csv = os.path.join(os.path.dirname(config.get('DATABASE', 'CSVPath')), 'presentations.csv')
+        presentations = []
+        if os.path.exists(presentations_csv):
+            with open(presentations_csv, 'r', newline='', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                presentations = list(reader)
+
+        guests = guests_db.read_all()
+        guest_map = {g['ID']: g for g in guests}
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+
+        # Write header with user-friendly names
+        writer.writerow([
+            "Presentation ID", "Title", "Presenter Name", "Presenter Role", "Contact",
+            "Submission Date", "Approval Status", "Marks (out of 10)", "Reviewed By", "Approval Date"
+        ])
+
+        # Write data
+        for p in presentations:
+            guest = guest_map.get(p.get('guest_id'))
+            writer.writerow([
+                p.get('id'),
+                p.get('title'),
+                guest.get('Name', 'Unknown') if guest else 'Unknown',
+                guest.get('GuestRole', '') if guest else '',
+                guest.get('Phone', '') if guest else '',
+                p.get('upload_date'),
+                p.get('selected_status', 'Pending'),
+                p.get('marks_allotted', 'N/A'),
+                p.get('remarks_by', 'N/A'),
+                p.get('approval_date', '')
+            ])
+
+        output.seek(0)
+        filename = f"presentations_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        return StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+    except Exception as e:
+        logger.error(f"Error exporting presentations report: {e}")
+        raise HTTPException(status_code=500, detail="Error exporting report")
+
 @router.get("/download_presentation/{file_name}")
 async def download_presentation(admin: Dict = Depends(get_current_admin), file_name: str = FastAPIPath(...)):
     """Download an uploaded presentation file"""
