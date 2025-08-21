@@ -47,3 +47,4 @@ All notable changes to this project will be documented in this file.
 - Add CSV export of presentations with judging details and an Export Report button on the admin presentations page.
 - Track guest availability for day 1, day 2, or both days across registration, admin views, profiles, and reports.
 - Resolve CSV upload failures by standardizing guest fieldnames against the model and enriching validation and error messages for admins.
+- Include journey fields in admin guest CSV uploads by defining a comprehensive master field list to prevent missing-field errors.
