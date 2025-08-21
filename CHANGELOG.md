@@ -44,3 +44,4 @@ All notable changes to this project will be documented in this file.
 - Lock presentation approvals after first decision and display approval status and remarks on admin and guest views with direct links to the review page.
 - Show KMC Number field in the first step of guest registration for Delegate and Faculty roles.
 - Add CSV export of presentations with judging details and an Export Report button on the admin presentations page.
+- Track guest availability for day 1, day 2, or both days across registration, admin views, profiles, and reports.

@@ -492,7 +492,7 @@ def reset_main_database():
             "FoodCouponsDay2", "FoodCouponsDay1Date", "FoodCouponsDay2Date",
             "FoodNotes", "PaymentStatus", "PaymentAmount", "PaymentDate",
             "PaymentMethod", "JourneyDetailsUpdated", "JourneyCompleted",
-            "LastJourneyUpdate", "InwardJourneyDate", "InwardJourneyFrom",
+            "LastJourneyUpdate", "Availability", "InwardJourneyDate", "InwardJourneyFrom",
             "InwardJourneyTo", "InwardJourneyDetails", "InwardPickupRequired",
             "InwardJourneyRemarks", "OutwardJourneyDate", "OutwardJourneyFrom",
             "OutwardJourneyTo", "OutwardJourneyDetails", "OutwardDropRequired",
@@ -903,7 +903,7 @@ async def export_guest_list(
             
             # Write header
             writer.writerow([
-                "ID", "Name", "Email", "Phone", "KMC Number", "Role", "Registration Date",
+                "ID", "Name", "Email", "Phone", "KMC Number", "Role", "Registration Date", "Availability",
                 "Check-in Status", "Kit Status", "Badge Status", "Payment Status", "Amount"
             ])
             
@@ -917,6 +917,7 @@ async def export_guest_list(
                     guest.get("KMCNumber", ""),
                     guest.get("GuestRole", ""),
                     guest.get("RegistrationDate", ""),
+                    guest.get("Availability", "Not Specified"),
                     "Checked In" if guest.get("DailyAttendance") == "True" else "Not Checked In",
                     "Received" if guest.get("KitReceived") == "True" else "Not Received",
                     "Printed" if guest.get("BadgePrinted") == "True" else "Not Printed",
@@ -950,6 +951,7 @@ async def export_guest_list(
                         "KMC Number": guest.get("KMCNumber", ""),
                         "Role": guest.get("GuestRole", ""),
                         "Registration Date": guest.get("RegistrationDate", ""),
+                        "Availability": guest.get("Availability", "Not Specified"),
                         "Check-in Status": "Checked In" if guest.get("DailyAttendance") == "True" else "Not Checked In",
                         "Kit Status": "Received" if guest.get("KitReceived") == "True" else "Not Received",
                         "Badge Status": "Printed" if guest.get("BadgePrinted") == "True" else "Not Printed",
@@ -2844,6 +2846,7 @@ async def update_guest_basic_info(request: Request, admin: Dict = Depends(get_cu
         email = data.get('email')
         phone = data.get('phone')
         kmc_number = data.get('kmc_number')
+        availability = data.get('availability')
         
         guests = guests_db.read_all()
         updated = False
@@ -2854,6 +2857,7 @@ async def update_guest_basic_info(request: Request, admin: Dict = Depends(get_cu
                 guest["Email"] = email
                 guest["Phone"] = phone
                 guest["KMCNumber"] = kmc_number
+                guest["Availability"] = availability
                 updated = True
                 break
                 
@@ -3667,6 +3671,7 @@ def ensure_all_guest_fields():
             # Notes fields
             "GiftNotes": "",
             "FoodNotes": "",
+            "Availability": "Not Specified",
         }
 
         first_guest = guests[0]

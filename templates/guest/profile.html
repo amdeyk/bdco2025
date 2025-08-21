@@ -227,8 +227,15 @@
                             <strong>{{ guest.RegistrationDate }}</strong>
                         </div>
                     </div>
-                    
-                    
+
+
+                    <div class="info-row">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="fas fa-calendar-check me-1"></i>Availability:</small>
+                            <strong>{{ guest.Availability or 'Not specified' }}</strong>
+                        </div>
+                    </div>
+
                     <div class="info-row">
                         <div class="d-flex justify-content-between align-items-center">
                             <small class="text-muted"><i class="fas fa-user-check me-1"></i>Attendance:</small>
