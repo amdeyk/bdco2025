@@ -978,7 +978,8 @@ async def register_guest(
     guest_role: str = Form(...),
     registration_type: str = Form(...),
     existing_id: str = Form(None),
-    kmc_number: str = Form("")
+    kmc_number: str = Form(""),
+    availability: str = Form(...)
 ):
     """Process guest registration"""
     try:
@@ -1033,6 +1034,7 @@ async def register_guest(
             "Email": email or "",
             "GuestRole": guest_role,
             "KMCNumber": kmc_number,
+            "Availability": availability,
             "RegistrationDate": datetime.now().strftime("%Y-%m-%d"),
             "DailyAttendance": "False"
         }

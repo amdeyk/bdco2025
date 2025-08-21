@@ -56,6 +56,7 @@ class Guest:
         self.food_coupons_day2_date = ""
         self.gift_notes = ""
         self.food_notes = ""
+        self.availability = "Not Specified"
         
     @classmethod
     def from_dict(cls, data: Dict) -> 'Guest':
@@ -113,7 +114,8 @@ class Guest:
             "GiftsGiven": self.gifts_given,
             "GiftGivenDate": self.gift_given_date,
             "GiftNotes": self.gift_notes,
-            "FoodNotes": self.food_notes
+            "FoodNotes": self.food_notes,
+            "Availability": self.availability
         }
         
     def validate(self) -> List[str]:

@@ -559,7 +559,12 @@
                                         <label class="form-label fw-bold text-muted">Registration Date</label>
                                         <div class="editable-field">{{ guest.RegistrationDate or 'Not available' }}</div>
                                     </div>
-                                    
+
+                                    <div class="mb-3">
+                                        <label class="form-label fw-bold text-muted">Availability</label>
+                                        <div class="editable-field" id="displayAvailability">{{ guest.Availability or 'Not specified' }}</div>
+                                    </div>
+
                                     {# Batch field removed as it is irrelevant #}
                                     
                                     
@@ -599,6 +604,17 @@
                                         <div class="mb-3">
                                             <label class="form-label">KMC Number</label>
                                             <input type="text" class="form-control" id="editKMCNumber" value="{{ guest.KMCNumber or '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Availability</label>
+                                            <select class="form-select" id="editAvailability">
+                                                <option value="Not Specified" {% if guest.Availability == 'Not Specified' %}selected{% endif %}>Not Specified</option>
+                                                <option value="Day - 1 Available" {% if guest.Availability == 'Day - 1 Available' %}selected{% endif %}>Day - 1 Available</option>
+                                                <option value="Day - 2 Available" {% if guest.Availability == 'Day - 2 Available' %}selected{% endif %}>Day - 2 Available</option>
+                                                <option value="Both Days Available" {% if guest.Availability == 'Both Days Available' %}selected{% endif %}>Both Days Available</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -1659,6 +1675,7 @@
             const email = document.getElementById('editEmail').value;
             const phone = document.getElementById('editPhone').value;
             const kmcNumber = document.getElementById('editKMCNumber').value;
+            const availability = document.getElementById('editAvailability').value;
             
             showLoading('basicEdit');
             
@@ -1672,7 +1689,8 @@
                     name: name,
                     email: email,
                     phone: phone,
-                    kmc_number: kmcNumber
+                    kmc_number: kmcNumber,
+                    availability: availability
                 })
             })
             .then(response => response.json())
@@ -1684,6 +1702,7 @@
                     document.getElementById('displayEmail').textContent = email || 'Not provided';
                     document.getElementById('displayPhone').textContent = phone || 'Not provided';
                     document.getElementById('displayKMC').textContent = kmcNumber || 'Not provided';
+                    document.getElementById('displayAvailability').textContent = availability || 'Not specified';
                     
                     showNotification(data.message || 'Basic information updated successfully', 'success');
                     toggleBasicEdit();
