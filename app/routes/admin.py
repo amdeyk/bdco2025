@@ -3040,24 +3040,40 @@ async def handle_guest_upload(
         new_guests, errors = await process_guest_csv(temp_path)
 
         if errors:
-            # If there are any errors, do not import any data. Return all errors.
             return JSONResponse(status_code=422, content={"success": False, "errors": errors})
 
         # --- START FIX ---
-        # Append new guests to the database
         existing_guests = guests_db.read_all()
         all_guests = existing_guests + new_guests
 
-        # Define fieldnames from the definitive Guest model to ensure all columns are present.
-        master_fieldnames = list(Guest().to_dict().keys())
+        # Define a complete and canonical list of ALL possible headers to prevent errors.
+        # This list includes all fields from the Guest model AND the journey sync service.
+        master_fieldnames = [
+            "ID", "Name", "Phone", "Email", "GuestRole", "RegistrationDate",
+            "DailyAttendance", "IsActive", "KitReceived", "BadgePrinted", "BadgeGiven",
+            "BadgePrintedDate", "BadgeGivenDate", "KitReceivedDate", "CheckInTime",
+            "PaymentStatus", "PaymentAmount", "PaymentDate", "PaymentMethod",
+            "Organization", "KMCNumber", "Notes", "JourneyDetailsUpdated", "JourneyCompleted",
+            "FoodCouponsDay1", "FoodCouponsDay2", "FoodCouponsDay1Date", "FoodCouponsDay2Date",
+            "GiftsGiven", "GiftGivenDate", "GiftNotes", "FoodNotes", "Availability",
+            "LastJourneyUpdate", "InwardJourneyDate", "InwardJourneyFrom", "InwardJourneyTo",
+            "InwardJourneyDetails", "InwardPickupRequired", "InwardJourneyRemarks",
+            "OutwardJourneyDate", "OutwardJourneyFrom", "OutwardJourneyTo",
+            "OutwardJourneyDetails", "OutwardDropRequired", "OutwardJourneyRemarks",
+            "Batch", "CompanyName"
+        ]
 
-        # Ensure all guest dicts have all keys to prevent errors.
+        # Ensure every guest dictionary has all keys from the master list.
+        # This prevents the "dict contains fields not in fieldnames" error.
+        default_guest_dict = {field: "" for field in master_fieldnames}
+
+        processed_guests = []
         for guest_dict in all_guests:
-            for field in master_fieldnames:
-                if field not in guest_dict:
-                    guest_dict[field] = ""
+            full_guest_record = default_guest_dict.copy()
+            full_guest_record.update(guest_dict)
+            processed_guests.append(full_guest_record)
 
-        guests_db.write_all(all_guests, fieldnames=master_fieldnames)
+        guests_db.write_all(processed_guests, fieldnames=master_fieldnames)
         # --- END FIX ---
 
         log_activity("Admin", f"Admin {admin['user_id']} uploaded {len(new_guests)} new guests from CSV.")
