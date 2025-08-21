@@ -3011,6 +3011,123 @@ async def admin_send_message(
         logging.error(f"Error sending message to guest: {e}")
         raise HTTPException(status_code=500, detail="Error sending message")
 
+# START: New CSV Upload Routes
+
+@router.get("/upload_guests", response_class=HTMLResponse)
+async def upload_guests_page(request: Request, admin: Dict = Depends(get_current_admin)):
+    """Render the page for uploading a guest CSV file."""
+    return templates.TemplateResponse("admin/upload_guests.html", {"request": request, "admin": admin})
+
+@router.post("/upload_guests")
+async def handle_guest_upload(
+    request: Request,
+    admin: Dict = Depends(get_current_admin),
+    file: UploadFile = File(...)
+):
+    """Handle the upload and processing of a guest CSV file with robust validation."""
+    if not file.filename.endswith('.csv'):
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "errors": [{"row": "N/A", "field": "File", "value": file.filename, "error": "Invalid file type. Only CSV is supported."}]}
+        )
+
+    temp_path = f"temp_{datetime.now().timestamp()}.csv"
+    try:
+        with open(temp_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        new_guests, errors = await process_guest_csv(temp_path)
+
+        if errors:
+            return JSONResponse(status_code=422, content={"success": False, "errors": errors})
+
+        existing_guests = guests_db.read_all()
+        fieldnames = existing_guests[0].keys() if existing_guests else new_guests[0].keys()
+        all_guests = existing_guests + new_guests
+
+        guests_db.write_all(all_guests, fieldnames=list(fieldnames))
+
+        log_activity("Admin", f"Admin {admin['user_id']} uploaded {len(new_guests)} new guests from CSV.")
+
+        return JSONResponse(
+            status_code=200,
+            content={"success": True, "message": f"Successfully uploaded and added {len(new_guests)} new guests."}
+        )
+    finally:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+
+async def process_guest_csv(file_path: str):
+    """Read, validate, and normalize data from an uploaded guest CSV."""
+    from app.models.guest import Guest
+    from app.utils.helpers import generate_unique_id
+
+    new_guests = []
+    errors = []
+
+    existing_guests = guests_db.read_all()
+    existing_phones = {g['Phone'] for g in existing_guests if g.get('Phone')}
+    existing_ids = {g['ID'] for g in existing_guests}
+    phones_in_current_file = set()
+
+    with open(file_path, mode='r', newline='', encoding='utf-8-sig') as file:
+        reader = csv.DictReader(file)
+
+        for index, row in enumerate(reader, start=2):
+            guest_model = Guest()
+            row_errors = []
+
+            name = row.get("Name", "").strip()
+            phone = re.sub(r'\D', '', row.get("Phone", "").strip())
+            role = row.get("GuestRole", "").strip()
+            email = row.get("Email", "").strip()
+
+            if not name:
+                row_errors.append({"field": "Name", "value": "", "error": "Name is a required field."})
+            if not phone:
+                row_errors.append({"field": "Phone", "value": row.get("Phone"), "error": "Phone is a required field."})
+            if not role:
+                row_errors.append({"field": "GuestRole", "value": "", "error": "GuestRole is a required field."})
+
+            if phone and len(phone) != 10:
+                row_errors.append({"field": "Phone", "value": phone, "error": "Phone number must be 10 digits."})
+            if phone in existing_phones:
+                row_errors.append({"field": "Phone", "value": phone, "error": "This phone number is already registered in the database."})
+            if phone in phones_in_current_file:
+                row_errors.append({"field": "Phone", "value": phone, "error": "This phone number is duplicated within the uploaded file."})
+
+            if email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+                row_errors.append({"field": "Email", "value": email, "error": "Invalid email format."})
+
+            if role and role not in ["Delegate", "Faculty", "Sponsor", "Staff", "Guest"]:
+                row_errors.append({"field": "GuestRole", "value": role, "error": "Invalid role. Must be one of Delegate, Faculty, Sponsor, Staff, Guest."})
+
+            if row_errors:
+                for err in row_errors:
+                    err['row'] = index
+                errors.extend(row_errors)
+                continue
+
+            guest_model.name = name
+            guest_model.phone = phone
+            guest_model.guest_role = role
+            guest_model.email = email
+            guest_model.kmc_number = row.get("KMCNumber", guest_model.kmc_number).strip()
+            guest_model.availability = row.get("Availability", guest_model.availability).strip()
+            guest_model.organization = row.get("Organization", guest_model.organization).strip()
+
+            guest_model.id = generate_unique_id(list(existing_ids), 4)
+
+            new_guests.append(guest_model.to_dict())
+
+            existing_phones.add(guest_model.phone)
+            phones_in_current_file.add(guest_model.phone)
+            existing_ids.add(guest_model.id)
+
+    return new_guests, errors
+
+# END: New CSV Upload Routes
+
 # HELPER FUNCTIONS
 
 
