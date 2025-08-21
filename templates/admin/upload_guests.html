@@ -30,8 +30,12 @@
                 </form>
 
                 <div id="errorContainer" class="mt-4" style="display: none;">
-                    <h5 class="text-danger">Validation Errors</h5>
-                    <p>The file could not be uploaded. Please correct the following errors and try again:</p>
+                    <div class="alert alert-danger">
+                        <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Upload Failed</h5>
+                        <p>The CSV file could not be imported because it contains errors. Please correct the issues listed in the table below and re-upload the file. No data has been saved.</p>
+                        <hr>
+                        <p class="mb-0"><strong>Tip:</strong> Common errors include missing required data, duplicate phone numbers, or incorrect column names.</p>
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-bordered table-sm">
                             <thead class="table-light">

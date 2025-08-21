@@ -46,3 +46,4 @@ All notable changes to this project will be documented in this file.
 - Show KMC Number field in the first step of guest registration for Delegate and Faculty roles.
 - Add CSV export of presentations with judging details and an Export Report button on the admin presentations page.
 - Track guest availability for day 1, day 2, or both days across registration, admin views, profiles, and reports.
+- Resolve CSV upload failures by standardizing guest fieldnames against the model and enriching validation and error messages for admins.

@@ -28,6 +28,7 @@ import io
 from PIL import Image, ImageDraw
 import qrcode
 import pandas as pd
+from app.models.guest import Guest
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
@@ -3039,13 +3040,25 @@ async def handle_guest_upload(
         new_guests, errors = await process_guest_csv(temp_path)
 
         if errors:
+            # If there are any errors, do not import any data. Return all errors.
             return JSONResponse(status_code=422, content={"success": False, "errors": errors})
 
+        # --- START FIX ---
+        # Append new guests to the database
         existing_guests = guests_db.read_all()
-        fieldnames = existing_guests[0].keys() if existing_guests else new_guests[0].keys()
         all_guests = existing_guests + new_guests
 
-        guests_db.write_all(all_guests, fieldnames=list(fieldnames))
+        # Define fieldnames from the definitive Guest model to ensure all columns are present.
+        master_fieldnames = list(Guest().to_dict().keys())
+
+        # Ensure all guest dicts have all keys to prevent errors.
+        for guest_dict in all_guests:
+            for field in master_fieldnames:
+                if field not in guest_dict:
+                    guest_dict[field] = ""
+
+        guests_db.write_all(all_guests, fieldnames=master_fieldnames)
+        # --- END FIX ---
 
         log_activity("Admin", f"Admin {admin['user_id']} uploaded {len(new_guests)} new guests from CSV.")
 
@@ -3058,9 +3071,13 @@ async def handle_guest_upload(
             os.remove(temp_path)
 
 async def process_guest_csv(file_path: str):
-    """Read, validate, and normalize data from an uploaded guest CSV."""
-    from app.models.guest import Guest
+    """
+    Read, validate, and normalize data from an uploaded guest CSV with enhanced, intuitive error reporting.
+    """
     from app.utils.helpers import generate_unique_id
+    import logging
+
+    logger = logging.getLogger(__name__)
 
     new_guests = []
     errors = []
@@ -3070,59 +3087,74 @@ async def process_guest_csv(file_path: str):
     existing_ids = {g['ID'] for g in existing_guests}
     phones_in_current_file = set()
 
-    with open(file_path, mode='r', newline='', encoding='utf-8-sig') as file:
-        reader = csv.DictReader(file)
+    try:
+        with open(file_path, mode='r', newline='', encoding='utf-8-sig') as file:
+            reader = csv.DictReader(file)
 
-        for index, row in enumerate(reader, start=2):
-            guest_model = Guest()
-            row_errors = []
+            # --- START: Header Validation ---
+            csv_headers = reader.fieldnames
+            model_headers = list(Guest().to_dict().keys())
 
-            name = row.get("Name", "").strip()
-            phone = re.sub(r'\D', '', row.get("Phone", "").strip())
-            role = row.get("GuestRole", "").strip()
-            email = row.get("Email", "").strip()
+            # Check for missing required headers in the CSV
+            required_headers = ["Name", "Phone", "GuestRole"]
+            missing_headers = [h for h in required_headers if h not in csv_headers]
+            if missing_headers:
+                error_detail = f"The CSV file is missing the following required columns: {', '.join(missing_headers)}."
+                logger.error(error_detail)
+                errors.append({"row": 1, "field": "File Headers", "value": "N/A", "error": error_detail})
+                return [], errors
+            # --- END: Header Validation ---
 
-            if not name:
-                row_errors.append({"field": "Name", "value": "", "error": "Name is a required field."})
-            if not phone:
-                row_errors.append({"field": "Phone", "value": row.get("Phone"), "error": "Phone is a required field."})
-            if not role:
-                row_errors.append({"field": "GuestRole", "value": "", "error": "GuestRole is a required field."})
+            for index, row in enumerate(reader, start=2):
+                guest_model = Guest()
+                row_errors = []
 
-            if phone and len(phone) != 10:
-                row_errors.append({"field": "Phone", "value": phone, "error": "Phone number must be 10 digits."})
-            if phone in existing_phones:
-                row_errors.append({"field": "Phone", "value": phone, "error": "This phone number is already registered in the database."})
-            if phone in phones_in_current_file:
-                row_errors.append({"field": "Phone", "value": phone, "error": "This phone number is duplicated within the uploaded file."})
+                name = row.get("Name", "").strip()
+                phone = re.sub(r'\D', '', row.get("Phone", "").strip())
+                role = row.get("GuestRole", "").strip()
 
-            if email and not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-                row_errors.append({"field": "Email", "value": email, "error": "Invalid email format."})
+                if not name:
+                    row_errors.append({"field": "Name", "value": name, "error": "Name cannot be empty."})
+                if not phone:
+                    row_errors.append({"field": "Phone", "value": row.get("Phone"), "error": "Phone number is required."})
+                if len(phone) != 10:
+                    row_errors.append({"field": "Phone", "value": phone, "error": "Phone number must be exactly 10 digits."})
+                if phone in existing_phones:
+                    row_errors.append({"field": "Phone", "value": phone, "error": "This phone number is already in the database."})
+                if phone in phones_in_current_file:
+                    row_errors.append({"field": "Phone", "value": phone, "error": "This phone number is a duplicate of another row in this file."})
 
-            if role and role not in ["Delegate", "Faculty", "Sponsor", "Staff", "Guest"]:
-                row_errors.append({"field": "GuestRole", "value": role, "error": "Invalid role. Must be one of Delegate, Faculty, Sponsor, Staff, Guest."})
+                if not role:
+                    row_errors.append({"field": "GuestRole", "value": role, "error": "GuestRole is required."})
+                elif role not in ["Delegate", "Faculty", "Sponsor", "Staff", "Guest"]:
+                    row_errors.append({"field": "GuestRole", "value": role, "error": "Invalid role specified."})
 
-            if row_errors:
-                for err in row_errors:
-                    err['row'] = index
-                errors.extend(row_errors)
-                continue
+                if row_errors:
+                    for err in row_errors:
+                        err['row'] = index
+                        logger.warning(f"CSV Upload Validation Error - Row {index}: Field='{err['field']}', Value='{err['value']}', Error='{err['error']}'")
+                    errors.extend(row_errors)
+                    continue
 
-            guest_model.name = name
-            guest_model.phone = phone
-            guest_model.guest_role = role
-            guest_model.email = email
-            guest_model.kmc_number = row.get("KMCNumber", guest_model.kmc_number).strip()
-            guest_model.availability = row.get("Availability", guest_model.availability).strip()
-            guest_model.organization = row.get("Organization", guest_model.organization).strip()
+                # Populate guest object from the row, using all possible fields from the model
+                for field in model_headers:
+                    if field in row:
+                        setattr(guest_model, field.lower(), row[field].strip())
 
-            guest_model.id = generate_unique_id(list(existing_ids), 4)
+                # Set core validated fields
+                guest_model.name = name
+                guest_model.phone = phone
+                guest_model.guest_role = role
+                guest_model.id = generate_unique_id(list(existing_ids), 4)
 
-            new_guests.append(guest_model.to_dict())
+                new_guests.append(guest_model.to_dict())
+                phones_in_current_file.add(guest_model.phone)
+                existing_ids.add(guest_model.id)
 
-            existing_phones.add(guest_model.phone)
-            phones_in_current_file.add(guest_model.phone)
-            existing_ids.add(guest_model.id)
+    except Exception as e:
+        error_message = f"An unexpected error occurred while processing the CSV file: {str(e)}"
+        logger.error(error_message, exc_info=True)
+        errors.append({"row": "N/A", "field": "File Processing", "value": "N/A", "error": "The file could not be read. Please ensure it is a valid, UTF-8 encoded CSV."})
 
     return new_guests, errors
 
