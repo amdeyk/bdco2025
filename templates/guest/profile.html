@@ -579,12 +579,13 @@
                         </div>
                         <div class="card-body">
                             <!-- Display existing journey details if any -->
-                            {% if inward_journey.date or outward_journey.date %}
+                            {% if inward_journey.date or outward_journey.date or day1_transport.pickup_location or day1_transport.drop_location or day2_transport.pickup_location or day2_transport.drop_location %}
                             <div class="mb-4">
                                 <h6 class="fw-bold mb-3 text-success">
                                     <i class="fas fa-check-circle me-1"></i>Your Journey Details
                                 </h6>
-                                <div class="row">
+                                <h6 class="fw-bold text-primary">Air Travel</h6>
+                        <div class="row">
                                     {% if inward_journey.date %}
                                     <div class="col-md-6">
                                         <div class="journey-card">
@@ -616,6 +617,25 @@
                                         </div>
                                     </div>
                                     {% endif %}
+                                </div>
+
+                                <hr class="my-4">
+                                <h6 class="fw-bold text-primary">Ground Transport</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="journey-card">
+                                            <h6 class="text-success mb-2">Day 1</h6>
+                                            <p><strong>Pickup:</strong> {{ day1_transport.pickup_location or 'Not set' }} at {{ day1_transport.pickup_time or 'N/A' }}</p>
+                                            <p><strong>Drop-off:</strong> {{ day1_transport.drop_location or 'Not set' }} at {{ day1_transport.drop_time or 'N/A' }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="journey-card">
+                                            <h6 class="text-danger mb-2">Day 2</h6>
+                                            <p><strong>Pickup:</strong> {{ day2_transport.pickup_location or 'Not set' }} at {{ day2_transport.pickup_time or 'N/A' }}</p>
+                                            <p><strong>Drop-off:</strong> {{ day2_transport.drop_location or 'Not set' }} at {{ day2_transport.drop_time or 'N/A' }}</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             {% endif %}
@@ -690,7 +710,61 @@
                                         </div>
                                     </div>
                                 </div>
-                                
+                                <hr class="my-4">
+                                <h6 class="fw-bold mb-3">Ground Transport</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="journey-card">
+                                            <h6 class="mb-2 text-success">Day 1</h6>
+                                            <div class="compact-input">
+                                                <label for="day1_pickup_location" class="form-label">Pickup Location</label>
+                                                <input type="text" class="form-control" id="day1_pickup_location" name="day1_pickup_location" value="{{ day1_transport.pickup_location or '' }}" placeholder="e.g., Airport, Hotel">
+                                                <small class="form-text text-muted">Where you'll be picked up on Day 1</small>
+                                            </div>
+                                            <div class="compact-input">
+                                                <label for="day1_pickup_time" class="form-label">Pickup Time</label>
+                                                <input type="text" class="form-control" id="day1_pickup_time" name="day1_pickup_time" value="{{ day1_transport.pickup_time or '' }}" placeholder="9:00 AM">
+                                                <small class="form-text text-muted">Time of pickup on Day 1</small>
+                                            </div>
+                                            <div class="compact-input">
+                                                <label for="day1_drop_location" class="form-label">Drop-off Location</label>
+                                                <input type="text" class="form-control" id="day1_drop_location" name="day1_drop_location" value="{{ day1_transport.drop_location or '' }}" placeholder="e.g., Hotel">
+                                                <small class="form-text text-muted">Where you'll be dropped after Day 1</small>
+                                            </div>
+                                            <div class="compact-input">
+                                                <label for="day1_drop_time" class="form-label">Drop-off Time</label>
+                                                <input type="text" class="form-control" id="day1_drop_time" name="day1_drop_time" value="{{ day1_transport.drop_time or '' }}" placeholder="6:00 PM">
+                                                <small class="form-text text-muted">Time of drop-off on Day 1</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="journey-card">
+                                            <h6 class="mb-2 text-danger">Day 2</h6>
+                                            <div class="compact-input">
+                                                <label for="day2_pickup_location" class="form-label">Pickup Location</label>
+                                                <input type="text" class="form-control" id="day2_pickup_location" name="day2_pickup_location" value="{{ day2_transport.pickup_location or '' }}" placeholder="e.g., Hotel">
+                                                <small class="form-text text-muted">Where you'll be picked up on Day 2</small>
+                                            </div>
+                                            <div class="compact-input">
+                                                <label for="day2_pickup_time" class="form-label">Pickup Time</label>
+                                                <input type="text" class="form-control" id="day2_pickup_time" name="day2_pickup_time" value="{{ day2_transport.pickup_time or '' }}" placeholder="9:00 AM">
+                                                <small class="form-text text-muted">Time of pickup on Day 2</small>
+                                            </div>
+                                            <div class="compact-input">
+                                                <label for="day2_drop_location" class="form-label">Drop-off Location</label>
+                                                <input type="text" class="form-control" id="day2_drop_location" name="day2_drop_location" value="{{ day2_transport.drop_location or '' }}" placeholder="e.g., Airport">
+                                                <small class="form-text text-muted">Where you'll be dropped after Day 2</small>
+                                            </div>
+                                            <div class="compact-input">
+                                                <label for="day2_drop_time" class="form-label">Drop-off Time</label>
+                                                <input type="text" class="form-control" id="day2_drop_time" name="day2_drop_time" value="{{ day2_transport.drop_time or '' }}" placeholder="6:00 PM">
+                                                <small class="form-text text-muted">Time of drop-off on Day 2</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="text-center mt-3">
                                     <button type="submit" class="btn btn-primary" id="saveJourneyBtn">
                                         <i class="fas fa-save me-2"></i>Save Journey Details

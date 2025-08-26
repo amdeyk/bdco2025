@@ -553,6 +553,8 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
         # Prepare journey data for template
         inward_journey = {}
         outward_journey = {}
+        day1_transport = {}
+        day2_transport = {}
 
         if journey_data:
             inward_journey = {
@@ -567,6 +569,20 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
                 "origin": journey_data.get("outward_origin"),
                 "destination": journey_data.get("outward_destination"),
                 "remarks": journey_data.get("outward_remarks"),
+            }
+
+            day1_transport = {
+                "pickup_location": journey_data.get("day1_pickup_location"),
+                "pickup_time": journey_data.get("day1_pickup_time"),
+                "drop_location": journey_data.get("day1_drop_location"),
+                "drop_time": journey_data.get("day1_drop_time"),
+            }
+
+            day2_transport = {
+                "pickup_location": journey_data.get("day2_pickup_location"),
+                "pickup_time": journey_data.get("day2_pickup_time"),
+                "drop_location": journey_data.get("day2_drop_location"),
+                "drop_time": journey_data.get("day2_drop_time"),
             }
         
         # Check for photo
@@ -583,6 +599,8 @@ async def profile_page(request: Request, guest: Dict = Depends(get_current_guest
                 "guest_messages": guest_messages,
                 "inward_journey": inward_journey,
                 "outward_journey": outward_journey,
+                "day1_transport": day1_transport,
+                "day2_transport": day2_transport,
                 "user_role": "faculty" if guest["is_faculty"] else "guest",
                 "active_page": "profile"
             }
@@ -786,7 +804,15 @@ async def update_journey(
     outward_date: Optional[str] = Form(None),
     outward_origin: Optional[str] = Form(None),
     outward_destination: Optional[str] = Form(None),
-    outward_remarks: Optional[str] = Form(None)
+    outward_remarks: Optional[str] = Form(None),
+    day1_pickup_location: Optional[str] = Form(None),
+    day1_pickup_time: Optional[str] = Form(None),
+    day1_drop_location: Optional[str] = Form(None),
+    day1_drop_time: Optional[str] = Form(None),
+    day2_pickup_location: Optional[str] = Form(None),
+    day2_pickup_time: Optional[str] = Form(None),
+    day2_drop_location: Optional[str] = Form(None),
+    day2_drop_time: Optional[str] = Form(None)
 ):
     """Update journey details - synchronized version"""
     try:
@@ -801,6 +827,14 @@ async def update_journey(
             "outward_origin": outward_origin or "",
             "outward_destination": outward_destination or "",
             "outward_remarks": outward_remarks or "",
+            "day1_pickup_location": day1_pickup_location or "",
+            "day1_pickup_time": day1_pickup_time or "",
+            "day1_drop_location": day1_drop_location or "",
+            "day1_drop_time": day1_drop_time or "",
+            "day2_pickup_location": day2_pickup_location or "",
+            "day2_pickup_time": day2_pickup_time or "",
+            "day2_drop_location": day2_drop_location or "",
+            "day2_drop_time": day2_drop_time or "",
         }
 
         success = journey_service.update_journey_from_guest(guest["ID"], journey_data)
