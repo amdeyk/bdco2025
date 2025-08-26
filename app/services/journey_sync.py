@@ -44,6 +44,14 @@ class JourneyDataService:
                 "drop_location",
                 "drop_confirmed",
                 "updated_at",
+                "day1_pickup_location",
+                "day1_pickup_time",
+                "day1_drop_location",
+                "day1_drop_time",
+                "day2_pickup_location",
+                "day2_pickup_time",
+                "day2_drop_location",
+                "day2_drop_time",
             ]
 
             with open(self.journey_csv_path, "w", newline="", encoding="utf-8") as f:
@@ -118,6 +126,14 @@ class JourneyDataService:
             "drop_location",
             "drop_confirmed",
             "updated_at",
+            "day1_pickup_location",
+            "day1_pickup_time",
+            "day1_drop_location",
+            "day1_drop_time",
+            "day2_pickup_location",
+            "day2_pickup_time",
+            "day2_drop_location",
+            "day2_drop_time",
         ]
 
         if os.path.exists(self.journey_csv_path):
@@ -156,6 +172,14 @@ class JourneyDataService:
             "OutwardJourneyDetails": journey_data.get("outward_transport_details", ""),
             "OutwardJourneyRemarks": journey_data.get("outward_remarks", ""),
             "OutwardDropRequired": str(journey_data.get("drop_required", False)),
+            "Day1PickupLocation": journey_data.get("day1_pickup_location", ""),
+            "Day1PickupTime": journey_data.get("day1_pickup_time", ""),
+            "Day1DropLocation": journey_data.get("day1_drop_location", ""),
+            "Day1DropTime": journey_data.get("day1_drop_time", ""),
+            "Day2PickupLocation": journey_data.get("day2_pickup_location", ""),
+            "Day2PickupTime": journey_data.get("day2_pickup_time", ""),
+            "Day2DropLocation": journey_data.get("day2_drop_location", ""),
+            "Day2DropTime": journey_data.get("day2_drop_time", ""),
             "JourneyDetailsUpdated": "True",
             "LastJourneyUpdate": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
@@ -184,6 +208,14 @@ class JourneyDataService:
                     "OutwardJourneyDetails",
                     "OutwardJourneyRemarks",
                     "OutwardDropRequired",
+                    "Day1PickupLocation",
+                    "Day1PickupTime",
+                    "Day1DropLocation",
+                    "Day1DropTime",
+                    "Day2PickupLocation",
+                    "Day2PickupTime",
+                    "Day2DropLocation",
+                    "Day2DropTime",
                     "JourneyDetailsUpdated",
                     "LastJourneyUpdate",
                 ]
@@ -248,6 +280,14 @@ class JourneyDataService:
             "outward_transport_details": admin_data.get("outward_details", ""),
             "outward_remarks": admin_data.get("outward_remarks", ""),
             "drop_required": admin_data.get("outward_drop", False),
+            "day1_pickup_location": admin_data.get("day1_pickup_location", ""),
+            "day1_pickup_time": admin_data.get("day1_pickup_time", ""),
+            "day1_drop_location": admin_data.get("day1_drop_location", ""),
+            "day1_drop_time": admin_data.get("day1_drop_time", ""),
+            "day2_pickup_location": admin_data.get("day2_pickup_location", ""),
+            "day2_pickup_time": admin_data.get("day2_pickup_time", ""),
+            "day2_drop_location": admin_data.get("day2_drop_location", ""),
+            "day2_drop_time": admin_data.get("day2_drop_time", ""),
         }
 
     def _convert_guests_to_journey_format(self, guests_data: Dict) -> Dict:
@@ -265,6 +305,14 @@ class JourneyDataService:
             "outward_transport_details": guests_data.get("OutwardJourneyDetails", ""),
             "outward_remarks": guests_data.get("OutwardJourneyRemarks", ""),
             "drop_required": guests_data.get("OutwardDropRequired", "False") == "True",
+            "day1_pickup_location": guests_data.get("Day1PickupLocation", ""),
+            "day1_pickup_time": guests_data.get("Day1PickupTime", ""),
+            "day1_drop_location": guests_data.get("Day1DropLocation", ""),
+            "day1_drop_time": guests_data.get("Day1DropTime", ""),
+            "day2_pickup_location": guests_data.get("Day2PickupLocation", ""),
+            "day2_pickup_time": guests_data.get("Day2PickupTime", ""),
+            "day2_drop_location": guests_data.get("Day2DropLocation", ""),
+            "day2_drop_time": guests_data.get("Day2DropTime", ""),
             "updated_at": guests_data.get("LastJourneyUpdate", ""),
         }
 

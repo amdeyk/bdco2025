@@ -35,7 +35,17 @@ class Journey:
         self.drop_required = False
         self.drop_location = ""
         self.drop_confirmed = False
-        
+
+        # Ground transport details
+        self.day1_pickup_location = ""
+        self.day1_pickup_time = ""
+        self.day1_drop_location = ""
+        self.day1_drop_time = ""
+        self.day2_pickup_location = ""
+        self.day2_pickup_time = ""
+        self.day2_drop_location = ""
+        self.day2_drop_time = ""
+
         self.updated_at = datetime.now().isoformat()
         
     @classmethod
@@ -74,7 +84,15 @@ class Journey:
             "drop_required": str(self.drop_required),
             "drop_location": self.drop_location,
             "drop_confirmed": str(self.drop_confirmed),
-            
+            "day1_pickup_location": self.day1_pickup_location,
+            "day1_pickup_time": self.day1_pickup_time,
+            "day1_drop_location": self.day1_drop_location,
+            "day1_drop_time": self.day1_drop_time,
+            "day2_pickup_location": self.day2_pickup_location,
+            "day2_pickup_time": self.day2_pickup_time,
+            "day2_drop_location": self.day2_drop_location,
+            "day2_drop_time": self.day2_drop_time,
+
             "updated_at": self.updated_at
         }
         
