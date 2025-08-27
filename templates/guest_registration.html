@@ -404,6 +404,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const delegateFields = document.getElementById('delegate-fields');
     const facultyFields = document.getElementById('faculty-fields');
     const sponsorFields = document.getElementById('sponsor-fields');
+    const baseFields = ['name', 'phone', 'email'];
+    const availabilityInputs = document.querySelectorAll('input[name="availability"]');
 
     if (guestRoleSelect) {
         guestRoleSelect.addEventListener('change', function() {
@@ -411,6 +413,22 @@ document.addEventListener('DOMContentLoaded', function() {
             delegateFields.style.display = 'none';
             facultyFields.style.display = 'none';
             sponsorFields.style.display = 'none';
+
+            // Toggle base field requirements based on role
+            const isDelegateOrFaculty = this.value === 'Delegate' || this.value === 'Faculty';
+            baseFields.forEach(id => {
+                const field = document.getElementById(id);
+                if (field) field.required = isDelegateOrFaculty;
+            });
+            availabilityInputs.forEach(input => input.required = isDelegateOrFaculty);
+
+            // Reset role-specific requirements
+            const orgField = document.getElementById('organization');
+            if (orgField) orgField.required = false;
+            ['designation', 'institution', 'specialty'].forEach(id => {
+                const field = document.getElementById(id);
+                if (field) field.required = false;
+            });
 
             // Also hide the KMC field initially
             const kmcField = document.getElementById('kmc-field');
@@ -426,6 +444,7 @@ document.addEventListener('DOMContentLoaded', function() {
             switch (this.value) {
                 case 'Delegate':
                     delegateFields.style.display = 'block';
+                    if (orgField) orgField.required = true;
                     if (kmcField) {
                         kmcField.style.display = 'block';
                         const kmcInput = kmcField.querySelector('input');
@@ -436,6 +455,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
                 case 'Faculty':
                     facultyFields.style.display = 'block';
+                    ['designation', 'institution', 'specialty'].forEach(id => {
+                        const field = document.getElementById(id);
+                        if (field) field.required = true;
+                    });
                     if (kmcField) {
                         kmcField.style.display = 'block';
                         const kmcInput = kmcField.querySelector('input');
@@ -449,6 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
             }
         });
+        guestRoleSelect.dispatchEvent(new Event('change'));
     }
     
     // Handle form step navigation
