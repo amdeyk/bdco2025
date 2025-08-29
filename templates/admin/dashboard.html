@@ -180,43 +180,51 @@
 <!-- Stats Overview Cards -->
 <div class="row mb-4">
     <div class="col-md-3">
-        <div class="stats-card primary mb-4">
-            <div class="stats-icon">
-                <i class="fas fa-users"></i>
+        <a href="/admin/all_guests" class="text-decoration-none">
+            <div class="stats-card primary mb-4">
+                <div class="stats-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stats-number">{{ stats.total_guests }}</div>
+                <div class="stats-title">Total Guests</div>
             </div>
-            <div class="stats-number">{{ stats.total_guests }}</div>
-            <div class="stats-title">Total Guests</div>
-        </div>
+        </a>
     </div>
-    
+
     <div class="col-md-3">
-        <div class="stats-card success mb-4">
-            <div class="stats-icon">
-                <i class="fas fa-user-tie"></i>
+        <a href="/admin/all_guests?role=Delegate" class="text-decoration-none">
+            <div class="stats-card success mb-4">
+                <div class="stats-icon">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div class="stats-number">{{ stats.delegate_count }}</div>
+                <div class="stats-title">Delegates</div>
             </div>
-            <div class="stats-number">{{ stats.delegate_count }}</div>
-            <div class="stats-title">Delegates</div>
-        </div>
+        </a>
     </div>
-    
+
     <div class="col-md-3">
-        <div class="stats-card warning mb-4">
-            <div class="stats-icon">
-                <i class="fas fa-university"></i>
+        <a href="/admin/all_guests?role=Faculty" class="text-decoration-none">
+            <div class="stats-card warning mb-4">
+                <div class="stats-icon">
+                    <i class="fas fa-university"></i>
+                </div>
+                <div class="stats-number">{{ stats.faculty_count }}</div>
+                <div class="stats-title">Faculty</div>
             </div>
-            <div class="stats-number">{{ stats.faculty_count }}</div>
-            <div class="stats-title">Faculty</div>
-        </div>
+        </a>
     </div>
-    
+
     <div class="col-md-3">
-        <div class="stats-card info mb-4">
-            <div class="stats-icon">
-                <i class="fas fa-clipboard-check"></i>
+        <a href="/admin/all_guests?attendance=present" class="text-decoration-none">
+            <div class="stats-card info mb-4">
+                <div class="stats-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <div class="stats-number">{{ stats.attendance_count }}</div>
+                <div class="stats-title">Attendance Rate</div>
             </div>
-            <div class="stats-number">{{ stats.attendance_count }}</div>
-            <div class="stats-title">Attendance Rate</div>
-        </div>
+        </a>
     </div>
 </div>
 
