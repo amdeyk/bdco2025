@@ -51,3 +51,4 @@ All notable changes to this project will be documented in this file.
 - Include journey fields in admin guest CSV uploads by defining a comprehensive master field list to prevent missing-field errors.
 - Make registration fields mandatory only when Delegate or Faculty role is selected.
 - Send SMS notifications to coordinators and guests after successful registration using configurable templates.
+- Allow admin guest table to span full width with responsive scrolling.

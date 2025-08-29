@@ -387,11 +387,14 @@ body {
    border-radius: 0.5rem;
    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
    background-color: white;
-   overflow: hidden;
+   overflow-x: auto; /* Ensure horizontal scroll on smaller screens */
+   overflow-y: hidden;
 }
 
 .table {
    margin-bottom: 0;
+   width: 100%; /* Make sure the table itself expands */
+   min-width: 700px; /* Optional: prevent columns from getting too narrow */
 }
 
 .table thead th {
