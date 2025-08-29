@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Make admin dashboard stat cards link to filtered guest lists for quick navigation.
 - Add admin CSV guest upload with robust validation, duplicate checks, and dashboard link.
 - Standardize branding to "Magna Endocrine Update 2025" across templates, backend emails, badges, and tests.
 - Fix admin journey update deleting records due to mismatched CSV columns.
