@@ -18,6 +18,7 @@ from pathlib import Path
 from app.services.qr_service import QRService
 from app.services.journey_sync import create_journey_service
 from app.services import EmailService
+from app.services.sms_service import SmsService
 
 from app.services.csv_db import CSVDatabase
 from app.services.auth import auth_service
@@ -40,6 +41,7 @@ guests_db = CSVDatabase(
 qr_service = QRService(config.get('PATHS', 'StaticDir'))
 # Email service for registration notifications
 email_service = EmailService()
+sms_service = SmsService()
 # Use singleton auth_service from app.services.auth
 
 # Define storage paths
@@ -1082,6 +1084,19 @@ async def register_guest(
             qr_service.generate_guest_badge_qr(guest_id)
         except Exception as qr_error:
             logger.warning(f"Failed to generate QR code for guest {guest_id}: {str(qr_error)}")
+
+        # Send SMS notifications
+        try:
+            sms_service.send_coordinator_message(
+                guest_name=name,
+                guest_phone=phone
+            )
+            sms_service.send_guest_confirmation(
+                guest_phone=phone,
+                guest_id=guest_id
+            )
+        except Exception as sms_error:
+            logger.error(f"SMS sending error: {sms_error}")
 
         # Send confirmation email (with enhanced template)
         email_sent = False
