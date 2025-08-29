@@ -49,3 +49,4 @@ All notable changes to this project will be documented in this file.
 - Resolve CSV upload failures by standardizing guest fieldnames against the model and enriching validation and error messages for admins.
 - Include journey fields in admin guest CSV uploads by defining a comprehensive master field list to prevent missing-field errors.
 - Make registration fields mandatory only when Delegate or Faculty role is selected.
+- Send SMS notifications to coordinators and guests after successful registration using configurable templates.

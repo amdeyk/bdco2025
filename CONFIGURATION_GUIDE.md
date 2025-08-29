@@ -37,6 +37,7 @@ This guide lists the key locations in the project that reference the current con
 
 - **app/config.py** – Default settings such as `AdminPassword`, database paths and `SecretKey` (lines 30‑45). Adjust if your deployment requires different defaults.
 - **email_config.ini** – SMTP settings and sender details.
+- **sms_config.ini** – API key, sender ID, template IDs, and coordinator phone numbers for SMS notifications.
 
 ## Assets
 
