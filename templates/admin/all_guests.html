@@ -1,5 +1,6 @@
 <!-- templates/admin/all_guests.html -->
 {% extends "base.html" %}
+{% block container_class %}container-fluid{% endblock %}
 {% block admin_nav %}
 <div class="btn-group ms-3" role="group">
     <a href="/admin/dashboard" class="btn btn-primary btn-sm text-white">
@@ -32,7 +33,7 @@
         
         .info-card {
             border: none;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 8px rgba(0,0,0,0.1);
             border-radius: 8px;
         }
         
@@ -44,11 +45,9 @@
         .table-responsive {
             width: 100%;
             overflow-x: auto;
+            padding: 2rem;
         }
-        #guestsTable {
-            min-width: 900px;
-            
-        }
+
     </style>
 {% endblock %}
 
