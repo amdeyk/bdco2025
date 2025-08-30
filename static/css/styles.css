@@ -394,7 +394,7 @@ body {
 .table {
    margin-bottom: 0;
    width: 100%; /* Make sure the table itself expands */
-   min-width: 700px; /* Optional: prevent columns from getting too narrow */
+   min-width: 800px; /* Optional: prevent columns from getting too narrow */
 }
 
 .table thead th {
@@ -405,6 +405,11 @@ body {
    color: #4a5568;
    padding: 0.75rem 1rem;
 }
+
+#guestsTable {
+        max-width: 900px;
+        margin: auto; /* Center the table if needed */
+    }
 
 .table tbody td {
    padding: 1rem;
