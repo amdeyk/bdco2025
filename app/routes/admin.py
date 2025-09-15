@@ -3390,7 +3390,7 @@ def create_magnacode_badge_working(guest: dict) -> Image.Image:
         guest_name = f"Dr. {guest_name}"
 
     # Guest Name (Larger Font)
-    font_size_name = 65
+    font_size_name = 72
     try:
         draw.text((center_x, current_y), guest_name, fill=navy_blue, anchor="mm", font_size=font_size_name)
     except TypeError:
@@ -3398,7 +3398,7 @@ def create_magnacode_badge_working(guest: dict) -> Image.Image:
     current_y += 100  # Increase space after the name
 
     # Guest Role (Smaller Font)
-    font_size_details = 35
+    font_size_details = 45
     try:
         draw.text((center_x, current_y), role.upper(), fill='black', anchor="mm", font_size=font_size_details)
     except TypeError:
@@ -3413,7 +3413,7 @@ def create_magnacode_badge_working(guest: dict) -> Image.Image:
     current_y += 80  # Increase space before the QR code
 
     # QR Code (Centered Below Text)
-    qr_size = 300
+    qr_size = 240
     qr_x = center_x - (qr_size // 2)
     qr_y = current_y
 
