@@ -53,3 +53,4 @@ All notable changes to this project will be documented in this file.
 - Make registration fields mandatory only when Delegate or Faculty role is selected.
 - Send SMS notifications to coordinators and guests after successful registration using configurable templates.
 - Allow admin guest table to span full width with responsive scrolling.
+- Center MagnaCode badge content with vertical stacking and remove phone numbers from the layout.
