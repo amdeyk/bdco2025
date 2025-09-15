@@ -3378,83 +3378,54 @@ def create_magnacode_badge_working(guest: dict) -> Image.Image:
 
     navy_blue = '#1e3a8a'
 
-    # --- ADJUST QR CODE POSITION ---
+    # --- CENTER ALIGNED GUEST INFO ---
+    center_x = width_px // 2
+    current_y = 550  # Starting Y position for the text block
+
+    guest_name = guest.get('Name', 'Unknown Guest')
+    role = guest.get('GuestRole', 'Event')
+    guest_id = guest.get('ID', 'UNKNOWN')
+
+    if role in ['Delegates', 'Faculty'] and guest_name and not any(prefix in guest_name.upper() for prefix in ['DR.', 'PROF.', 'MR.', 'MS.', 'MRS.']):
+        guest_name = f"Dr. {guest_name}"
+
+    # Guest Name (Larger Font)
+    font_size_name = 65
+    try:
+        draw.text((center_x, current_y), guest_name, fill=navy_blue, anchor="mm", font_size=font_size_name)
+    except TypeError:
+        draw.text((center_x, current_y), guest_name, fill=navy_blue, anchor="mm")
+    current_y += 100  # Increase space after the name
+
+    # Guest Role (Smaller Font)
+    font_size_details = 35
+    try:
+        draw.text((center_x, current_y), role.upper(), fill='black', anchor="mm", font_size=font_size_details)
+    except TypeError:
+        draw.text((center_x, current_y), role.upper(), fill='black', anchor="mm")
+    current_y += 60  # Increase space after the role
+
+    # Guest ID (Smaller Font)
+    try:
+        draw.text((center_x, current_y), f"ID: {guest_id}", fill='black', anchor="mm", font_size=font_size_details)
+    except TypeError:
+        draw.text((center_x, current_y), f"ID: {guest_id}", fill='black', anchor="mm")
+    current_y += 80  # Increase space before the QR code
+
+    # QR Code (Centered Below Text)
     qr_size = 300
-    qr_padding = 20
-    qr_x = 100
-    qr_y = 600
+    qr_x = center_x - (qr_size // 2)
+    qr_y = current_y
 
     qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=12, border=1)
-    qr.add_data(f"MAGNACODE2025:{guest.get('ID', 'UNKNOWN')}")
+    qr.add_data(f"MAGNACODE2025:{guest_id}")
     qr.make(fit=True)
     qr_img = qr.make_image(fill_color=navy_blue, back_color="white")
     try:
         qr_resized = qr_img.resize((qr_size, qr_size), Image.Resampling.LANCZOS)
     except AttributeError:
         qr_resized = qr_img.resize((qr_size, qr_size))
-    badge.paste(qr_resized, (qr_x + qr_padding, qr_y + qr_padding))
-
-    # --- ADJUST GUEST INFO POSITION ---
-    info_x = qr_x + qr_size + 80
-    info_width = width_px - info_x - 100
-    info_y = qr_y + 20
-
-    guest_name = guest.get('Name', 'Unknown Guest')
-    role = guest.get('GuestRole', 'Event')
-    if role in ['Delegates', 'Faculty'] and guest_name and not any(prefix in guest_name.upper() for prefix in ['DR.', 'PROF.', 'MR.', 'MS.', 'MRS.']):
-        guest_name = f"Dr. {guest_name}"
-
-    # Guest Name (bigger font)
-    name_y = info_y
-    name_height = 120  # Increased height for bigger font
-    if len(guest_name) > 20:
-        words = guest_name.split(' ')
-        if len(words) > 1:
-            mid = len(words) // 2
-            line1 = ' '.join(words[:mid])
-            line2 = ' '.join(words[mid:])
-            try:
-                draw.text((info_x + info_width//2, name_y + 40), line1, fill=navy_blue, anchor="mm", font_size=55)
-                draw.text((info_x + info_width//2, name_y + 90), line2, fill=navy_blue, anchor="mm", font_size=55)
-            except TypeError:
-                draw.text((info_x + info_width//2, name_y + 40), line1, fill=navy_blue, anchor="mm")
-                draw.text((info_x + info_width//2, name_y + 90), line2, fill=navy_blue, anchor="mm")
-        else:
-            try:
-                draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm", font_size=55)
-            except TypeError:
-                draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm")
-    else:
-        try:
-            draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm", font_size=60)
-        except TypeError:
-            draw.text((info_x + info_width//2, name_y + name_height//2), guest_name, fill=navy_blue, anchor="mm")
-
-    # Guest Role (black color)
-    role_y = name_y + name_height
-    role_height = 60
-    try:
-        draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='black', anchor="mm", font_size=30)
-    except TypeError:
-        draw.text((info_x + info_width//2, role_y + role_height//2), role.upper(), fill='black', anchor="mm")
-
-    # Guest ID (black color)
-    id_y = role_y + role_height + 10
-    id_height = 60
-    guest_id = guest.get('ID', 'UNKNOWN')
-    try:
-        draw.text((info_x + info_width//2, id_y + id_height//2), f"ID: {guest_id}", fill='black', anchor="mm", font_size=30)
-    except TypeError:
-        draw.text((info_x + info_width//2, id_y + id_height//2), f"ID: {guest_id}", fill='black', anchor="mm")
-
-    # Guest Phone (newly added, black color)
-    phone_y = id_y + id_height + 10
-    phone_height = 60
-    guest_phone = guest.get('Phone', 'N/A')
-    try:
-        draw.text((info_x + info_width//2, phone_y + phone_height//2), f"Phone: {guest_phone}", fill='black', anchor="mm", font_size=30)
-    except TypeError:
-        draw.text((info_x + info_width//2, phone_y + phone_height//2), f"Phone: {guest_phone}", fill='black', anchor="mm")
+    badge.paste(qr_resized, (qr_x, qr_y))
 
     return badge
 
