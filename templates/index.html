@@ -83,6 +83,31 @@
         transform: translateY(-2px);
         box-shadow: 0 8px 25px rgba(26, 35, 126, 0.3);
     }
+
+    .registration-closed-btn {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: 2px dashed #6c757d;
+        color: #6c757d;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+    .registration-closed-btn:hover {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        color: #6c757d;
+        border-color: #6c757d;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .registration-closed-btn:disabled {
+        opacity: 1;
+    }
+
+    .registration-closed-btn .action-icon,
+    .registration-closed-btn .fa-lock {
+        color: #6c757d;
+    }
     
     .quick-scan-btn {
         background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
@@ -346,16 +371,16 @@
                     </div>
                     
                     <div class="col-md-6">
-                        <a href="/guest_registration" class="btn secondary-action-btn w-100 d-flex align-items-center justify-content-between text-decoration-none">
+                        <button type="button" class="btn secondary-action-btn registration-closed-btn w-100 d-flex align-items-center justify-content-between text-decoration-none" disabled>
                             <div class="text-start">
                                 <div class="d-flex align-items-center mb-2">
-                                    <i class="fas fa-user-plus action-icon"></i>
-                                    <span class="h5 mb-0 fw-bold">New Registration</span>
+                                    <i class="fas fa-user-lock action-icon"></i>
+                                    <span class="h5 mb-0 fw-bold">Registration Closed</span>
                                 </div>
-                                <small class="d-block">Register for the conference</small>
+                                <small class="d-block text-muted">Conference registration is currently closed</small>
                             </div>
-                            <i class="fas fa-chevron-right fa-lg"></i>
-                        </a>
+                            <i class="fas fa-lock fa-lg"></i>
+                        </button>
                     </div>
                 </div>
                 
