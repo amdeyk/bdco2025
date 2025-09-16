@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+- Replace homepage registration link with a disabled "Registration Closed" notice to reflect enrollment status.
 - Add QueryPreprocessorAgent for astrological query preprocessing and explicit termination to avoid agent loop.
 - Make admin dashboard stat cards link to filtered guest lists for quick navigation.
 - Add admin CSV guest upload with robust validation, duplicate checks, and dashboard link.
