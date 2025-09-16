@@ -19,6 +19,7 @@ from app.utils.logging_utils import log_activity
 from fastapi.responses import StreamingResponse
 import csv
 import io
+import zipfile
 from app.utils.changelog import ChangelogManager
 import random
 from fastapi import Path as FastAPIPath
@@ -2011,6 +2012,78 @@ async def generate_badge(admin: Dict = Depends(get_current_admin), guest_id: str
     except Exception as e:
         logger.error(f"Error generating badge for {guest_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Badge generation failed: {str(e)}")
+
+
+@router.get("/download_all_badges")
+async def download_all_badges(admin: Dict = Depends(get_current_admin)):
+    """Download badge images for all guests as a ZIP archive."""
+    try:
+        guests = guests_db.read_all()
+
+        if not guests:
+            raise HTTPException(status_code=404, detail="No guests available for badge download")
+
+        download_started = datetime.now()
+        timestamp_str = download_started.strftime('%Y-%m-%d %H:%M:%S')
+        archive_name = f"MAGNACODE2025_badges_{download_started.strftime('%Y%m%d%H%M%S')}.zip"
+
+        zip_buffer = io.BytesIO()
+        badges_added = 0
+        badges_marked_printed = 0
+
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+            for guest in guests:
+                if not validate_guest_data_safe(guest):
+                    continue
+
+                try:
+                    badge_image = create_magnacode_badge_working(guest)
+                except Exception as badge_error:
+                    logger.error(
+                        f"Error generating badge for {guest.get('ID', 'UNKNOWN')}: {badge_error}",
+                        exc_info=True,
+                    )
+                    continue
+
+                image_bytes = io.BytesIO()
+                badge_image.save(image_bytes, format="PNG", dpi=(300, 300))
+                image_bytes.seek(0)
+
+                guest_id = guest.get("ID", "UNKNOWN")
+                archive.writestr(
+                    f"MAGNACODE2025_{guest_id}_badge.png",
+                    image_bytes.getvalue(),
+                )
+
+                badges_added += 1
+
+                if guest.get("BadgePrinted") != "True":
+                    guest["BadgePrinted"] = "True"
+                    guest["BadgePrintedDate"] = timestamp_str
+                    badges_marked_printed += 1
+
+        if badges_added == 0:
+            raise HTTPException(status_code=404, detail="No valid guests available for badge download")
+
+        if badges_marked_printed > 0:
+            guests_db.write_all(guests)
+
+        zip_buffer.seek(0)
+
+        log_activity("Badge", f"Admin {admin['user_id']} downloaded {badges_added} badges in bulk")
+
+        return StreamingResponse(
+            zip_buffer,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{archive_name}"'},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error downloading badges in bulk: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to download badges in bulk")
+
+
 @router.post("/print_badges_bulk")
 async def print_badges_bulk(request: Request, admin: Dict = Depends(get_current_admin)):
     """Print badges for multiple guests"""
