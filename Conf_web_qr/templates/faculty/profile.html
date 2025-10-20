@@ -1,0 +1,503 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Profile{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100">
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <!-- Profile Header -->
+        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">
+                        Faculty Profile
+                    </h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                        Manage your profile information, presentations, and journey details
+                    </p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="showEditProfileModal()"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Edit Profile
+                    </button>
+                    <button onclick="showUploadPresentationModal()"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Upload Presentation
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Profile Information -->
+            <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Full name</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ faculty.name }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Email address</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ faculty.email }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Phone number</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ faculty.phone }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">KMC Number</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ faculty.kmc_number or 'N/A' }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Roles</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% for role in faculty.roles %}
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                {{ role }}
+                            </span>
+                            {% endfor %}
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+
+        <!-- Presentations Section -->
+        <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Presentations
+                </h3>
+            </div>
+            <div class="border-t border-gray-200">
+                <ul class="divide-y divide-gray-200">
+                    {% for presentation in faculty.presentations %}
+                    <li class="px-4 py-4 sm:px-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-indigo-600 truncate">
+                                    {{ presentation.title }}
+                                </p>
+                                <p class="mt-1 text-sm text-gray-500">
+                                    {{ presentation.description }}
+                                </p>
+                                <p class="mt-1 text-xs text-gray-500">
+                                    Uploaded on {{ presentation.upload_date }}
+                                </p>
+                            </div>
+                            <div class="ml-4 flex-shrink-0">
+                                <a href="/static/{{ presentation.file_path }}" target="_blank"
+                                    class="font-medium text-indigo-600 hover:text-indigo-500">
+                                    Download
+                                </a>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Journey Details Section -->
+        <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 flex items-center justify-between">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Journey Details
+                </h3>
+                <button onclick="showJourneyDetailsModal()"
+                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Update Journey Details
+                </button>
+            </div>
+            <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
+                {% if faculty.journey_details %}
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Arrival Date</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ faculty.journey_details.arrival_date }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Departure Date</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ faculty.journey_details.departure_date }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Origin City</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ faculty.journey_details.origin_city }}</dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500">Destination City</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ faculty.journey_details.destination_city }}</dd>
+                    </div>
+                    {% if faculty.journey_details.remarks %}
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500">Remarks</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ faculty.journey_details.remarks }}</dd>
+                    </div>
+                    {% endif %}
+                </dl>
+                {% else %}
+                <p class="text-sm text-gray-500">No journey details available. Please update your journey information.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Conference Schedule Section -->
+    <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+        <div class="px-4 py-5 sm:px-6 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-t-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold">{{ conference_name }}</h3>
+                    <p class="text-indigo-100 mt-1">{{ conference_dates }}</p>
+                </div>
+                <div class="text-right">
+                    <div class="bg-white bg-opacity-20 rounded-lg px-3 py-2">
+                        <div class="text-sm font-medium">The Chancery Pavilion</div>
+                        <div class="text-xs text-indigo-100">Bangalore</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-4 py-5 sm:px-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Day 1 -->
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 border border-green-200">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm mr-3">1</div>
+                        <div>
+                            <h4 class="font-bold text-green-800">Day 1 - September 20</h4>
+                            <p class="text-sm text-green-600">09:00 AM - 6:25 PM</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="bg-white rounded-lg p-3 shadow-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-medium text-gray-500">HALL A</span>
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Primary Track</span>
+                            </div>
+                            <div class="mt-2">
+                                <p class="font-medium text-sm">MASLD & Obesity Management</p>
+                                <p class="text-xs text-gray-600">Medical Nutrition Therapy & GDM</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-3 shadow-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-medium text-gray-500">HALL B</span>
+                                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Tech Track</span>
+                            </div>
+                            <div class="mt-2">
+                                <p class="font-medium text-sm">AI in Medical Writing</p>
+                                <p class="text-xs text-gray-600">CGMS & Glucose Monitoring</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Day 2 -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm mr-3">2</div>
+                        <div>
+                            <h4 class="font-bold text-blue-800">Day 2 - September 21</h4>
+                            <p class="text-sm text-blue-600">09:00 AM - 6:25 PM</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="bg-white rounded-lg p-3 shadow-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-medium text-gray-500">HALL A</span>
+                                <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">Women's Health</span>
+                            </div>
+                            <div class="mt-2">
+                                <p class="font-medium text-sm">PCOS & Fertility Management</p>
+                                <p class="text-xs text-gray-600">IVF-ET & Male Subfertility</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-3 shadow-sm">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-medium text-gray-500">HALL B</span>
+                                <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">New Therapies</span>
+                            </div>
+                            <div class="mt-2">
+                                <p class="font-medium text-sm">Pediatric Endocrinology</p>
+                                <p class="text-xs text-gray-600">Latest Medications & CKM Syndrome</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Info Bar -->
+            <div class="mt-6 bg-gray-50 rounded-lg p-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div>
+                        <div class="text-2xl font-bold text-indigo-600">2</div>
+                        <div class="text-sm text-gray-600">Conference Days</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-green-600">20+</div>
+                        <div class="text-sm text-gray-600">Expert Sessions</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-blue-600">2</div>
+                        <div class="text-sm text-gray-600">CPD Credits/Day</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-purple-600">4</div>
+                        <div class="text-sm text-gray-600">Specialized Tracks</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <div class="mt-6 text-center">
+                <a href="/static/schedule/conference_schedule.pdf" target="_blank" 
+                   class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-medium rounded-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Download Complete Schedule
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div id="editProfileModal" class="hidden fixed inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="editProfileForm" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="mb-4">
+                    <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" name="email" id="email" value="{{ faculty.email }}"
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label for="phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                    <input type="tel" name="phone" id="phone" value="{{ faculty.phone }}"
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label for="kmc_number" class="block text-sm font-medium text-gray-700">KMC Number</label>
+                    <input type="text" name="kmc_number" id="kmc_number" value="{{ faculty.kmc_number or '' }}"
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label for="photo" class="block text-sm font-medium text-gray-700">Profile Photo</label>
+                    <input type="file" name="photo" id="photo"
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300">
+                </div>
+            </form>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="submitProfileUpdate()"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    Save Changes
+                </button>
+                <button type="button" onclick="hideEditProfileModal()"
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Presentation Modal -->
+<div id="uploadPresentationModal" class="hidden fixed inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="uploadPresentationForm" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="mb-4">
+                    <label for="title" class="block text-sm font-medium text-gray-700">Title</label>
+                    <input type="text" name="title" id="title" required
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
+                    <textarea name="description" id="description" rows="3"
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="session_type" class="block text-sm font-medium text-gray-700">Session Type</label>
+                    <select name="session_type" id="session_type" required
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <option value="keynote">Keynote</option>
+                        <option value="technical">Technical</option>
+                        <option value="workshop">Workshop</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="file" class="block text-sm font-medium text-gray-700">Presentation File</label>
+                    <input type="file" name="file" id="file" required accept=".pdf,.ppt,.pptx,.mp4"
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300">
+                </div>
+            </form>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="submitPresentationUpload()"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    Upload
+                </button>
+                <button type="button" onclick="hideUploadPresentationModal()"
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Journey Details Modal -->
+<div id="journeyDetailsModal" class="hidden fixed inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="journeyDetailsForm" class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="mb-4">
+                    <label for="arrival_date" class="block text-sm font-medium text-gray-700">Arrival Date</label>
+                    <input type="datetime-local" name="arrival_date" id="arrival_date" required
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label for="departure_date" class="block text-sm font-medium text-gray-700">Departure Date</label>
+                    <input type="datetime-local" name="departure_date" id="departure_date" required
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label for="origin_city" class="block text-sm font-medium text-gray-700">Origin City</label>
+                    <input type="text" name="origin_city" id="origin_city" required
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label for="destination_city" class="block text-sm font-medium text-gray-700">Destination City</label>
+                    <input type="text" name="destination_city" id="destination_city" required
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md">
+                </div>
+                <div class="mb-4">
+                    <label for="remarks" class="block text-sm font-medium text-gray-700">Remarks</label>
+                    <textarea name="remarks" id="remarks" rows="3"
+                        class="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
+                </div>
+            </form>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="submitJourneyDetails()"
+                    class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                    Save Changes
+                </button>
+                <button type="button" onclick="hideJourneyDetailsModal()"
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Modal visibility functions
+    function showEditProfileModal() {
+        document.getElementById('editProfileModal').classList.remove('hidden');
+    }
+
+    function hideEditProfileModal() {
+        document.getElementById('editProfileModal').classList.add('hidden');
+    }
+
+    function showUploadPresentationModal() {
+        document.getElementById('uploadPresentationModal').classList.remove('hidden');
+    }
+
+    function hideUploadPresentationModal() {
+        document.getElementById('uploadPresentationModal').classList.add('hidden');
+    }
+
+    function showJourneyDetailsModal() {
+        document.getElementById('journeyDetailsModal').classList.remove('hidden');
+    }
+
+    function hideJourneyDetailsModal() {
+        document.getElementById('journeyDetailsModal').classList.add('hidden');
+    }
+
+    // Form submission functions
+    async function submitProfileUpdate() {
+        const form = document.getElementById('editProfileForm');
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch('/faculty/profile/update', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('Failed to update profile');
+            }
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function submitPresentationUpload() {
+        const form = document.getElementById('uploadPresentationForm');
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch('/faculty/presentation/upload', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('Failed to upload presentation');
+            }
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+
+    async function submitJourneyDetails() {
+        const form = document.getElementById('journeyDetailsForm');
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch('/faculty/journey/update', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('Failed to update journey details');
+            }
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+</script>
+{% endblock %} 

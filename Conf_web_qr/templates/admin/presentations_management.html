@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block admin_nav %}
+<div class="btn-group ms-3" role="group">
+    <a href="/admin/dashboard" class="btn btn-primary btn-sm text-white">
+        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+    </a>
+    <a href="/logout" class="btn btn-danger btn-sm text-white">
+        <i class="fas fa-sign-out-alt me-1"></i> Logout
+    </a>
+</div>
+{% endblock %}
+{% block title %}Presentations Management | Conference Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-1">Presentations Management</h1>
+                <p class="text-muted mb-0">Review and download uploaded presentations</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/admin/dashboard" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                </a>
+                <a href="/admin/report/export/presentations" class="btn btn-outline-success">
+                    <i class="fas fa-file-csv me-1"></i> Export Report
+                </a>
+            </div>
+        </div>
+        <div class="table-responsive mt-4">
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Guest</th>
+                        <th>Phone</th>
+                        <th>Role</th>
+                        <th>Title</th>
+                        <th>Uploaded</th>
+                        <th>Status</th>
+                        <th>Remarks</th>
+                        <th>File</th>
+                        <th>Approval</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for p in presentations %}
+                    <tr>
+                        <td>{{ p.guest_name }} ({{ p.guest_id }})</td>
+                        <td>{{ p.guest_phone or 'Not provided' }}</td>
+                        <td>{{ p.guest_role }}</td>
+                        <td>{{ p.title }}</td>
+                        <td>{{ p.upload_date }}</td>
+                        <td>{{ p.selected_status or 'Pending' }}</td>
+                        <td>{{ p.remarks_by or 'N/A' }}</td>
+                        <td><a href="{{ p.file_url }}" class="btn btn-sm btn-primary"><i class="fas fa-download me-1"></i>Download</a></td>
+                        <td><a href="/approvals/dashboard?id={{ p.id }}" class="btn btn-sm btn-outline-primary">Review</a></td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="9" class="text-center">No presentations found.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light border-0">
+            <div class="card-body">
+                <h5 class="card-title">How this page fits in</h5>
+                <p class="mb-1">This list shows all presentations uploaded by guests.</p>
+                <p class="mb-0">Files here feed into the program schedule so you can easily download and review them.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

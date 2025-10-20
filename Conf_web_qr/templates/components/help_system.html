@@ -1,0 +1,79 @@
+<!-- components/help_system.html -->
+<div class="help-overlay" id="helpOverlay" style="display: none;">
+    <div class="help-content">
+        <div class="help-header">
+            <h5>Help Guide</h5>
+            <button type="button" class="btn-close" onclick="toggleHelpOverlay()"></button>
+        </div>
+        <div class="help-body">
+            <!-- Dynamic content will be loaded here -->
+            <div id="helpContent">
+                Select a feature to see help information.
+            </div>
+            
+            <!-- Feature list -->
+            <div class="help-features mt-4">
+                <h6>Available Features:</h6>
+                <div class="list-group">
+                    <button onclick="showHelpFor('registration')" class="list-group-item list-group-item-action">
+                        Guest Registration
+                    </button>
+                    <button onclick="showHelpFor('check-in')" class="list-group-item list-group-item-action">
+                        Check-in Process
+                    </button>
+                    <button onclick="showHelpFor('payments')" class="list-group-item list-group-item-action">
+                        Payment Management
+                    </button>
+                    <button onclick="showHelpFor('badges')" class="list-group-item list-group-item-action">
+                        Badge Generation
+                    </button>
+                    <button onclick="showHelpFor('reports')" class="list-group-item list-group-item-action">
+                        Reports and Analytics
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="help-footer">
+            <button type="button" class="btn btn-primary btn-sm" onclick="startGuidedTour()">
+                Start Guided Tour
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleHelpOverlay()">
+                Close Help
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Help content templates -->
+<template id="help-registration">
+    <h6>Guest Registration</h6>
+    <p>Register new guests or activate existing registrations:</p>
+    <ul>
+        <li><strong>New Registration:</strong> Create a completely new guest record</li>
+        <li><strong>Activate Registration:</strong> Complete an existing registration ID</li>
+    </ul>
+    <p>Required fields depend on the guest role:</p>
+    <ul>
+        <li><strong>Delegates:</strong> Name, Phone, Email</li>
+        <li><strong>Sponsors:</strong> Name, Phone, Company Name</li>
+        <li><strong>Organizer/Event:</strong> Basic contact information</li>
+    </ul>
+    <p class="mt-3"><strong>Tip:</strong> Use the "Generate Dummy Registrations" feature in Admin to create multiple registration IDs at once.</p>
+</template>
+
+<template id="help-check-in">
+    <h6>Check-in Process</h6>
+    <p>Mark guests as present at the conference:</p>
+    <ul>
+        <li>Enter the guest ID or scan their badge QR code</li>
+        <li>Verify guest information on the screen</li>
+        <li>Click "Mark Attendance" to complete check-in</li>
+    </ul>
+    <p>Check-in also allows you to quickly handle:</p>
+    <ul>
+        <li>Kit distribution for eligible guests</li>
+        <li>Lunch vouchers for the current day</li>
+        <li>Payment collection (for Delegates)</li>
+    </ul>
+    <p class="mt-3"><strong>Note:</strong> Check-ins reset at the end of each day.</p>
+</template>

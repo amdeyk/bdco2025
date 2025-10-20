@@ -1,0 +1,20 @@
+/* Responsive tweaks for the single guest page */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1.25rem;
+    }
+    .nav-tabs .nav-link {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.5rem;
+    }
+    .info-card,
+    .journey-card,
+    .quick-action-card {
+        margin-bottom: 1rem;
+    }
+}
+
+#qrcode-container canvas {
+    max-width: 100%;
+    height: auto;
+}

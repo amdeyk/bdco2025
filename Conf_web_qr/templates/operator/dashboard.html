@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}Operator | {{ conference_name }}{% endblock %}
+{% block content %}
+<style>
+.op-card { border-radius: 16px; }
+.op-large { font-size: 1.15rem; }
+.op-toggle { transform: scale(1.4); margin-right: 10px; }
+.scan-box { border: 2px dashed #1a237e; border-radius: 16px; min-height: 220px; display:flex; align-items:center; justify-content:center; }
+.btn-op { padding: 14px 18px; font-size: 1rem; }
+video { width: 100%; max-height: 260px; border-radius: 12px; }
+@media (max-width: 576px) {
+  .op-large { font-size: 1rem; }
+  .btn-op { padding: 12px 14px; font-size: 0.95rem; }
+}
+</style>
+
+<div class="container py-3">
+  <div class="row g-4">
+    <div class="col-12 col-lg-6">
+      <div class="card op-card shadow-sm">
+        <div class="card-body">
+          <h3 class="mb-3">Scan Badge</h3>
+          <div id="cameraSection">
+            <div id="videoContainer" class="mb-3">
+              <video id="video" autoplay muted playsinline></video>
+            </div>
+            <div class="d-flex gap-2 mb-3">
+              <button id="startBtn" class="btn btn-primary btn-op"><i class="fas fa-camera me-1"></i> Start Camera</button>
+              <button id="stopBtn" class="btn btn-secondary btn-op" disabled>Stop</button>
+            </div>
+          </div>
+          <div class="mb-2">Or enter code/phone</div>
+          <form id="manualForm" class="d-flex gap-2">
+            <input id="manualCode" type="text" class="form-control form-control-lg" placeholder="PREFIX:ID or phone">
+            <button class="btn btn-success btn-op" type="submit">Find</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="card op-card shadow-sm">
+        <div class="card-body">
+          <h3 class="mb-3">Guest Details</h3>
+          <div id="guestInfo" class="op-large">Scan to view guest...</div>
+          <form id="updateForm" class="mt-3" style="display:none;">
+            <input type="hidden" id="guest_id" name="guest_id">
+            <div class="form-check mb-2">
+              <input class="form-check-input op-toggle" type="checkbox" id="attendance" name="attendance">
+              <label class="form-check-label" for="attendance">Mark Attendance</label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input op-toggle" type="checkbox" id="lunch" name="lunch">
+              <label class="form-check-label" for="lunch">Lunch Given</label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input op-toggle" type="checkbox" id="dinner" name="dinner">
+              <label class="form-check-label" for="dinner">Dinner Given</label>
+            </div>
+            <div class="form-check mb-2">
+              <input class="form-check-input op-toggle" type="checkbox" id="gift" name="gift">
+              <label class="form-check-label" for="gift">Gift Given</label>
+            </div>
+            <div class="form-check mb-3">
+              <input class="form-check-input op-toggle" type="checkbox" id="certificate" name="certificate">
+              <label class="form-check-label" for="certificate">Certificate Given</label>
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary btn-op" type="submit"><i class="fas fa-save me-1"></i> Save</button>
+              <button id="resetBtn" class="btn btn-outline-secondary btn-op" type="button">Scan Next</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@zxing/browser@0.1.5/umd/index.min.js"></script>
+<script>
+const codeReader = window.ZXingBrowser ? new window.ZXingBrowser.BrowserQRCodeReader() : null;
+const videoElem = document.getElementById('video');
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+let stream;
+
+async function startCamera() {
+  try {
+    if (!navigator.mediaDevices) throw new Error('No media devices');
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    videoElem.srcObject = stream;
+    startBtn.disabled = true; stopBtn.disabled = false;
+    if (codeReader) {
+      codeReader.decodeFromVideoDevice(null, videoElem, (result, err, controls) => {
+        if (result) {
+          controls.stop(); stopCamera(); handleCode(result.getText());
+        }
+      });
+    }
+  } catch(e) {
+    alert('Camera not available. Use manual input.');
+  }
+}
+
+function stopCamera() {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+    stream = null;
+  }
+  startBtn.disabled = false; stopBtn.disabled = true;
+}
+
+startBtn?.addEventListener('click', (e)=>{ e.preventDefault(); startCamera(); });
+stopBtn?.addEventListener('click', (e)=>{ e.preventDefault(); stopCamera(); });
+
+async function lookup(code) {
+  const resp = await fetch(`/operator/api/guest/${encodeURIComponent(code)}`);
+  if (!resp.ok) { document.getElementById('guestInfo').innerText = 'Guest not found'; document.getElementById('updateForm').style.display='none'; return; }
+  const data = await resp.json();
+  const info = document.getElementById('guestInfo');
+  info.innerHTML = `<div><strong>${data.name || ''}</strong> <small class="text-muted">(${data.id})</small><div class="text-muted">${data.phone || ''}</div></div>`;
+  const form = document.getElementById('updateForm');
+  form.style.display = 'block';
+  document.getElementById('guest_id').value = data.id;
+  document.getElementById('attendance').checked = !!data.attendance;
+  document.getElementById('lunch').checked = !!data.lunch;
+  document.getElementById('dinner').checked = !!data.dinner;
+  document.getElementById('gift').checked = !!data.gift;
+  document.getElementById('certificate').checked = !!data.certificate;
+}
+
+function handleCode(text) {
+  lookup(text);
+}
+
+document.getElementById('manualForm').addEventListener('submit', (e)=>{
+  e.preventDefault(); const val = document.getElementById('manualCode').value.trim(); if (val) handleCode(val);
+});
+
+document.getElementById('updateForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  fd.set('attendance', document.getElementById('attendance').checked);
+  fd.set('lunch', document.getElementById('lunch').checked);
+  fd.set('dinner', document.getElementById('dinner').checked);
+  fd.set('gift', document.getElementById('gift').checked);
+  fd.set('certificate', document.getElementById('certificate').checked);
+  const resp = await fetch('/operator/api/update', { method:'POST', body: fd });
+  if (resp.ok) { alert('Updated. Ready for next scan.'); reset(); }
+  else { alert('Failed to update'); }
+});
+
+function reset() {
+  document.getElementById('guestInfo').innerText = 'Scan to view guest...';
+  document.getElementById('updateForm').style.display='none';
+  document.getElementById('manualCode').value='';
+}
+document.getElementById('resetBtn').addEventListener('click', reset);
+</script>
+{% endblock %}
+

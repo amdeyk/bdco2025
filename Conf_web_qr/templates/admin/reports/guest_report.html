@@ -1,0 +1,167 @@
+<!-- templates/admin/reports/guest_report.html -->
+{% extends "base.html" %}
+{% block admin_nav %}
+<div class="btn-group ms-3" role="group">
+    <a href="/admin/dashboard" class="btn btn-primary btn-sm text-white">
+        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+    </a>
+    <a href="/logout" class="btn btn-danger btn-sm text-white">
+        <i class="fas fa-sign-out-alt me-1"></i> Logout
+    </a>
+</div>
+{% endblock %}
+
+{% block title %}Guest Report | Conference Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-2">Guest Report</h1>
+        <p class="text-muted">Detailed report on guest registration and attendance</p>
+        <a href="/admin/report" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to Main Report
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Filter Options</h5>
+            </div>
+            <div class="card-body">
+                <form id="filterForm" method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="role" class="form-label">Filter by Role</label>
+                        <select class="form-select" id="role" name="role">
+                            <option value="">All Roles</option>
+                            {% for role_option in roles %}
+                            <option value="{{ role_option }}" {% if role_option == selected_role %}selected{% endif %}>
+                                {{ role_option }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="attendance" class="form-label">Filter by Attendance</label>
+                        <select class="form-select" id="attendance" name="attendance">
+                            <option value="">All</option>
+                            <option value="present" {% if selected_attendance == 'present' %}selected{% endif %}>Present</option>
+                            <option value="absent" {% if selected_attendance == 'absent' %}selected{% endif %}>Absent</option>
+                        </select>
+                    </div>
+                    
+                    
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-1"></i> Apply Filters
+                        </button>
+                        <a href="/admin/report/guests" class="btn btn-outline-secondary">
+                            Clear Filters
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Guest Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Guest List</h5>
+                <div class="btn-group">
+                    <a href="/admin/report/export/guest_list?format=csv{% if selected_role %}&role={{ selected_role }}{% endif %}{% if selected_attendance %}&attendance={{ selected_attendance }}{% endif %}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-file-csv me-1"></i> Export CSV
+                    </a>
+                    <a href="/admin/report/export/guest_list?format=excel{% if selected_role %}&role={{ selected_role }}{% endif %}{% if selected_attendance %}&attendance={{ selected_attendance }}{% endif %}" class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-file-excel me-1"></i> Export Excel
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover datatable mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Contact</th>
+                                <th>Registration Date</th>
+                                <th>Attendance</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for guest in guests %}
+                            <tr>
+                                <td>{{ guest.ID }}</td>
+                                <td>{{ guest.Name }}</td>
+                                <td>
+                                    <span class="badge bg-primary">{{ guest.GuestRole }}</span>
+                                </td>
+                                <td>
+                                    <small>{{ guest.Phone }}</small><br>
+                                    <small class="text-muted">{{ guest.Email }}</small>
+                                </td>
+                                <td>{{ guest.RegistrationDate }}</td>
+                                <td>
+                                    <span class="badge {% if guest.DailyAttendance == 'True' %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {% if guest.DailyAttendance == 'True' %}Present{% else %}Absent{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="/single_guest/{{ guest.ID }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% if not guests %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    No guests found matching the current filters
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Total: <strong>{{ guests|length }}</strong> guests</span>
+                    <button id="printBtn" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-print me-1"></i> Print Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable
+    $('.datatable').DataTable({
+        responsive: true,
+        pageLength: 25,
+        order: [[4, 'desc']]  // Sort by registration date by default
+    });
+    
+    // Print functionality
+    document.getElementById('printBtn').addEventListener('click', function() {
+        window.print();
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1160 @@
+{% extends "base.html" %}
+
+{% block title %}Guest Profile | Conference Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .compact-card {
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
+    }
+    
+    .info-row {
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    
+    .profile-photo {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    
+    .qr-container {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        border-radius: 10px;
+        padding: 15px;
+        color: white;
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 12px;
+    }
+    
+    .compact-input {
+        margin-bottom: 12px;
+    }
+    
+    .compact-input label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+    
+    .compact-input .form-control {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+    
+    .journey-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .schedule-item {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .schedule-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transform: translateY(-1px);
+    }
+    
+    .presentation-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+    }
+    
+    .presentation-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .message-bubble {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-left: 4px solid #007bff;
+    }
+    
+    .admin-response {
+        background: #e8f5e8;
+        border-left: 4px solid #28a745;
+        margin-top: 8px;
+        padding: 8px 12px;
+        border-radius: 6px;
+    }
+    
+    @media (max-width: 768px) {
+        .profile-photo {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .compact-card {
+            margin-bottom: 10px;
+        }
+        
+        .qr-container {
+            padding: 12px;
+        }
+        
+        .journey-card {
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .schedule-item {
+            padding: 10px;
+        }
+        
+        .container {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        
+        .nav-tabs .nav-link {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .profile-photo {
+            width: 80px;
+            height: 80px;
+        }
+        
+        .qr-container img {
+            max-width: 100px !important;
+        }
+        
+        .compact-card .card-body {
+            padding: 12px;
+        }
+        
+        .journey-card {
+            padding: 10px;
+        }
+        
+        .nav-tabs .nav-link {
+            padding: 6px 8px;
+            font-size: 0.8rem;
+        }
+        
+        .nav-tabs .nav-link i {
+            margin-right: 4px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <div class="row g-3">
+        <!-- Left Column - Profile Info & QR Code -->
+        <div class="col-lg-4 col-md-5">
+            <!-- Profile Information Card -->
+            <div class="card compact-card border-0">
+                <div class="card-header bg-primary text-white py-2">
+                    <h6 class="mb-0"><i class="fas fa-user me-2"></i>Guest Information</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Profile Photo and Basic Info -->
+                    <div class="text-center mb-3">
+                        {% if guest.photo_url %}
+                        <img src="{{ guest.photo_url }}" alt="{{ guest.Name }}" class="rounded-circle profile-photo">
+                        {% else %}
+                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto profile-photo">
+                            <i class="fas fa-user-circle text-secondary" style="font-size: 60px;"></i>
+                        </div>
+                        {% endif %}
+                        <h6 class="mt-2 mb-1">{{ guest.Name }}</h6>
+                        <span class="badge bg-info status-badge">{{ guest.GuestRole }}</span>
+                    </div>
+                    
+                    <!-- Detailed Information -->
+                    <div class="info-row">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted"><i class="fas fa-id-card me-1"></i>Guest ID:</small>
+                            <strong>{{ guest.ID }}</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted"><i class="fas fa-phone me-1"></i>Phone:</small>
+                            <strong>{{ guest.Phone }}</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="fas fa-envelope me-1"></i>Email:</small>
+                            <small class="text-end"><strong>{{ guest.Email or 'Not provided' }}</strong></small>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="fas fa-id-badge me-1"></i>KMC No:</small>
+                            <strong>{{ guest.KMCNumber or 'N/A' }}</strong>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted"><i class="fas fa-calendar-alt me-1"></i>Registration:</small>
+                            <strong>{{ guest.RegistrationDate }}</strong>
+                        </div>
+                    </div>
+
+
+                    <div class="info-row">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="fas fa-calendar-check me-1"></i>Availability:</small>
+                            <strong>{{ guest.Availability or 'Not specified' }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="info-row">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="fas fa-user-check me-1"></i>Attendance:</small>
+                            <span class="badge {% if guest.DailyAttendance == 'True' %}bg-success{% else %}bg-secondary{% endif %} status-badge">
+                                {% if guest.DailyAttendance == 'True' %}Present{% else %}Not Checked In{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="fas fa-gift me-1"></i>Kit Status:</small>
+                            <span class="badge {% if guest.KitReceived == 'True' %}bg-success{% else %}bg-warning{% endif %} status-badge">
+                                {% if guest.KitReceived == 'True' %}Received{% else %}Pending{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="fas fa-id-badge me-1"></i>Badge:</small>
+                            <span class="badge {% if guest.BadgePrinted == 'True' %}bg-success{% else %}bg-warning{% endif %} status-badge">
+                                {% if guest.BadgePrinted == 'True' %}Printed{% else %}Pending{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {% if guest.is_faculty %}
+                    <div class="info-row">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted"><i class="fas fa-chalkboard-teacher me-1"></i>Faculty:</small>
+                            <span class="badge bg-info status-badge">Faculty Member</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                            <i class="fas fa-edit me-1"></i>Edit Profile
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPhotoModal">
+                            <i class="fas fa-camera me-1"></i>Update Photo
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- QR Code Card -->
+            <div class="card compact-card border-0">
+                <div class="qr-container text-center">
+                    <h6 class="mb-2"><i class="fas fa-qrcode me-2"></i>QR Code</h6>
+                    <div class="qr-code-display mb-2">
+                        {% if guest.qr_code_url %}
+                            <img src="{{ guest.qr_code_url }}" alt="QR Code for {{ guest.Name }}" class="img-fluid" style="max-width: 150px;">
+                        {% elif guest.qr_code_base64 %}
+                            <img src="{{ guest.qr_code_base64 }}" alt="QR Code for {{ guest.Name }}" class="img-fluid" style="max-width: 150px;">
+                        {% else %}
+                            <div id="qr-placeholder" class="border border-dashed border-light rounded d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;">
+                                <div class="text-center">
+                                    <i class="fas fa-qrcode fa-2x text-light mb-2"></i>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-outline-light" onclick="generateQRCode()">
+                                            Generate QR Code
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <small class="d-block mb-2">Use this QR code for quick check-in</small>
+                    <button type="button" class="btn btn-sm btn-outline-light" onclick="downloadQRCode()">
+                        <i class="fas fa-download me-1"></i>Download QR Code
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column - Tabs Content -->
+        <div class="col-lg-8 col-md-7">
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs mb-3" id="guestTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab">
+                        <i class="fas fa-info-circle me-1"></i><span class="d-none d-md-inline">Information</span><span class="d-md-none">Info</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="presentations-tab" data-bs-toggle="tab" data-bs-target="#presentations" type="button" role="tab">
+                        <i class="fas fa-file-powerpoint me-1"></i><span class="d-none d-md-inline">Presentations</span><span class="d-md-none">Files</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="journey-tab" data-bs-toggle="tab" data-bs-target="#journey" type="button" role="tab">
+                        <i class="fas fa-plane me-1"></i><span class="d-none d-md-inline">Journey Details</span><span class="d-md-none">Journey</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab">
+                        <i class="fas fa-envelope me-1"></i><span class="d-none d-md-inline">Messages</span><span class="d-md-none">Msgs</span>
+                    </button>
+                </li>
+            </ul>
+            
+            <!-- Tab Content -->
+            <div class="tab-content" id="guestTabContent">
+                <!-- Information Tab -->
+                <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
+                    <!-- Enhanced Conference Schedule -->
+                    <div class="card compact-card border-0">
+                        <div class="card-header bg-white border-bottom">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h6 class="mb-0">
+                                    <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                    {{ conference_name }} Schedule
+                                </h6>
+                                <span class="badge bg-primary">Sep 20-21</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Conference Header -->
+                            <div class="feature-highlight text-center mb-4">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h6 class="fw-bold text-primary mb-1">{{ conference_name }}</h6>
+                                        <p class="small mb-0">{{ conference_venue }}, {{ conference_city }}</p>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <div class="d-flex justify-content-end gap-1">
+                                            <span class="badge bg-success">09:00 AM</span>
+                                            <span class="badge bg-danger">6:25 PM</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Day Wise Schedule -->
+                            <div class="row g-3 mb-4">
+                                <!-- Day 1 -->
+                                <div class="col-md-6">
+                                    <div class="border rounded-3 p-3 h-100" style="background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%); border-color: #28a745 !important;">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 0.8rem; font-weight: bold;">
+                                                1
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-success">Day 1 - September 20</div>
+                                                <small class="text-success opacity-75">Hall A & B Sessions</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="small">
+                                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded">
+                                                <span class="fw-bold">MASLD & Obesity</span>
+                                                <span class="badge bg-success bg-opacity-25 text-success">Hall A</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded">
+                                                <span class="fw-bold">AI & Tech in Medicine</span>
+                                                <span class="badge bg-primary bg-opacity-25 text-primary">Hall B</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center p-2 bg-white rounded">
+                                                <span class="fw-bold">Nutrition & GDM</span>
+                                                <span class="badge bg-warning bg-opacity-25 text-warning">Both</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Day 2 -->
+                                <div class="col-md-6">
+                                    <div class="border rounded-3 p-3 h-100" style="background: linear-gradient(135deg, #e3f2fd 0%, #f0f8ff 100%); border-color: #2196f3 !important;">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 0.8rem; font-weight: bold;">
+                                                2
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-primary">Day 2 - September 21</div>
+                                                <small class="text-primary opacity-75">Specialized Sessions</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="small">
+                                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded">
+                                                <span class="fw-bold">PCOS & Fertility</span>
+                                                <span class="badge bg-success bg-opacity-25 text-success">Hall A</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 bg-white rounded">
+                                                <span class="fw-bold">Pediatric Endo</span>
+                                                <span class="badge bg-primary bg-opacity-25 text-primary">Hall B</span>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center p-2 bg-white rounded">
+                                                <span class="fw-bold">New Medications</span>
+                                                <span class="badge bg-danger bg-opacity-25 text-danger">Latest</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quick Stats -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-3">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="fw-bold text-primary">20+</div>
+                                        <small class="text-muted">Sessions</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="fw-bold text-success">4</div>
+                                        <small class="text-muted">CPD Credits</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="fw-bold text-warning">2</div>
+                                        <small class="text-muted">Halls</small>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="fw-bold text-info">9.5</div>
+                                        <small class="text-muted">Hours/Day</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Download Action -->
+                            <div class="text-center">
+                                <a href="/static/schedule/{{ schedule_file }}" 
+                                   class="btn btn-primary btn-sm px-4 py-2 rounded-pill"
+                                   target="_blank" 
+                                   download="{{ schedule_file }}">
+                                    <i class="fas fa-download me-2"></i>
+                                    <span class="fw-bold">Download Complete Schedule</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Venue Information Card -->
+                    <div class="card compact-card border-0 mt-3">
+                        <div class="card-header bg-white border-bottom">
+                            <h6 class="mb-0">
+                                <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                                Venue Information
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <small class="text-muted fw-bold">Location</small>
+                                        <div class="fw-bold">{{ conference_venue }}</div>
+                                        <small class="text-muted">{{ conference_city }}</small>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted fw-bold">Contact Support</small>
+                                        <div class="d-flex gap-2">
+                                            <span class="badge bg-success">{{ support_phone1 }}</span>
+                                            <span class="badge bg-info">{{ support_phone2 }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <small class="text-muted fw-bold">Conference Theme</small>
+                                        <div class="fw-bold text-primary">{{ conference_tagline }}</div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <small class="text-muted fw-bold">Daily Timing</small>
+                                        <div class="d-flex gap-1">
+                                            <span class="badge bg-light text-dark">09:00 AM</span>
+                                            <span class="text-muted">to</span>
+                                            <span class="badge bg-light text-dark">6:25 PM</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Presentations Tab -->
+                <div class="tab-pane fade" id="presentations" role="tabpanel" aria-labelledby="presentations-tab">
+                    <div class="card compact-card border-0">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">Your Presentations</h6>
+                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadPresentationModal">
+                                <i class="fas fa-upload me-1"></i>Upload New
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            {% if presentations %}
+                            <div class="row g-3">
+                                {% for presentation in presentations %}
+                                <div class="col-md-6 col-12">
+                                    <div class="card presentation-card h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title mb-0">{{ presentation.title }}</h6>
+                                                <span class="badge {% if presentation.file_type == 'pdf' %}bg-danger{% elif presentation.file_type == 'ppt' %}bg-warning{% elif presentation.file_type == 'video' %}bg-primary{% else %}bg-success{% endif %} status-badge">
+                                                    {{ presentation.file_type|upper }}
+                                                </span>
+                                            </div>
+                                            <p class="card-text small text-muted mb-2">
+                                                {{ presentation.description|truncate(100) }}
+                                            </p>
+                                            <p class="card-text small">
+                                                <i class="fas fa-calendar-alt me-1"></i>{{ presentation.upload_date }}
+                                            </p>
+                                        </div>
+                                        <div class="card-footer bg-white">
+                                            <a href="{{ presentation.file_url }}" class="btn btn-sm btn-outline-primary w-100" target="_blank">
+                                                <i class="fas fa-download me-1"></i>Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
+                                <h6>No Presentations Yet</h6>
+                                <p class="text-muted">Upload your presentations for the conference here.</p>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadPresentationModal">
+                                    <i class="fas fa-upload me-2"></i>Upload Your First Presentation
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Journey Details Tab -->
+                <div class="tab-pane fade" id="journey" role="tabpanel" aria-labelledby="journey-tab">
+                    <div class="card compact-card border-0">
+                        <div class="card-header bg-white">
+                            <h6 class="mb-0">Travel Information</h6>
+                        </div>
+                        <div class="card-body">
+                            <!-- Display existing journey details if any -->
+                            {% if inward_journey.date or outward_journey.date or day1_transport.pickup_location or day1_transport.drop_location or day2_transport.pickup_location or day2_transport.drop_location %}
+                            <div class="mb-4">
+                                <h6 class="fw-bold mb-3 text-success">
+                                    <i class="fas fa-check-circle me-1"></i>Your Journey Details
+                                </h6>
+                                <h6 class="fw-bold text-primary">Air Travel</h6>
+                        <div class="row">
+                                    {% if inward_journey.date %}
+                                    <div class="col-md-6">
+                                        <div class="journey-card">
+                                            <h6 class="text-primary mb-2">
+                                                <i class="fas fa-plane-arrival me-1"></i>Inward Journey
+                                            </h6>
+                                            <p><strong>Date:</strong> {{ inward_journey.date }}</p>
+                                            <p><strong>From:</strong> {{ inward_journey.origin }}</p>
+                                            <p><strong>To:</strong> {{ inward_journey.destination }}</p>
+                                            {% if inward_journey.remarks %}
+                                            <p><strong>Details:</strong> {{ inward_journey.remarks }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if outward_journey.date %}
+                                    <div class="col-md-6">
+                                        <div class="journey-card">
+                                            <h6 class="text-success mb-2">
+                                                <i class="fas fa-plane-departure me-1"></i>Outward Journey
+                                            </h6>
+                                            <p><strong>Date:</strong> {{ outward_journey.date }}</p>
+                                            <p><strong>From:</strong> {{ outward_journey.origin }}</p>
+                                            <p><strong>To:</strong> {{ outward_journey.destination }}</p>
+                                            {% if outward_journey.remarks %}
+                                            <p><strong>Details:</strong> {{ outward_journey.remarks }}</p>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <hr class="my-4">
+                                <h6 class="fw-bold text-primary">Ground Transport</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="journey-card">
+                                            <h6 class="text-success mb-2">Day 1</h6>
+                                            <p><strong>Pickup:</strong> {{ day1_transport.pickup_location or 'Not set' }} at {{ day1_transport.pickup_time or 'N/A' }}</p>
+                                            <p><strong>Drop-off:</strong> {{ day1_transport.drop_location or 'Not set' }} at {{ day1_transport.drop_time or 'N/A' }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="journey-card">
+                                            <h6 class="text-danger mb-2">Day 2</h6>
+                                            <p><strong>Pickup:</strong> {{ day2_transport.pickup_location or 'Not set' }} at {{ day2_transport.pickup_time or 'N/A' }}</p>
+                                            <p><strong>Drop-off:</strong> {{ day2_transport.drop_location or 'Not set' }} at {{ day2_transport.drop_time or 'N/A' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Journey Update Form -->
+                            <form id="journeyForm" method="post" action="/guest/update-journey">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="fas fa-edit me-1"></i>Update Journey Details
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="journey-card">
+                                            <h6 class="mb-3 text-primary">
+                                                <i class="fas fa-plane-arrival me-1"></i>Inward Journey
+                                            </h6>
+                                            
+                                            <div class="compact-input">
+                                                <label for="inward_date" class="form-label">Arrival Date</label>
+                                                <input type="date" class="form-control" id="inward_date" name="inward_date" 
+                                                       value="{{ inward_journey.date or '' }}">
+                                            </div>
+                                            
+                                            <div class="compact-input">
+                                                <label for="inward_origin" class="form-label">Origin</label>
+                                                <input type="text" class="form-control" id="inward_origin" name="inward_origin" 
+                                                       placeholder="City/Airport/Station" value="{{ inward_journey.origin or '' }}">
+                                            </div>
+                                            
+                                            <div class="compact-input">
+                                                <label for="inward_destination" class="form-label">Destination</label>
+                                                <input type="text" class="form-control" id="inward_destination" name="inward_destination" 
+                                                       placeholder="Conference Venue City" value="{{ inward_journey.destination or 'Calcutta' }}">
+                                            </div>
+                                            
+                                            <div class="compact-input">
+                                                <label for="inward_remarks" class="form-label">Travel Details</label>
+                                                <textarea class="form-control" id="inward_remarks" name="inward_remarks" rows="3" 
+                                                          placeholder="Flight/Train Number, arrival time, etc.">{{ inward_journey.remarks or '' }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="journey-card">
+                                            <h6 class="mb-3 text-success">
+                                                <i class="fas fa-plane-departure me-1"></i>Outward Journey
+                                            </h6>
+                                            
+                                            <div class="compact-input">
+                                                <label for="outward_date" class="form-label">Departure Date</label>
+                                                <input type="date" class="form-control" id="outward_date" name="outward_date" 
+                                                       value="{{ outward_journey.date or '' }}">
+                                            </div>
+                                            
+                                            <div class="compact-input">
+                                                <label for="outward_origin" class="form-label">Origin</label>
+                                                <input type="text" class="form-control" id="outward_origin" name="outward_origin" 
+                                                       placeholder="Conference Venue City" value="{{ outward_journey.origin or 'Calcutta' }}">
+                                            </div>
+                                            
+                                            <div class="compact-input">
+                                                <label for="outward_destination" class="form-label">Destination</label>
+                                                <input type="text" class="form-control" id="outward_destination" name="outward_destination" 
+                                                       placeholder="City/Airport/Station" value="{{ outward_journey.destination or '' }}">
+                                            </div>
+                                            
+                                            <div class="compact-input">
+                                                <label for="outward_remarks" class="form-label">Travel Details</label>
+                                                <textarea class="form-control" id="outward_remarks" name="outward_remarks" rows="3" 
+                                                          placeholder="Flight/Train Number, departure time, etc.">{{ outward_journey.remarks or '' }}</textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr class="my-4">
+                                <h6 class="fw-bold mb-3">Ground Transport</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="journey-card">
+                                            <h6 class="mb-2 text-success">Day 1</h6>
+                                            <div class="compact-input">
+                                                <label for="day1_pickup_location" class="form-label">Pickup Location</label>
+                                                <input type="text" class="form-control" id="day1_pickup_location" name="day1_pickup_location" value="{{ day1_transport.pickup_location or '' }}" placeholder="e.g., Airport, Hotel">
+                                                <small class="form-text text-muted">Where you'll be picked up on Day 1</small>
+                                            </div>
+                                            <div class="compact-input">
+                                                <label for="day1_pickup_time" class="form-label">Pickup Time</label>
+                                                <input type="text" class="form-control" id="day1_pickup_time" name="day1_pickup_time" value="{{ day1_transport.pickup_time or '' }}" placeholder="9:00 AM">
+                                                <small class="form-text text-muted">Time of pickup on Day 1</small>
+                                            </div>
+                                            <div class="compact-input">
+                                                <label for="day1_drop_location" class="form-label">Drop-off Location</label>
+                                                <input type="text" class="form-control" id="day1_drop_location" name="day1_drop_location" value="{{ day1_transport.drop_location or '' }}" placeholder="e.g., Hotel">
+                                                <small class="form-text text-muted">Where you'll be dropped after Day 1</small>
+                                            </div>
+                                            <div class="compact-input">
+                                                <label for="day1_drop_time" class="form-label">Drop-off Time</label>
+                                                <input type="text" class="form-control" id="day1_drop_time" name="day1_drop_time" value="{{ day1_transport.drop_time or '' }}" placeholder="6:00 PM">
+                                                <small class="form-text text-muted">Time of drop-off on Day 1</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="journey-card">
+                                            <h6 class="mb-2 text-danger">Day 2</h6>
+                                            <div class="compact-input">
+                                                <label for="day2_pickup_location" class="form-label">Pickup Location</label>
+                                                <input type="text" class="form-control" id="day2_pickup_location" name="day2_pickup_location" value="{{ day2_transport.pickup_location or '' }}" placeholder="e.g., Hotel">
+                                                <small class="form-text text-muted">Where you'll be picked up on Day 2</small>
+                                            </div>
+                                            <div class="compact-input">
+                                                <label for="day2_pickup_time" class="form-label">Pickup Time</label>
+                                                <input type="text" class="form-control" id="day2_pickup_time" name="day2_pickup_time" value="{{ day2_transport.pickup_time or '' }}" placeholder="9:00 AM">
+                                                <small class="form-text text-muted">Time of pickup on Day 2</small>
+                                            </div>
+                                            <div class="compact-input">
+                                                <label for="day2_drop_location" class="form-label">Drop-off Location</label>
+                                                <input type="text" class="form-control" id="day2_drop_location" name="day2_drop_location" value="{{ day2_transport.drop_location or '' }}" placeholder="e.g., Airport">
+                                                <small class="form-text text-muted">Where you'll be dropped after Day 2</small>
+                                            </div>
+                                            <div class="compact-input">
+                                                <label for="day2_drop_time" class="form-label">Drop-off Time</label>
+                                                <input type="text" class="form-control" id="day2_drop_time" name="day2_drop_time" value="{{ day2_transport.drop_time or '' }}" placeholder="6:00 PM">
+                                                <small class="form-text text-muted">Time of drop-off on Day 2</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="text-center mt-3">
+                                    <button type="submit" class="btn btn-primary" id="saveJourneyBtn">
+                                        <i class="fas fa-save me-2"></i>Save Journey Details
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Messages Tab -->
+                <div class="tab-pane fade" id="messages" role="tabpanel" aria-labelledby="messages-tab">
+                    <div class="card compact-card border-0">
+                        <div class="card-header bg-white">
+                            <h6 class="mb-0">Messages</h6>
+                        </div>
+                        <div class="card-body">
+                            <form id="messageForm" method="post" action="/guest/send-message">
+                                <div class="compact-input">
+                                    <label for="message" class="form-label">Send a Message to Organizers</label>
+                                    <textarea class="form-control" id="message" name="message" rows="4" placeholder="Type your message here..."></textarea>
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary" id="sendMessageBtn">
+                                        <i class="fas fa-paper-plane me-2"></i>Send Message
+                                    </button>
+                                </div>
+                            </form>
+                            
+                            <hr>
+                            
+                            <h6 class="mb-3">Message History</h6>
+                            <div id="messageHistory" style="max-height: 400px; overflow-y: auto;">
+                                {% if guest_messages %}
+                                    {% for msg in guest_messages %}
+                                    <div class="message-bubble">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>{{ msg.timestamp }}
+                                            </small>
+                                            <span class="badge bg-primary status-badge">You</span>
+                                        </div>
+                                        {% if msg.message %}
+                                        <p class="mb-0">{{ msg.message }}</p>
+                                        {% endif %}
+                                        {% if msg.response %}
+                                        <div class="admin-response mt-2">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <strong class="text-success"><i class="fas fa-user-shield me-1"></i>Admin Response:</strong>
+                                                <small class="text-muted">{{ msg.response_timestamp }}</small>
+                                            </div>
+                                            <p class="mb-0">{{ msg.response }}</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                                    <h6>No Messages Yet</h6>
+                                    <p class="text-muted">Start a conversation with the organizers</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1" aria-labelledby="editProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProfileModalLabel">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editProfileForm" method="post" action="/guest/update-profile">
+                <div class="modal-body">
+                    <div class="compact-input">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ guest.Email or '' }}">
+                    </div>
+                    <div class="compact-input">
+                        <label for="phone" class="form-label">Phone Number</label>
+                        <input type="text" class="form-control" id="phone" name="phone" value="{{ guest.Phone }}">
+                        <div class="form-text">10-digit phone number without spaces or hyphens</div>
+                    </div>
+                    <div class="compact-input">
+                        <label for="kmc_number" class="form-label">KMC Number</label>
+                        <input type="text" class="form-control" id="kmc_number" name="kmc_number" value="{{ guest.KMCNumber or '' }}">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Photo Modal -->
+<div class="modal fade" id="uploadPhotoModal" tabindex="-1" aria-labelledby="uploadPhotoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadPhotoModalLabel">Upload Profile Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="uploadPhotoForm" method="post" action="/guest/upload-photo" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="compact-input">
+                        <label for="photo" class="form-label">Select Photo</label>
+                        <input type="file" class="form-control" id="photo" name="photo" accept="image/jpeg,image/png,image/gif">
+                        <div class="form-text">Maximum file size: 2MB. Supported formats: JPG, PNG, GIF</div>
+                    </div>
+                    <div id="photoPreview" class="text-center mb-3" style="display:none;">
+                        <img src="" alt="Preview" class="img-thumbnail" style="max-height: 200px;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload Photo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Presentation Modal -->
+<div class="modal fade" id="uploadPresentationModal" tabindex="-1" aria-labelledby="uploadPresentationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadPresentationModalLabel">Upload Presentation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="uploadPresentationForm" method="post" action="/guest/upload-presentation" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="compact-input">
+                        <label for="title" class="form-label">Presentation Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="compact-input">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="compact-input">
+                        <label for="file" class="form-label">Presentation File</label>
+                        <input type="file" class="form-control" id="file" name="file" required
+                               accept=".pdf,.ppt,.pptx,.doc,.docx,.mp4,.avi,.webm">
+                        <div class="form-text">Supported formats: PDF, PowerPoint, Word, and Video files</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Upload Presentation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// QR Code functionality
+function generateQRCode() {
+    const guestId = '{{ guest.ID }}';
+    const placeholder = document.getElementById('qr-placeholder');
+    
+    if (placeholder) {
+        placeholder.innerHTML = '<div class="text-center"><div class="spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2 mb-0">Generating...</p></div>';
+        
+        fetch(`/guest/qr-code/${guestId}`)
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                }
+                throw new Error('Failed to generate QR code');
+            })
+            .then(blob => {
+                const imageUrl = URL.createObjectURL(blob);
+                placeholder.innerHTML = `<img src="${imageUrl}" alt="QR Code for {{ guest.Name }}" class="img-fluid" style="max-width: 150px;">`;
+            })
+            .catch(error => {
+                console.error('Error generating QR code:', error);
+                placeholder.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                        <p class="mb-2">Failed to generate QR code</p>
+                        <button type="button" class="btn btn-sm btn-outline-light" onclick="generateQRCode()">
+                            Try Again
+                        </button>
+                    </div>
+                `;
+            });
+    }
+}
+
+function downloadQRCode() {
+    const guestId = '{{ guest.ID }}';
+    const guestName = '{{ guest.Name }}';
+    
+    fetch(`/guest/qr-code/${guestId}`)
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            }
+            throw new Error('Failed to download QR code');
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `QRCode_${guestId}_${guestName.replace(/\s+/g, '_')}.png`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        })
+        .catch(error => {
+            console.error('Error downloading QR code:', error);
+            alert('Failed to download QR code. Please try again.');
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-generate QR code if placeholder exists
+    const qrPlaceholder = document.getElementById('qr-placeholder');
+    if (qrPlaceholder) {
+        setTimeout(generateQRCode, 1000);
+    }
+    
+    // Photo preview functionality
+    const photoInput = document.getElementById('photo');
+    const photoPreview = document.getElementById('photoPreview');
+    const previewImage = photoPreview ? photoPreview.querySelector('img') : null;
+    
+    if (photoInput && previewImage) {
+        photoInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    photoPreview.style.display = 'block';
+                }
+                
+                reader.readAsDataURL(this.files[0]);
+            } else {
+                photoPreview.style.display = 'none';
+            }
+        });
+    }
+    
+    // Form submission handling with proper feedback
+    function handleFormSubmit(formId, successMessage) {
+        const form = document.getElementById(formId);
+        
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                
+                // Show loading state
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Saving...';
+                submitBtn.disabled = true;
+                
+                fetch(this.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Close modal if it's in a modal
+                        const modalElement = this.closest('.modal');
+                        if (modalElement) {
+                            const modal = bootstrap.Modal.getInstance(modalElement);
+                            if (modal) {
+                                modal.hide();
+                            }
+                        }
+                        
+                        // Show success message
+                        showAlert(successMessage || data.message, 'success');
+                        
+                        // Reload page to show updated data
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        showAlert(data.message || 'An error occurred', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('An unexpected error occurred', 'danger');
+                })
+                .finally(() => {
+                    // Restore button state
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
+            });
+        }
+    }
+    
+    // Alert function
+    function showAlert(message, type) {
+        // Remove existing alerts
+        const existingAlerts = document.querySelectorAll('.alert-custom');
+        existingAlerts.forEach(alert => alert.remove());
+        
+        // Create new alert
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show alert-custom position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (alertDiv && alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    // Initialize form handlers
+    handleFormSubmit('editProfileForm', 'Profile updated successfully');
+    handleFormSubmit('uploadPhotoForm', 'Photo uploaded successfully');
+    handleFormSubmit('uploadPresentationForm', 'Presentation uploaded successfully');
+    handleFormSubmit('journeyForm', 'Journey details updated successfully');
+    handleFormSubmit('messageForm', 'Message sent successfully');
+    
+    // Phone number validation
+    const phoneInputs = document.querySelectorAll('input[name="phone"]');
+    phoneInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            this.value = this.value.replace(/\D/g, '').substring(0, 10);
+        });
+    });
+    
+    // Smooth tab transitions
+    const tabLinks = document.querySelectorAll('[data-bs-toggle="tab"]');
+    tabLinks.forEach(link => {
+        link.addEventListener('click', function() {
+            // Add a subtle loading effect
+            const targetId = this.getAttribute('data-bs-target');
+            const targetPane = document.querySelector(targetId);
+            
+            if (targetPane) {
+                targetPane.style.opacity = '0.7';
+                setTimeout(() => {
+                    targetPane.style.opacity = '1';
+                }, 150);
+            }
+        });
+    });
+    
+    // Auto-scroll to top of content when switching tabs
+    tabLinks.forEach(link => {
+        link.addEventListener('shown.bs.tab', function() {
+            const targetId = this.getAttribute('data-bs-target');
+            const targetPane = document.querySelector(targetId);
+            
+            if (targetPane) {
+                targetPane.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+    
+    // Message history auto-scroll to bottom
+    const messageHistory = document.getElementById('messageHistory');
+    if (messageHistory && messageHistory.children.length > 0) {
+        messageHistory.scrollTop = messageHistory.scrollHeight;
+    }
+});
+</script>
+{% endblock %}

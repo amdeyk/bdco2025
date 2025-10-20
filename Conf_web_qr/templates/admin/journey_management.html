@@ -1,0 +1,927 @@
+<!-- templates/admin/journey_management.html -->
+{% extends "base.html" %}
+{% block admin_nav %}
+<div class="btn-group ms-3" role="group">
+    <a href="/admin/dashboard" class="btn btn-primary btn-sm text-white">
+        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+    </a>
+    <a href="/logout" class="btn btn-danger btn-sm text-white">
+        <i class="fas fa-sign-out-alt me-1"></i> Logout
+    </a>
+</div>
+{% endblock %}
+
+{% block title %}Journey Management | Conference Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="h3 mb-2">Journey Management</h1>
+        <p class="text-muted">Manage guest journey details and travel arrangements</p>
+        <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Quick Stats Row -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Total Guests</h5>
+                        <h3>{{ guests|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Details Updated</h5>
+                        <h3>{{ guests|selectattr("JourneyDetailsUpdated", "equalto", "True")|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Completed</h5>
+                        <h3>{{ guests|selectattr("JourneyCompleted", "equalto", "True")|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-check-double fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">Pending</h5>
+                        <h3>{{ guests|selectattr("JourneyDetailsUpdated", "equalto", "False")|list|length }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Bar -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="q" value="{{ search_query or '' }}" placeholder="Search by name, ID or phone...">
+                            <button class="btn btn-outline-secondary" type="submit">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <label class="input-group-text">Filter</label>
+                            <select class="form-select" name="status" onchange="this.form.submit()">
+                                <option value="">All Guests</option>
+                                <option value="updated" {% if status_filter == 'updated' %}selected{% endif %}>Journey Details Updated</option>
+                                <option value="not_updated" {% if status_filter == 'not_updated' %}selected{% endif %}>Journey Details Not Updated</option>
+                                <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Journey Completed</option>
+                                <option value="ongoing" {% if status_filter == 'ongoing' %}selected{% endif %}>Journey Ongoing</option>
+                            </select>
+                            <a href="/admin/journey_management" class="btn btn-outline-secondary">
+                                Clear Filters
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Journey Management Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Guest Journeys</h5>
+                <div class="btn-group">
+                    <button id="markSelectedUpdatedBtn" class="btn btn-sm btn-outline-primary" disabled>
+                        <i class="fas fa-check me-1"></i> Mark Selected as Updated
+                    </button>
+                    <button id="markSelectedCompletedBtn" class="btn btn-sm btn-outline-success" disabled>
+                        <i class="fas fa-check-double me-1"></i> Mark Selected as Completed
+                    </button>
+                    
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover datatable mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="selectAll">
+                                    </div>
+                                </th>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Role</th>
+                                <th>Phone</th>
+                                <th>Journey Status</th>
+                                <th>Last Updated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for guest in guests %}
+                            <tr>
+                                <td>
+                                    <div class="form-check">
+                                        <input class="form-check-input guest-checkbox" type="checkbox" value="{{ guest.ID }}">
+                                    </div>
+                                </td>
+                                <td><strong>{{ guest.ID }}</strong></td>
+                                <td>{{ guest.Name or 'Not provided' }}</td>
+                                <td><span class="badge bg-primary">{{ guest.GuestRole }}</span></td>
+                                <td>{{ guest.Phone or 'Not provided' }}</td>
+                                <td>
+                                    <div>
+                                        <span class="badge {% if guest.JourneyDetailsUpdated == 'True' %}bg-success{% else %}bg-warning{% endif %} me-1">
+                                            {% if guest.JourneyDetailsUpdated == 'True' %}Details Updated{% else %}Not Updated{% endif %}
+                                        </span>
+                                        <span class="badge {% if guest.JourneyCompleted == 'True' %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if guest.JourneyCompleted == 'True' %}Completed{% else %}Ongoing{% endif %}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ guest.LastJourneyUpdate or 'Never' }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-outline-primary btn-sm" 
+                                                onclick="markJourneyUpdated('{{ guest.ID }}')"
+                                                {% if guest.JourneyDetailsUpdated == 'True' %}disabled{% endif %}
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                title="Mark journey details as updated">
+                                            <i class="fas fa-pen"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-success btn-sm" 
+                                                onclick="markJourneyCompleted('{{ guest.ID }}')"
+                                                {% if guest.JourneyCompleted == 'True' %}disabled{% endif %}
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                title="Mark journey as completed">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <a href="/admin/single_guest/{{ guest.ID }}" 
+                                           class="btn btn-outline-info btn-sm"
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-placement="top" 
+                                           title="View guest details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                                onclick="editJourneyDetailsModal('{{ guest.ID }}')"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top" 
+                                                title="Edit journey details">
+                                            <i class="fas fa-route"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            
+                            {% if not guests %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <p class="text-muted mb-0">No guests found matching the current filters</p>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Total: <strong>{{ guests|length }}</strong> guests</span>
+                    <button id="journeyQrScannerBtn" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-qrcode me-1"></i> QR Code Scanner
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Journey Details Modal -->
+<div class="modal fade" id="journeyDetailsModal" tabindex="-1" aria-labelledby="journeyDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="journeyDetailsModalLabel">
+                    <i class="fas fa-route me-2"></i>Journey Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="journeyDetailsContent">
+                    <!-- Journey details will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editJourneyDetailsModal(currentEditingGuestId)">
+                    <i class="fas fa-edit me-1"></i> Edit Details
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- QR Code Scanner Modal -->
+<div class="modal fade" id="qrScannerModal" tabindex="-1" aria-labelledby="qrScannerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="qrScannerModalLabel">Scan Badge QR Code</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Scan a guest's QR code to quickly update their journey status
+                </div>
+                
+                <div id="qrScanner" style="width: 100%; height: 300px;"></div>
+                
+                <div id="scanResult" class="mt-3" style="display: none;">
+                    <div class="alert alert-success">
+                        <strong>Guest Found:</strong> <span id="scanGuestName"></span>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button id="scanUpdateBtn" class="btn btn-primary">
+                            <i class="fas fa-pen me-2"></i> Mark Journey Details Updated
+                        </button>
+                        <button id="scanCompleteBtn" class="btn btn-success">
+                            <i class="fas fa-check me-2"></i> Mark Journey Completed
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Journey Edit Modal -->
+<div class="modal fade" id="journeyEditModal" tabindex="-1" aria-labelledby="journeyEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="journeyEditModalLabel">
+                    <i class="fas fa-route me-2"></i>Edit Journey Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="journeyEditContent">
+                    <!-- Loading state -->
+                    <div class="text-center" id="journeyEditLoading">
+                        <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                        <p class="mt-2">Loading journey details...</p>
+                    </div>
+                    
+                    <!-- Edit form - will be populated by JavaScript -->
+                    <div id="journeyEditForm" style="display: none;">
+                        <div class="row">
+                            <!-- Guest Info Header -->
+                            <div class="col-12 mb-3">
+                                <div class="alert alert-info">
+                                    <strong>Guest:</strong> <span id="editGuestName"></span> 
+                                    (<span id="editGuestId"></span>)
+                                </div>
+                            </div>
+                            
+                            <!-- Inward Journey -->
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-plane-arrival me-2"></i>
+                                            Inward Journey
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Date</label>
+                                            <input type="date" class="form-control" id="modalInwardDate">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">From</label>
+                                            <input type="text" class="form-control" id="modalInwardOrigin" 
+                                                   placeholder="Origin city/airport">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">To</label>
+                                            <input type="text" class="form-control" id="modalInwardDestination" 
+                                                   placeholder="Destination city/airport">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Transport Details</label>
+                                            <textarea class="form-control" id="modalInwardDetails" rows="2" 
+                                                      placeholder="Flight number, time, etc."></textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="modalInwardPickup">
+                                                <label class="form-check-label" for="modalInwardPickup">
+                                                    Pickup required from airport/station
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Remarks</label>
+                                            <textarea class="form-control" id="modalInwardRemarks" rows="2" 
+                                                      placeholder="Special requirements, contact details, etc."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Outward Journey -->
+                            <div class="col-md-6">
+                                <div class="card border-danger">
+                                    <div class="card-header bg-danger text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-plane-departure me-2"></i>
+                                            Outward Journey
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Date</label>
+                                            <input type="date" class="form-control" id="modalOutwardDate">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">From</label>
+                                            <input type="text" class="form-control" id="modalOutwardOrigin" 
+                                                   placeholder="Origin city/airport">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">To</label>
+                                            <input type="text" class="form-control" id="modalOutwardDestination" 
+                                                   placeholder="Destination city/airport">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Transport Details</label>
+                                            <textarea class="form-control" id="modalOutwardDetails" rows="2" 
+                                                      placeholder="Flight number, time, etc."></textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="modalOutwardDrop">
+                                                <label class="form-check-label" for="modalOutwardDrop">
+                                                    Drop required to airport/station
+                                                </label>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Remarks</label>
+                                            <textarea class="form-control" id="modalOutwardRemarks" rows="2" 
+                                                      placeholder="Special requirements, contact details, etc."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-success" id="saveJourneyChanges" onclick="saveModalJourneyDetails()">
+                    <i class="fas fa-save me-1"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card bg-light border-0">
+            <div class="card-body">
+                <h5 class="card-title">How this page fits in</h5>
+                <p class="mb-1">Update and track each guest's travel plans here.</p>
+                <p class="mb-0">These details connect to their profiles so the transport team and organizers see the same information.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
+<!-- DataTables -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable
+    $('.datatable').DataTable({
+        responsive: true,
+        pageLength: 25,
+        order: [[1, 'asc']],
+        language: {
+            search: "Search guests:",
+            lengthMenu: "Show _MENU_ guests per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ guests"
+        }
+    });
+
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Handle select all checkbox
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const guestCheckboxes = document.querySelectorAll('.guest-checkbox');
+    const markSelectedUpdatedBtn = document.getElementById('markSelectedUpdatedBtn');
+    const markSelectedCompletedBtn = document.getElementById('markSelectedCompletedBtn');
+    
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            guestCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateSelectedButtonsState();
+        });
+    }
+    
+    // Handle individual checkboxes
+    guestCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateSelectedButtonsState();
+        });
+    });
+    
+    // Update selected buttons state
+    function updateSelectedButtonsState() {
+        const selectedGuests = document.querySelectorAll('.guest-checkbox:checked');
+        markSelectedUpdatedBtn.disabled = selectedGuests.length === 0;
+        markSelectedCompletedBtn.disabled = selectedGuests.length === 0;
+    }
+    
+    // QR Code Scanner
+    let html5QrCode;
+    const journeyQrScannerBtn = document.getElementById('journeyQrScannerBtn');
+    const qrScannerModal = document.getElementById('qrScannerModal');
+    const scanResult = document.getElementById('scanResult');
+    const scanGuestName = document.getElementById('scanGuestName');
+    const scanUpdateBtn = document.getElementById('scanUpdateBtn');
+    const scanCompleteBtn = document.getElementById('scanCompleteBtn');
+    
+    // Initialize scanner when button is clicked
+    if (journeyQrScannerBtn) {
+        journeyQrScannerBtn.addEventListener('click', function() {
+            const modal = new bootstrap.Modal(qrScannerModal);
+            modal.show();
+            
+            // Initialize scanner
+            html5QrCode = new Html5Qrcode("qrScanner");
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            // Start scanning
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config,
+                onScanSuccess,
+                onScanFailure
+            );
+        });
+    }
+    
+    // Stop scanner when modal is closed
+    qrScannerModal.addEventListener('hidden.bs.modal', function() {
+        if (html5QrCode && html5QrCode.isScanning) {
+            html5QrCode.stop().catch(err => {
+                console.error('Error stopping scanner:', err);
+            });
+        }
+        scanResult.style.display = 'none';
+    });
+    
+    // Handle QR scan success
+    function onScanSuccess(decodedText, decodedResult) {
+        let guestId = decodedText;
+        
+        if (decodedText.includes(':')) {
+            const parts = decodedText.split(':');
+            guestId = parts[1];
+        }
+        
+        // Fetch guest info
+        fetch(`/api/guest/${guestId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                scanGuestName.textContent = data.guest.Name;
+                scanResult.style.display = 'block';
+                
+                scanUpdateBtn.dataset.guestId = guestId;
+                scanCompleteBtn.dataset.guestId = guestId;
+                
+                scanUpdateBtn.disabled = data.guest.JourneyDetailsUpdated === 'True';
+                scanCompleteBtn.disabled = data.guest.JourneyCompleted === 'True';
+            } else {
+                showNotification('Guest not found. Please try again.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An error occurred while fetching guest information', 'error');
+        });
+    }
+    
+    // Handle QR scan failure
+    function onScanFailure(error) {
+        console.log('QR scan error: ', error);
+    }
+    
+    // Handle update button from scanner
+    if (scanUpdateBtn) {
+        scanUpdateBtn.addEventListener('click', function() {
+            const guestId = this.dataset.guestId;
+            if (guestId) {
+                markJourneyUpdated(guestId);
+            }
+        });
+    }
+    
+    // Handle complete button from scanner
+    if (scanCompleteBtn) {
+        scanCompleteBtn.addEventListener('click', function() {
+            const guestId = this.dataset.guestId;
+            if (guestId) {
+                markJourneyCompleted(guestId);
+            }
+        });
+    }
+    
+    // Handle bulk mark as updated
+    if (markSelectedUpdatedBtn) {
+        markSelectedUpdatedBtn.addEventListener('click', function() {
+            const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+                
+            if (selectedGuestIds.length > 0) {
+                fetch('/update_journey_status_bulk', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ guest_ids: selectedGuestIds })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(data.message || 'Journey details marked as updated successfully', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showNotification(data.message || 'An error occurred', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('An unexpected error occurred', 'error');
+                });
+            }
+        });
+    }
+    
+    // Handle bulk mark as completed
+    if (markSelectedCompletedBtn) {
+        markSelectedCompletedBtn.addEventListener('click', function() {
+            const selectedGuestIds = Array.from(document.querySelectorAll('.guest-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+                
+            if (selectedGuestIds.length > 0) {
+                fetch('/complete_journey_bulk', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ guest_ids: selectedGuestIds })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(data.message || 'Journeys marked as completed successfully', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showNotification(data.message || 'An error occurred', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('An unexpected error occurred', 'error');
+                });
+            }
+        });
+    }
+});
+
+// Global variable to store current editing guest ID
+let currentEditingGuestId = null;
+
+// Function to open journey edit modal
+function editJourneyDetailsModal(guestId) {
+    currentEditingGuestId = guestId;
+    const modal = new bootstrap.Modal(document.getElementById('journeyEditModal'));
+
+    // Show loading state
+    document.getElementById('journeyEditLoading').style.display = 'block';
+    document.getElementById('journeyEditForm').style.display = 'none';
+
+    modal.show();
+
+    // Fetch guest and journey details
+    fetchGuestJourneyDetails(guestId);
+}
+
+// Function to fetch guest journey details
+function fetchGuestJourneyDetails(guestId) {
+    // First, get guest basic info
+    fetch(`/admin/api/guest/${guestId}`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Populate guest info
+            document.getElementById('editGuestName').textContent = data.guest.Name || 'Unknown';
+            document.getElementById('editGuestId').textContent = guestId;
+
+            // Now fetch journey details
+            return fetch(`/admin/api/journey-details/${guestId}`);
+        } else {
+            throw new Error('Guest not found');
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            populateJourneyForm(data.journey);
+        } else {
+            // If no journey data, show empty form
+            populateJourneyForm({});
+        }
+
+        // Hide loading, show form
+        document.getElementById('journeyEditLoading').style.display = 'none';
+        document.getElementById('journeyEditForm').style.display = 'block';
+    })
+    .catch(error => {
+        console.error('Error fetching journey details:', error);
+        document.getElementById('journeyEditLoading').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Error loading journey details: ${error.message}
+            </div>
+        `;
+    });
+}
+
+// Function to populate the journey form
+function populateJourneyForm(journey) {
+    // Inward journey
+    document.getElementById('modalInwardDate').value = journey.inward_date || '';
+    document.getElementById('modalInwardOrigin').value = journey.inward_origin || '';
+    document.getElementById('modalInwardDestination').value = journey.inward_destination || '';
+    document.getElementById('modalInwardDetails').value = journey.inward_details || '';
+    document.getElementById('modalInwardPickup').checked = journey.inward_pickup || false;
+    document.getElementById('modalInwardRemarks').value = journey.inward_remarks || '';
+
+    // Outward journey
+    document.getElementById('modalOutwardDate').value = journey.outward_date || '';
+    document.getElementById('modalOutwardOrigin').value = journey.outward_origin || '';
+    document.getElementById('modalOutwardDestination').value = journey.outward_destination || '';
+    document.getElementById('modalOutwardDetails').value = journey.outward_details || '';
+    document.getElementById('modalOutwardDrop').checked = journey.outward_drop || false;
+    document.getElementById('modalOutwardRemarks').value = journey.outward_remarks || '';
+}
+
+// Function to save journey details from modal
+function saveModalJourneyDetails() {
+    if (!currentEditingGuestId) {
+        showNotification('Error: No guest selected', 'error');
+        return;
+    }
+
+    // Disable save button and show loading
+    const saveBtn = document.getElementById('saveJourneyChanges');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
+
+    const journeyData = {
+        guest_id: currentEditingGuestId,
+        inward_date: document.getElementById('modalInwardDate').value,
+        inward_from: document.getElementById('modalInwardOrigin').value,
+        inward_to: document.getElementById('modalInwardDestination').value,
+        inward_details: document.getElementById('modalInwardDetails').value,
+        inward_pickup: document.getElementById('modalInwardPickup').checked,
+        inward_remarks: document.getElementById('modalInwardRemarks').value,
+        outward_date: document.getElementById('modalOutwardDate').value,
+        outward_from: document.getElementById('modalOutwardOrigin').value,
+        outward_to: document.getElementById('modalOutwardDestination').value,
+        outward_details: document.getElementById('modalOutwardDetails').value,
+        outward_drop: document.getElementById('modalOutwardDrop').checked,
+        outward_remarks: document.getElementById('modalOutwardRemarks').value
+    };
+
+    fetch('/admin/update_journey_details', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(journeyData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Restore button state
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+
+        if (data.success) {
+            showNotification(data.message || 'Journey details updated successfully', 'success');
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('journeyEditModal'));
+            modal.hide();
+
+            // Refresh the page to show updated data
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification(data.message || 'An error occurred', 'error');
+        }
+    })
+    .catch(error => {
+        // Restore button state
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+
+        console.error('Error:', error);
+        showNotification('An unexpected error occurred', 'error');
+    });
+}
+
+// Update the existing viewJourneyDetails function to use the new modal
+function viewJourneyDetails(guestId) {
+    // Redirect to the edit modal instead
+    editJourneyDetailsModal(guestId);
+}
+
+// Individual action functions
+function markJourneyUpdated(guestId) {
+    if (confirm('Mark journey details as updated for this guest?')) {
+        fetch('/update_journey_status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `guest_id=${guestId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Journey details marked as updated successfully', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification(data.message || 'An error occurred', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An unexpected error occurred', 'error');
+        });
+    }
+}
+
+function markJourneyCompleted(guestId) {
+    if (confirm('Mark journey as completed for this guest?')) {
+        fetch('/complete_journey', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `guest_id=${guestId}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Journey marked as completed successfully', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotification(data.message || 'An error occurred', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('An unexpected error occurred', 'error');
+        });
+    }
+}
+
+function exportJourneyData() {
+    window.location.href = '/admin/report/export/journey_list?format=csv';
+}
+
+
+// Notification function
+function showNotification(message, type) {
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(n => n.remove());
+    
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : type === 'warning' ? 'warning' : 'info'} notification`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        max-width: 500px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        border-radius: 8px;
+    `;
+    
+    const iconClass = type === 'success' ? 'check-circle' : 
+                     type === 'error' ? 'exclamation-circle' : 
+                     type === 'warning' ? 'exclamation-triangle' : 'info-circle';
+    
+    notification.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas fa-${iconClass} me-2"></i>
+            <span class="flex-grow-1">${message}</span>
+            <button type="button" class="btn-close ms-2" onclick="this.closest('.notification').remove()"></button>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

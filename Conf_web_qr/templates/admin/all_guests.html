@@ -1,0 +1,329 @@
+<!-- templates/admin/all_guests.html -->
+{% extends "base.html" %}
+{% block container_class %}container-fluid{% endblock %}
+{% block admin_nav %}
+<div class="btn-group ms-3" role="group">
+    <a href="/admin/dashboard" class="btn btn-primary btn-sm text-white">
+        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+    </a>
+    <a href="/logout" class="btn btn-danger btn-sm text-white">
+        <i class="fas fa-sign-out-alt me-1"></i> Logout
+    </a>
+    <a href="/admin/guest_badges" class="btn btn-secondary btn-sm text-white">
+        <i class="fas fa-id-badge me-1"></i> Badge Management
+    </a>
+</div>
+{% endblock %}
+
+{% block title %}All Guests | Conference Management{% endblock %}
+
+{% block extra_css %}
+<!-- DataTables CSS -->
+<link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+
+<style>
+        .bg-primary { background-color: #1a237e !important; }
+        .text-primary { color: #1a237e !important; }
+        .btn-primary { background-color: #1a237e; border-color: #1a237e; }
+        .btn-primary:hover { background-color: #0f1566; border-color: #0f1566; }
+        
+        .status-badge.true { background-color: #28a745; }
+        .status-badge.false { background-color: #6c757d; }
+        .status-badge { color: white; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.875rem; }
+        
+        .info-card {
+            border: none;
+            box-shadow: 0 5px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        
+        .table th {
+            background-color: #1a237e;
+            color: white;
+            border: none;
+        }
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            padding: 2rem;
+        }
+
+    </style>
+{% endblock %}
+
+{% block content %}
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-1">All Guests</h1>
+                        <p class="text-muted mb-0">Complete list of registered conference guests</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/admin/dashboard" class="btn btn-outline-primary">
+                            <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                        </a>
+                        <a href="/logout" class="btn btn-outline-secondary">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a>
+                        <a href="/admin/guest_badges" class="btn btn-outline-secondary">
+                            <i class="fas fa-id-badge me-1"></i> Badge Management
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card info-card">
+                    <div class="card-body">
+                        <form method="get" class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Search</label>
+                                <input type="text" class="form-control" name="q" value="{{ search_query or '' }}" placeholder="Search by name, ID or phone...">
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label class="form-label">Role Filter</label>
+                                <select class="form-select" name="role">
+                                    <option value="">All Roles</option>
+                                    {% for role in roles %}
+                                    <option value="{{ role }}" {% if role_filter == role %}selected{% endif %}>{{ role }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-3">
+                                <label class="form-label">Attendance Filter</label>
+                                <select class="form-select" name="attendance">
+                                    <option value="">All Guests</option>
+                                    <option value="present" {% if attendance_filter == 'present' %}selected{% endif %}>Present</option>
+                                    <option value="absent" {% if attendance_filter == 'absent' %}selected{% endif %}>Absent</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-2 d-flex align-items-end gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i> Filter
+                                </button>
+                                <a href="/admin/all_guests" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i> Clear
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guests Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card info-card">
+                    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Registered Guests ({{ guests|length }})</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-success" onclick="exportData('csv')">
+                                <i class="fas fa-download me-1"></i> Export CSV
+                            </button>
+                            <button class="btn btn-sm btn-outline-info" onclick="exportData('excel')">
+                                <i class="fas fa-file-excel me-1"></i> Export Excel
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table id="guestsTable" class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>KMC</th>
+                                        <th>Phone</th>
+                                        <th>Email</th>
+                                        <th>Attendance</th>
+                                        <th>Badge Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for guest in guests %}
+                                    <tr>
+                                        <td><strong>{{ guest.ID }}</strong></td>
+                                        <td>{{ guest.Name or 'Not provided' }}</td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ guest.GuestRole }}</span>
+                                        </td>
+                                        <td>{{ guest.KMCNumber or 'N/A' }}</td>
+                                        <td>{{ guest.Phone or 'Not provided' }}</td>
+                                        <td>{{ guest.Email or 'Not provided' }}</td>
+                                        <td>
+                                            <span class="status-badge {% if guest.DailyAttendance == 'True' %}true{% else %}false{% endif %}">
+                                                {% if guest.DailyAttendance == 'True' %}Present{% else %}Absent{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex gap-1">
+                                                <span class="badge {% if guest.BadgePrinted == 'True' %}bg-success{% else %}bg-secondary{% endif %} me-1">
+                                                    {% if guest.BadgePrinted == 'True' %}Printed{% else %}Not Printed{% endif %}
+                                                </span>
+                                                <span class="badge {% if guest.BadgeGiven == 'True' %}bg-success{% else %}bg-secondary{% endif %}">
+                                                    {% if guest.BadgeGiven == 'True' %}Given{% else %}Not Given{% endif %}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="/admin/single_guest/{{ guest.ID }}" class="btn btn-outline-info btn-sm">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <button class="btn btn-outline-primary btn-sm" onclick="printBadge('{{ guest.ID }}')" 
+                                                        {% if guest.BadgePrinted == 'True' %}disabled{% endif %}>
+                                                    <i class="fas fa-print"></i>
+                                                </button>
+                                                <button class="btn btn-outline-success btn-sm" onclick="giveBadge('{{ guest.ID }}')"
+                                                        {% if guest.BadgeGiven == 'True' or guest.BadgePrinted != 'True' %}disabled{% endif %}>
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    
+                                    {% if not guests %}
+                                    <tr>
+                                        <td colspan="9" class="text-center py-4">
+                                            <p class="text-muted mb-0">No guests found matching the current filters</p>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<!-- DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+        // Initialize DataTable
+        $(document).ready(function() {
+            $('#guestsTable').DataTable({
+                responsive: true,
+                pageLength: 25,
+                order: [[0, 'asc']], // Sort by ID
+                language: {
+                    search: "Search guests:",
+                    lengthMenu: "Show _MENU_ guests per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ guests",
+                    emptyTable: "No guests found"
+                }
+            });
+        });
+        
+        // Print Badge
+        function printBadge(guestId) {
+            if (confirm('Mark badge as printed for this guest?')) {
+                fetch('/admin/print_badge', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `guest_id=${guestId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(data.message || 'Badge printed successfully', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showNotification(data.message || 'An error occurred', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('An unexpected error occurred', 'error');
+                });
+            }
+        }
+        
+        // Give Badge
+        function giveBadge(guestId) {
+            if (confirm('Mark badge as given to this guest?')) {
+                fetch('/admin/give_badge', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `guest_id=${guestId}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(data.message || 'Badge marked as given successfully', 'success');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showNotification(data.message || 'An error occurred', 'error');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('An unexpected error occurred', 'error');
+                });
+            }
+        }
+        
+        // Export Data
+        function exportData(format) {
+            const params = new URLSearchParams(window.location.search);
+            params.set('format', format);
+            window.location.href = `/admin/report/export/guest_list?${params.toString()}`;
+        }
+        
+        // Show notification
+        function showNotification(message, type) {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(n => n.remove());
+            
+            // Create notification
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'success' ? 'success' : 'danger'} notification`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            `;
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+</script>
+{% endblock %}

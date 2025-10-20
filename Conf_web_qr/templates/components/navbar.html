@@ -1,0 +1,134 @@
+<!-- components/navbar.html -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="fas fa-graduation-cap"></i> Conference Management
+        </a>
+        
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
+                data-bs-target="#navbarMain" aria-controls="navbarMain" 
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarMain">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/operator/login">
+                        <i class="fas fa-qrcode"></i> Operator
+                    </a>
+                </li>
+                <!-- Common Navigation Links -->
+                <li class="nav-item">
+                    <a class="nav-link {% if active_page == 'home' %}active{% endif %}" href="/">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                </li>
+                
+                <!-- Guest Navigation -->
+                {% if user_role == 'guest' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_page == 'profile' %}active{% endif %}" href="/guest/profile">
+                        <i class="fas fa-user"></i> My Profile
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if active_page == 'presentations' %}active{% endif %}" href="/guest/presentations">
+                        <i class="fas fa-file-powerpoint"></i> Presentations
+                    </a>
+                </li>
+                {% endif %}
+                
+                <!-- Admin Navigation -->
+                {% if user_role == 'admin' %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" 
+                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-cogs"></i> Admin
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+                        <li>
+                            <a class="dropdown-item" href="/admin_dashboard">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/guest_registration">
+                                <i class="fas fa-user-plus"></i> Registration
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/all_guests">
+                                <i class="fas fa-users"></i> All Guests
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/manage_guest">
+                                <i class="fas fa-tasks"></i> Manage Guests
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/report">
+                                <i class="fas fa-chart-bar"></i> Reports
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="/logout">
+                                <i class="fas fa-sign-out-alt"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                {% endif %}
+                
+                <!-- Faculty Navigation -->
+                {% if user_role == 'faculty' %}
+                <li class="nav-item">
+                    <a class="nav-link {% if active_page == 'profile' %}active{% endif %}" href="/guest/profile">
+                        <i class="fas fa-user"></i> My Profile
+                    </a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="facultyDropdown" 
+                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-graduate"></i> Faculty
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="facultyDropdown">
+                        <li>
+                            <a class="dropdown-item" href="/faculty/presentations">
+                                <i class="fas fa-file-powerpoint"></i> Presentations
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/faculty/journey">
+                                <i class="fas fa-plane"></i> Journey Details
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="/faculty/messages">
+                                <i class="fas fa-envelope"></i> Messages
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                {% endif %}
+                
+                <!-- Login/Logout -->
+                {% if not user_role %}
+                <li class="nav-item">
+                    <a class="nav-link action-button" href="/guest/login">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="nav-link" href="/logout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>

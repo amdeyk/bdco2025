@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Faculty Presentations | Conference Management{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="h3 mb-4">My Presentations</h1>
+    <a href="/faculty/profile" class="btn btn-outline-secondary btn-sm mb-3">
+        <i class="fas fa-arrow-left me-1"></i> Back to Profile
+    </a>
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Presentations</h5>
+        </div>
+        <div class="card-body">
+            {% if faculty.presentations %}
+            <ul class="list-group">
+                {% for presentation in faculty.presentations %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ presentation.title }}</strong>
+                        <div class="small text-muted">{{ presentation.description }}</div>
+                    </div>
+                    <a href="/static/{{ presentation.file_path }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                        <i class="fas fa-download me-1"></i> Download
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="mb-0">No presentations uploaded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

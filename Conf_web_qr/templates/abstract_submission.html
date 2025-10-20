@@ -1,0 +1,99 @@
+{% extends "minimal_base.html" %}
+
+{% block title %}Abstract Submission{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <h2 class="mb-4 text-center">{{ conference_name }} Abstract Submission</h2>
+    <p class="text-center">{{ conference_name }} proudly hosts an annual conference celebrating advances in medical technology and coding practices.</p>
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    {% if success %}
+    <div class="alert alert-success">{{ success }}</div>
+    {% if submitted_file %}
+    <p><strong>File:</strong> {{ submitted_file }}<br><strong>Submitted at:</strong> {{ timestamp }}</p>
+    {% endif %}
+    {% endif %}
+
+    {% if step == 'check' or not step %}
+    <form method="post">
+      <input type="hidden" name="step" value="check">
+      <div class="mb-3">
+        <label for="phone" class="form-label">Mobile Number</label>
+        <input type="text" class="form-control" id="phone" name="phone" required>
+      </div>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Check Number</button>
+      </div>
+    </form>
+    <!-- NEW FLEX IMAGE ROW BELOW -->
+    <style>
+      .steps-flex-row {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 72px;
+        margin-top: 72px;
+        flex-wrap: nowrap;
+      }
+      .step-img {
+        max-width: 340px;
+        width: 100%;
+        height: auto;
+        border-radius: 16px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+        transition: transform 0.2s;
+        background: #fff;
+        padding: 6px;
+      }
+      .step-img:hover {
+        transform: scale(1.15);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+      }
+      @media (max-width: 1200px) {
+        .step-img {
+          max-width: 180px;
+        }
+        .steps-flex-row {
+          gap: 16px;
+        }
+      }
+      @media (max-width: 700px) {
+        .steps-flex-row {
+          flex-wrap: wrap;
+          justify-content: flex-start;
+          gap: 12px;
+        }
+        .step-img {
+          max-width: 120px;
+          margin-bottom: 14px;
+        }
+      }
+    </style>
+    <div class="steps-flex-row">
+      <img src="{{ url_for('static', path='images/step1.jpeg') }}" alt="Step 1" class="step-img">
+      <img src="{{ url_for('static', path='images/step2.jpeg') }}" alt="Step 2" class="step-img">
+      <img src="{{ url_for('static', path='images/step3.jpeg') }}" alt="Step 3" class="step-img">
+      <img src="{{ url_for('static', path='images/step4.jpeg') }}" alt="Step 4" class="step-img">
+    </div>
+    <!-- END FLEX IMAGE ROW -->
+    {% elif step == 'upload' %}
+    <p><strong>Name:</strong> {{ guest_name }}<br><strong>Email:</strong> {{ guest_email }}</p>
+    <form method="post" enctype="multipart/form-data">
+      <input type="hidden" name="step" value="upload">
+      <input type="hidden" name="phone" value="{{ phone }}">
+      <div class="mb-3">
+        <label for="file" class="form-label">Upload File</label>
+        <input type="file" class="form-control" id="file" name="file" required>
+      </div>
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Submit</button>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

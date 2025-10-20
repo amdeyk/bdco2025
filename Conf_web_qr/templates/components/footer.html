@@ -1,0 +1,35 @@
+<!-- templates/components/footer.html -->
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <h5><i class="fas fa-university me-2"></i> Event Details</h5>
+            <p class="mb-0">{{ conference_name }}</p>
+            <p class="mb-0">{{ conference_tagline }}</p>
+            <p class="mb-0">{{ conference_venue }}</p>
+            <p class="mb-0">{{ conference_city }}</p>
+        </div>
+        <div class="col-md-4 text-center">
+            <h5><i class="fas fa-envelope me-2"></i> Contact Info</h5>
+            <p class="mb-0"><i class="fas fa-phone me-2"></i> {{ support_phone1 }}</p>
+            <p class="mb-0"><i class="fas fa-phone me-2"></i> {{ support_phone2 }}</p>
+            <p class="mb-0"><i class="fas fa-envelope me-2"></i> {{ conference_contact_email }}</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <h5><i class="fas fa-info-circle me-2"></i> QUBIX INFORMATION SYSTEMS </h5>
+            <p class="mb-0">Guest Management System</p>
+            <p class="mb-0">Version: {{ app_version }}</p>
+            <p class="mb-0">Updated on: {{ now.strftime('%d-%m-%Y') }}</p>
+            <p class="mb-1">
+                <a href="#" class="text-white text-decoration-none" onclick="toggleHelpOverlay()">
+                    <i class="fas fa-question-circle me-1"></i> Help & Support
+                </a>
+            </p>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <!-- In templates/components/footer.html -->
+            <small>&copy; <script>document.write(new Date().getFullYear());</script> {{ conference_name }}. All rights reserved.</small>
+        </div>
+    </div>
+</div>
