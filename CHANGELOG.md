@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
+### Simplification (2025-11-01)
+- Normalize CSV writes to minimal schema and prune legacy columns to fix DictWriter errors when existing data has extra fields.
+- Replace previous multi-feature app with a minimal guest/admin system.
+- Add phone-only guest login and guest registration with basic validation.
+- Implement guest profile edit and 2MB document uploads with downloads.
+- Add admin login (password: admin123change), guest list/detail editing, bulk CSV upload, and database clear with password confirmation.
+- Add conference settings (name, dates, contact, email, location, tagline) and render dynamically across header/footer.
+- Introduce `app/routes/simple.py` and `app/services/settings.py`; update `app/main.py` to include only simplified routes.
+- Simplify navbar/header/footer templates; add tooltips/help; ensure responsive layout.
+- Remove legacy modules, routes, services, and templates not used by the simplified app to slim the repository.
+- Add `docs/sample_bulk_upload.csv` template for admin CSV import.
+- Prepopulate default conference settings in `data/settings.json`.
+- Update `app/services/__init__.py` to stop importing removed services; remove `app.templates` dependency from `app/main.py`.
+- UI polish: add Logout button for guest users in navbar; increase header title size for better visibility.
+- Add Logout button inside Guest Dashboard card header for quick access.
+- Admin settings extended with Chairperson, Organizing Secretary, Scientific Chairperson and global toggle to show/hide their phone numbers; footer renders these details conditionally.
+- Add per-role phone visibility toggles (chair, secretary, scientific) and a Registration Open toggle. Navbar, login, and registration pages reflect closed registration state and block POST.
+- Sessions: reduce validity to 10 minutes (configurable via SECURITY.SessionTimeout). Add thread-safe session store and cookie max-age.
+- CSV locking: add cross-process lock file with timeout to prevent conflicts; graceful 503 UI responses on lock timeouts; preserve atomic writes and backups.
+- Header FX: add glassmorphism card for title and animated floating particles with subtle parallax tilt (desktop-friendly, no input needed).
 - Replace homepage registration link with a disabled "Registration Closed" notice to reflect enrollment status.
 - Add QueryPreprocessorAgent for astrological query preprocessing and explicit termination to avoid agent loop.
 - Make admin dashboard stat cards link to filtered guest lists for quick navigation.
@@ -56,3 +76,6 @@ All notable changes to this project will be documented in this file.
 - Send SMS notifications to coordinators and guests after successful registration using configurable templates.
 - Allow admin guest table to span full width with responsive scrolling.
 - Center MagnaCode badge content with vertical stacking and remove phone numbers from the layout.
+ - Redesigned site header: gradient hero with layered shapes, bottom SVG wave, and right-side info column (Dates, Venue, Schedule). Removed Register/Login buttons from the header.
+ - Compact header info cards (approx. 50% height) with one-line label/value layout for readability.
+ - Fix date range mojibake (e.g., "Dec 12â14"): add Jinja `normalize_dashes` filter and apply to date displays in header; also registered in route templates.

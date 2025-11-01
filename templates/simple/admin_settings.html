@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Settings | {{ conference.name or 'Conference' }}{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-header bg-white"><strong><i class="fas fa-gear"></i> Conference Settings</strong></div>
+  <div class="card-body">
+    <form method="post" action="/admin/settings">
+      <div class="row g-3">
+        <div class="col-md-6"><label class="form-label">Conference Name</label><input name="name" class="form-control" value="{{ settings.name }}" required></div>
+        <div class="col-md-6"><label class="form-label">Dates</label><input name="dates" class="form-control" value="{{ settings.dates }}"></div>
+        <div class="col-md-6"><label class="form-label">Contact Person</label><input name="contact_name" class="form-control" value="{{ settings.contact_name }}"></div>
+        <div class="col-md-6"><label class="form-label">Contact Email</label><input name="contact_email" type="email" class="form-control" value="{{ settings.contact_email }}"></div>
+        <div class="col-md-6"><label class="form-label">Location</label><input name="location" class="form-control" value="{{ settings.location }}"></div>
+        <div class="col-12"><label class="form-label">Tagline (up to ~20 words)</label><input name="tagline" class="form-control" value="{{ settings.tagline }}"></div>
+        <hr>
+        <div class="col-12"><strong>Organizing Committee</strong></div>
+        <div class="col-md-6"><label class="form-label">Conference Chairperson</label><input name="chairperson_name" class="form-control" value="{{ settings.chairperson_name }}" placeholder="Name"></div>
+        <div class="col-md-6"><label class="form-label">Chairperson Phone</label><input name="chairperson_phone" class="form-control" value="{{ settings.chairperson_phone }}" placeholder="Optional phone"></div>
+        <div class="col-md-6"><label class="form-label">Organizing Secretary</label><input name="secretary_name" class="form-control" value="{{ settings.secretary_name }}" placeholder="Name"></div>
+        <div class="col-md-6"><label class="form-label">Secretary Phone</label><input name="secretary_phone" class="form-control" value="{{ settings.secretary_phone }}" placeholder="Optional phone"></div>
+        <div class="col-md-6"><label class="form-label">Scientific Chairperson</label><input name="scientific_chair_name" class="form-control" value="{{ settings.scientific_chair_name }}" placeholder="Name"></div>
+        <div class="col-md-6"><label class="form-label">Scientific Phone</label><input name="scientific_chair_phone" class="form-control" value="{{ settings.scientific_chair_phone }}" placeholder="Optional phone"></div>
+        <div class="col-12"><strong>Visibility</strong></div>
+        <div class="col-md-4 form-check">
+          <input class="form-check-input" type="checkbox" id="showChairPhone" name="show_chairperson_phone" {% if settings.show_chairperson_phone %}checked{% endif %}>
+          <label class="form-check-label" for="showChairPhone">Show Chairperson phone</label>
+        </div>
+        <div class="col-md-4 form-check">
+          <input class="form-check-input" type="checkbox" id="showSecPhone" name="show_secretary_phone" {% if settings.show_secretary_phone %}checked{% endif %}>
+          <label class="form-check-label" for="showSecPhone">Show Secretary phone</label>
+        </div>
+        <div class="col-md-4 form-check">
+          <input class="form-check-input" type="checkbox" id="showSciPhone" name="show_scientific_chair_phone" {% if settings.show_scientific_chair_phone %}checked{% endif %}>
+          <label class="form-check-label" for="showSciPhone">Show Scientific Chair phone</label>
+        </div>
+        <div class="col-12 form-check mt-2">
+          <input class="form-check-input" type="checkbox" id="regOpen" name="registration_open" {% if settings.registration_open %}checked{% endif %}>
+          <label class="form-check-label" for="regOpen" data-bs-toggle="tooltip" title="Disable to close new registrations">Registration open</label>
+        </div>
+      </div>
+      <div class="mt-3"><button class="btn btn-primary" type="submit" data-bs-toggle="tooltip" title="Save settings"><i class="fas fa-save me-1"></i> Save</button></div>
+    </form>
+  </div>
+</div>
+{% endblock %}

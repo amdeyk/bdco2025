@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSideMenu();
     initializeHelpSystem();
     handleSearchForm();
+    initHeaderFX();
     
     // Initialize any data tables
     if (typeof $.fn.DataTable !== 'undefined') {
@@ -363,3 +364,72 @@ window.toggleHelpOverlay = function() {
         helpOverlay.style.display = helpOverlay.style.display === 'none' ? 'flex' : 'none';
     }
 };
+
+// --- Header particles + parallax tilt (glassmorphism support) ---
+function initHeaderFX(){
+  const canvas = document.getElementById('headerParticles');
+  const card = document.querySelector('.header-text');
+  const banner = document.querySelector('.header-banner');
+  if(!canvas || !banner) return;
+  const ctx = canvas.getContext('2d');
+  let w, h, dpr = Math.min(2, window.devicePixelRatio || 1);
+  let particles = [];
+
+  function resize(){
+    w = canvas.clientWidth; h = canvas.clientHeight;
+    canvas.width = Math.floor(w * dpr);
+    canvas.height = Math.floor(h * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    spawn();
+  }
+
+  function spawn(){
+    const count = Math.max(30, Math.floor((w*h)/35000));
+    particles = new Array(count).fill(0).map(()=>({
+      x: Math.random()*w,
+      y: Math.random()*h,
+      z: Math.random()*1.0 + 0.2, // depth 0.2-1.2
+      r: Math.random()*2 + 0.8,
+      vx: (Math.random()*0.6 - 0.3),
+      vy: (Math.random()*0.6 - 0.3)
+    }));
+  }
+
+  function step(){
+    ctx.clearRect(0,0,w,h);
+    for(const p of particles){
+      p.x += p.vx * p.z; p.y += p.vy * p.z;
+      if(p.x < -10) p.x = w+10; if(p.x > w+10) p.x = -10;
+      if(p.y < -10) p.y = h+10; if(p.y > h+10) p.y = -10;
+      const alpha = 0.35 * p.z;
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+      ctx.arc(p.x, p.y, p.r * p.z, 0, Math.PI*2);
+      ctx.fill();
+    }
+    requestAnimationFrame(step);
+  }
+
+  function onMove(e){
+    if(!card) return;
+    const rect = banner.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const dx = ((e.clientX || cx) - cx) / rect.width;  // -0.5..0.5
+    const dy = ((e.clientY || cy) - cy) / rect.height; // -0.5..0.5
+    const tx = (dx * 12).toFixed(2) + 'px';
+    const ty = (dy * 8).toFixed(2) + 'px';
+    const rx = (dy * -6).toFixed(2) + 'deg';
+    const ry = (dx * 6).toFixed(2) + 'deg';
+    card.classList.add('parallax-tilt');
+    card.style.setProperty('--tx', tx);
+    card.style.setProperty('--ty', ty);
+    card.style.setProperty('--rx', rx);
+    card.style.setProperty('--ry', ry);
+  }
+
+  window.addEventListener('resize', resize, {passive:true});
+  banner.addEventListener('mousemove', onMove);
+  resize();
+  requestAnimationFrame(step);
+}

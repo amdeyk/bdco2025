@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Guests | {{ conference.name or 'Conference' }}{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <strong><i class="fas fa-users"></i> All Guests</strong>
+    <a class="btn btn-sm btn-outline-secondary" href="/admin" data-bs-toggle="tooltip" title="Back to dashboard">Back</a>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Institution</th><th>Phone</th><th></th></tr></thead>
+        <tbody>
+        {% for g in guests %}
+          <tr>
+            <td class="text-muted">{{ g.ID }}</td>
+            <td>{{ g.Name }}</td>
+            <td>{{ g.Email }}</td>
+            <td>{{ g.Institution }}</td>
+            <td>{{ g.Phone }}</td>
+            <td class="text-end"><a class="btn btn-sm btn-primary" href="/admin/guest/{{ g.ID }}" data-bs-toggle="tooltip" title="View and edit"><i class="fas fa-eye"></i></a></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="6" class="text-center">No guests found.</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

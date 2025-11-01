@@ -23,16 +23,16 @@ body {
 
 .header-banner {
     width: 100%;
-    height: 200px;
-    background-image: url('/static/images/header.jpeg');
-    background-size: contain;
-    background-position: center top;
-    background-repeat: no-repeat;
-    background-color: #1a237e; /* Match this to the deep blue in your banner */
+    min-height: 280px;
+    background:
+      radial-gradient(900px 400px at -10% -20%, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 60%),
+      radial-gradient(700px 350px at 120% -10%, rgba(3,169,244,0.25) 0%, rgba(3,169,244,0.05) 55%, transparent 70%),
+      linear-gradient(135deg, #0d47a1 0%, #1976d2 55%, #0b2a6b 100%);
     position: relative;
     overflow: hidden;
     margin: 0;
-    padding: 0;
+    padding: 0 0 40px 0;
+    color: var(--text-on-primary);
 }
 
 
@@ -41,12 +41,9 @@ body {
 .header-banner::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.1));
-    z-index: 1;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.15), rgba(0,0,0,0.05));
+    z-index: 2;
 }
 
 .navbar {
@@ -88,8 +85,35 @@ body {
 .footer {
     background-color: var(--primary-color);
     color: var(--text-on-primary);
-    padding: 2rem 0;
+    padding: 2.25rem 0;
     margin-top: auto;
+}
+
+/* Header text tuning */
+.header-content .header-text h1 {
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+.header-content .header-text p.small {
+    opacity: 0.9;
+}
+
+/* Footer layout + typography (desktop) */
+@media (min-width: 992px) {
+  .header-banner { height: 240px; }
+  .footer .container { max-width: 1200px; }
+  .footer .row > [class^='col-'] {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .footer h6 { font-size: 1.05rem; margin-bottom: .35rem; font-weight: 600; }
+  .footer .small { font-size: .95rem; }
+}
+
+/* Footer spacing for stacked details on smaller/medium screens */
+@media (max-width: 991.98px) {
+  .footer .row > [class^='col-'] { margin: .35rem 0; }
 }
 
 /* Card Styles */
@@ -306,7 +330,8 @@ body {
    }
    
    .header-banner {
-       height: 150px;
+       min-height: 260px;
+       padding-bottom: 32px;
    }
    
    .container {
@@ -778,4 +803,115 @@ body {
        height: 100%;
        object-fit: contain;
    }
+}
+.header-canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:1;
+    pointer-events:none;
+    opacity:.6;
+}
+
+.glass-card{
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    -webkit-backdrop-filter: blur(10px) saturate(130%);
+    backdrop-filter: blur(10px) saturate(130%);
+    border-radius: 16px;
+}
+
+.header-parallax{ perspective: 800px; }
+.header-text{ transform: translateZ(0); transition: transform .12s ease-out; }
+.header-text.parallax-tilt{
+    transform: translate3d(var(--tx,0), var(--ty,0), 0)
+               rotateY(var(--ry,0)) rotateX(var(--rx,0));
+}
+
+/* Hero content + shapes */
+.header-content { position: relative; height: 100%; z-index: 3; }
+
+.hero-shapes {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hero-shape { position: absolute; display: block; }
+
+.hero-shape.circle {
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%,
+               rgba(255,255,255,0.35),
+               rgba(255,255,255,0.08) 60%, transparent 61%);
+  filter: blur(0.5px);
+}
+
+.circle-lg { width: 420px; height: 420px; left: -120px; top: -120px; opacity: .35; }
+.circle-sm { width: 220px; height: 220px; left: 260px; top: 30px; opacity: .2; }
+
+.hero-shape.ring {
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.22);
+  opacity: .65;
+  transform: rotate(12deg);
+}
+
+.ring-1 { width: 160px; height: 160px; right: 18%; top: 16%; }
+.ring-2 { width: 90px; height: 90px; right: 8%; top: 48%; transform: rotate(-8deg); }
+
+/* Bottom wave */
+.header-wave {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 90px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Minor utility for muted text */
+.opacity-90 { opacity: .9; }
+
+/* Right-side info column */
+.header-info { z-index: 3; }
+.info-card {
+  color: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+  align-items: center;
+  padding: .5rem .625rem !important; /* compact height */
+}
+.info-icon {
+  width: 28px; height: 28px; /* smaller icon box */
+  border-radius: 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.08));
+  border: 1px solid rgba(255,255,255,.35);
+  color: #fff;
+}
+.header-info .info-icon { margin-right: .5rem !important; }
+.info-icon i { font-size: .9rem; }
+
+/* tighter text in info boxes */
+.header-info .small { font-size: .9rem; line-height: 1.2; }
+.header-info .fw-semibold.small { font-size: .82rem; letter-spacing: .04em; }
+
+/* one-line info layout */
+.info-line { display: flex; align-items: center; gap: .35rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .95rem; }
+.info-label { font-weight: 700; opacity: .95; }
+.info-value { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+
+.btn.btn-light { color: #0d47a1; }
+
+/* Responsive tweaks for hero */
+@media (max-width: 768px) {
+  .circle-lg { width: 320px; height: 320px; left: -100px; top: -140px; }
+  .circle-sm { width: 180px; height: 180px; left: 200px; top: 35px; }
+  .ring-1 { right: 14%; top: 18%; }
+  .ring-2 { right: 6%; top: 52%; }
 }

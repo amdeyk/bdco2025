@@ -1,5 +1,6 @@
 # Example of improved auth service (auth.py)
 import secrets
+import threading
 from datetime import datetime, timedelta
 from fastapi import Request, HTTPException
 from app.config import Config
@@ -23,33 +24,38 @@ class AuthService:
     def __init__(self, admin_password):
         self.admin_password = admin_password
         self.sessions = {}  # In-memory session store
+        self._lock = threading.Lock()
+        cfg = Config()
+        # Session timeout in minutes (default 10)
+        self.session_timeout_minutes = cfg.getint('SECURITY', 'SessionTimeout', fallback=10) or 10
     
     def create_session(self, user_id, role):
         """Create a new session for a user"""
         session_id = secrets.token_urlsafe(32)
-        expiry = datetime.now() + timedelta(hours=12)
-        
-        self.sessions[session_id] = {
-            "user_id": user_id,
-            "role": role,
-            "expires": expiry
-        }
-        
+        expiry = datetime.now() + timedelta(minutes=self.session_timeout_minutes)
+        with self._lock:
+            self.sessions[session_id] = {
+                "user_id": user_id,
+                "role": role,
+                "expires": expiry
+            }
         return session_id
     
     def validate_session(self, session_id):
         """Validate a session and return user information"""
-        if not session_id or session_id not in self.sessions:
+        if not session_id:
             return None
-        
-        session = self.sessions[session_id]
-        
-        # Check expiry
-        if datetime.now() > session["expires"]:
-            del self.sessions[session_id]
-            return None
-        
-        return session
+        with self._lock:
+            session = self.sessions.get(session_id)
+            if not session:
+                return None
+            if datetime.now() > session["expires"]:
+                try:
+                    del self.sessions[session_id]
+                except KeyError:
+                    pass
+                return None
+            return dict(session)
     
     def require_admin(self, session_id):
         """Check if the session has admin privileges"""

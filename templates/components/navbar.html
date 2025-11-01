@@ -1,8 +1,8 @@
 <!-- components/navbar.html -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
     <div class="container">
-        <a class="navbar-brand" href="/">
-            <i class="fas fa-graduation-cap"></i> Conference Management
+        <a class="navbar-brand" href="/" title="Go to Home">
+            <i class="fas fa-graduation-cap"></i> {{ conference.name or 'Conference' }}
         </a>
         
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" 
@@ -13,115 +13,29 @@
         
         <div class="collapse navbar-collapse" id="navbarMain">
             <ul class="navbar-nav ms-auto">
-                <!-- Common Navigation Links -->
-                <li class="nav-item">
-                    <a class="nav-link {% if active_page == 'home' %}active{% endif %}" href="/">
-                        <i class="fas fa-home"></i> Home
-                    </a>
-                </li>
-                
-                <!-- Guest Navigation -->
                 {% if user_role == 'guest' %}
                 <li class="nav-item">
-                    <a class="nav-link {% if active_page == 'profile' %}active{% endif %}" href="/guest/profile">
+                    <a class="nav-link {% if active_page == 'profile' %}active{% endif %}" href="/guest" data-bs-toggle="tooltip" title="View and edit your details">
                         <i class="fas fa-user"></i> My Profile
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if active_page == 'presentations' %}active{% endif %}" href="/guest/presentations">
-                        <i class="fas fa-file-powerpoint"></i> Presentations
+                    <a class="nav-link" href="/logout" data-bs-toggle="tooltip" title="Sign out">
+                        <i class="fas fa-right-from-bracket"></i> Logout
                     </a>
                 </li>
-                {% endif %}
-                
-                <!-- Admin Navigation -->
-                {% if user_role == 'admin' %}
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" 
-                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-cogs"></i> Admin
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                        <li>
-                            <a class="dropdown-item" href="/admin_dashboard">
-                                <i class="fas fa-tachometer-alt"></i> Dashboard
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="/guest_registration">
-                                <i class="fas fa-user-plus"></i> Registration
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="/all_guests">
-                                <i class="fas fa-users"></i> All Guests
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="/manage_guest">
-                                <i class="fas fa-tasks"></i> Manage Guests
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="/report">
-                                <i class="fas fa-chart-bar"></i> Reports
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item text-danger" href="/logout">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                {% endif %}
-                
-                <!-- Faculty Navigation -->
-                {% if user_role == 'faculty' %}
-                <li class="nav-item">
-                    <a class="nav-link {% if active_page == 'profile' %}active{% endif %}" href="/guest/profile">
-                        <i class="fas fa-user"></i> My Profile
-                    </a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="facultyDropdown" 
-                       role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-user-graduate"></i> Faculty
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="facultyDropdown">
-                        <li>
-                            <a class="dropdown-item" href="/faculty/presentations">
-                                <i class="fas fa-file-powerpoint"></i> Presentations
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="/faculty/journey">
-                                <i class="fas fa-plane"></i> Journey Details
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="/faculty/messages">
-                                <i class="fas fa-envelope"></i> Messages
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                {% endif %}
-                
-                <!-- Login/Logout -->
-                {% if not user_role %}
-                <li class="nav-item">
-                    <a class="nav-link action-button" href="/guest/login">
-                        <i class="fas fa-sign-in-alt"></i> Login
-                    </a>
-                </li>
+                {% elif user_role == 'admin' %}
+                <li class="nav-item"><a class="nav-link {% if active_page == 'admin' %}active{% endif %}" href="/admin" data-bs-toggle="tooltip" title="Admin dashboard"><i class="fas fa-gauge"></i> Admin</a></li>
+                <li class="nav-item"><a class="nav-link {% if active_page == 'guests' %}active{% endif %}" href="/admin/guests" data-bs-toggle="tooltip" title="Manage guests"><i class="fas fa-users"></i> Guests</a></li>
+                <li class="nav-item"><a class="nav-link {% if active_page == 'settings' %}active{% endif %}" href="/admin/settings" data-bs-toggle="tooltip" title="Conference settings"><i class="fas fa-gear"></i> Settings</a></li>
+                <li class="nav-item"><a class="nav-link" href="/logout" data-bs-toggle="tooltip" title="Sign out"><i class="fas fa-right-from-bracket"></i> Logout</a></li>
                 {% else %}
-                <li class="nav-item">
-                    <a class="nav-link" href="/logout">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </li>
+                <li class="nav-item"><a class="nav-link {% if active_page == 'login' %}active{% endif %}" href="/login" data-bs-toggle="tooltip" title="Login as guest or admin"><i class="fas fa-right-to-bracket"></i> Login</a></li>
+                {% if conference.registration_open %}
+                <li class="nav-item"><a class="nav-link {% if active_page == 'register' %}active{% endif %}" href="/register" data-bs-toggle="tooltip" title="Register as a guest"><i class="fas fa-user-plus"></i> Register</a></li>
+                {% else %}
+                <li class="nav-item"><a class="nav-link disabled" href="#" aria-disabled="true" data-bs-toggle="tooltip" title="Registration is currently closed"><i class="fas fa-user-plus"></i> Registration Closed</a></li>
+                {% endif %}
                 {% endif %}
             </ul>
         </div>

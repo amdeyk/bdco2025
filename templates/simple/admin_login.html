@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Admin Login | {{ conference.name or 'Conference' }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white"><strong><i class="fas fa-shield-halved"></i> Admin Login</strong></div>
+      <div class="card-body">
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="post" action="/admin/login">
+          <div class="mb-3"><label class="form-label">Password</label><input type="password" name="password" class="form-control" required></div>
+          <button class="btn btn-danger" type="submit" data-bs-toggle="tooltip" title="Login to the admin panel"><i class="fas fa-right-to-bracket me-1"></i> Login</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

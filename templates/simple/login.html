@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Login | {{ conference.name or 'Conference' }}{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white"><strong><i class="fas fa-user"></i> Guest Login</strong></div>
+      <div class="card-body">
+        <form method="post" action="/guest/login" class="needs-validation" novalidate>
+          <div class="mb-3">
+            <label class="form-label">Phone Number</label>
+            <input name="phone" type="tel" class="form-control" placeholder="Enter your phone number" required>
+            <div class="form-text">No password required. Use your registered phone number.</div>
+          </div>
+          <button class="btn btn-primary" type="submit" data-bs-toggle="tooltip" title="Login as guest with phone">
+            <i class="fas fa-right-to-bracket me-1"></i> Login as Guest
+          </button>
+          {% if conference.registration_open %}
+          <a class="btn btn-outline-secondary" href="/register" data-bs-toggle="tooltip" title="Register as new guest">Register</a>
+          {% else %}
+          <button class="btn btn-outline-secondary" type="button" disabled data-bs-toggle="tooltip" title="Registration is closed">Registration Closed</button>
+          {% endif %}
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-white"><strong><i class="fas fa-lock"></i> Admin Login</strong></div>
+      <div class="card-body">
+        <form method="post" action="/admin/login" class="needs-validation" novalidate>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input name="password" type="password" class="form-control" placeholder="Enter admin password" required>
+          </div>
+          <button class="btn btn-danger" type="submit" data-bs-toggle="tooltip" title="Login to admin panel">
+            <i class="fas fa-user-shield me-1"></i> Login as Admin
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
